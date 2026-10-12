@@ -16,19 +16,20 @@ Everything here is 100% free: no paywalls, no locked features, no catch.
 
 Not able to donate? That's completely fine. You can still help by:
 
-⭐ Starring this repo so more streamers can find it
-📣 Shouting it out to your streamer friends
-🐛 Reporting bugs or ideas in Issues
-🛠️ Want it made just for you?
+- Starring this repo so more streamers can find it
+- Shouting it out to your streamer friends
+- Reporting bugs or ideas in Issues
+
+Want it made just for you?
 
 For a small donation, I'll tailor the tools to fit your channel perfectly:
 
-➕ New commands built around your community's inside jokes
-🐧 Rename the "of the day": turn "Daddy of the day" into "Penguin of the day", "Goblin of the day", or whatever suits your chat
-👉 New interactions like !poke, !prod, !boop and more
-✨ And plenty more. If you can imagine it, just ask!
+- New commands built around your community's inside jokes
+- Rename the "of the day": turn "Daddy of the day" into "Penguin of the day", "Goblin of the day", or whatever suits your chat
+- New interactions like !poke, !prod, !boop and more
+- And plenty more. If you can imagine it, just ask!
 
-👉 Get in touch via Ko-fi and tell me what you have in mind.
+Get in touch via Ko-fi and tell me what you have in mind.
 
 Need video editing too?
 
