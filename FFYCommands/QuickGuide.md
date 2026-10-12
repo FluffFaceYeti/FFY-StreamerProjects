@@ -737,7 +737,7 @@ Add-ons are **extra packs**, each its own import file. Install only the ones you
 | **FFY Pokemon** | Open Pokémon booster packs (10 cards plus an Energy, with PSA grades and values), god packs, 1-1 Pikachus, `!keep`, `!sell all` or `!sell bulk` packs, `!binder` and a season reset after however many days you choose | No |
 | **FFY Counters** | 20 counters, like `!pickle` (+1), `!setpickle 5` and `!pickles` (shows the count) | No |
 
-Each add-on is its own import file with its own guide. Install the ones you want, the same way as this one.
+Each add-on is its own import file with its own guide. **Get them from the [FFYAddons folder](../FFYAddons/Readme.md)**, and install the ones you want the same way as this one.
 
 ---
 
