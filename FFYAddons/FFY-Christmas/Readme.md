@@ -1,4 +1,4 @@
-#  FFY Christmas
+# FFY Christmas
 
 Festive, silly Christmas commands for your stream, including **Santa's naughty or nice list**. An add-on for **FFY Commands**.
 

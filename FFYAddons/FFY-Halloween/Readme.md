@@ -1,4 +1,4 @@
-#  FFY Halloween
+# FFY Halloween
 
 Spooky, silly Halloween commands, including some **Nightmare Before Christmas** ones. An add-on for **FFY Commands**.
 

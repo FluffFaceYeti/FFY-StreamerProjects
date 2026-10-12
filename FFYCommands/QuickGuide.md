@@ -63,7 +63,7 @@ Everything you need to set up, use and customise **FFY Commands** in Streamer.bo
 | **Games** | `!rps @Sam`, `!swordfight @Sam`, `!d20` | Rock-paper-scissors, duels, dice and more |
 | **Titles** | `!dadofday`, `!momofday` | The first person to hit 100% wins the title for the day |
 | **Extras** | `!sotfest`, `!leaderboard` | Countdowns, leaderboards |
-| **Add-ons** *(separate imports)* | Christmas, Halloween, ThanksGiving, Daily's, Pokemon, Counters | Extra packs you can add (see [section 15](#15-add-ons)) |
+| **Add-ons** *(separate imports)* | Christmas, Halloween, ThanksGiving, Gears Of War, Daily's, Pokemon, Dino, Mining, Counters | Extra packs you can add (see [section 15](#15-add-ons)) |
 
 **Results stay the same all day.** If Bob types `!pp` ten times, he gets the same answer ten times. At midnight everyone gets a new one.
 
@@ -733,8 +733,11 @@ Add-ons are **extra packs**, each its own import file. Install only the ones you
 | **FFY Christmas** | Santa's naughty or nice list (results can last a day or longer), `!present`, `!grinch`, `!reindeer`, `!cracker`, `!snowball @someone`, Grinch of the Day and more | Yes |
 | **FFY Halloween** | `!costume`, `!pumpkin`, `!spooky`, `!candy`, `!trickortreat`, `!spook @someone`, plus Nightmare Before Christmas ones like `!jack`, `!oogieboogie` and `!whatsthis` | Yes |
 | **FFY ThanksGiving** | `!turkey`, `!gobble`, `!pie`, `!thankful`, `!leftovers`, a `!wishbone @someone` duel, Turkey of the Day and more | Yes |
+| **FFY Gears Of War** | `!activereload`, `!gnasher`, `!lancer`, `!gearsweapon`, `!curbstomp @someone`, a `!chainsaw @someone` duel, COG and Locust of the Day and more | Yes |
 | **FFY Daily's** | 20 daily channel point redeems, like *"Bob has redeemed their daily head pat!"* Each viewer can claim each one once a day | No |
 | **FFY Pokemon** | Open Pokémon booster packs (10 cards plus an Energy, with PSA grades and values), god packs, 1-1 Pikachus, `!keep`, `!sell all` or `!sell bulk` packs, `!binder` and a season reset after however many days you choose | No |
+| **FFY Dino** | `!dig` for fossils, complete dinosaur skeletons for your `!museum`, amber and 1-1 legendary fossils | No |
+| **FFY Mining** | `!mine` for ores and gems, `!sellores`, `!upgrade` your pickaxe, BIG FIND diamonds and 1-1 gems | No |
 | **FFY Counters** | 20 counters, like `!pickle` (+1), `!setpickle 5` and `!pickles` (shows the count) | No |
 
 Each add-on is its own import file with its own guide. **Get them from the [FFYAddons folder](../FFYAddons/Readme.md)**, and install the ones you want the same way as this one.

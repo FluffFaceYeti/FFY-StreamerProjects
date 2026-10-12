@@ -1,4 +1,4 @@
-#  FFY ThanksGiving
+# FFY ThanksGiving
 
 Silly, turkey-filled Thanksgiving commands. An add-on for **FFY Commands**.
 
