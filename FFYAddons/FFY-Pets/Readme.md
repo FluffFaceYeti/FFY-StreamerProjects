@@ -15,7 +15,7 @@ Chat: @Ann asked Biscuit to roll over... and it did! Woof!
 
 - Works on its own. You don't need FFY Commands.
 - Works on **Twitch, Kick and YouTube**.
-- 10 kinds of pet, each with its own sound, food, tricks, walks and play.
+- 27 kinds of pet, from dogs and cats to Highland Cows, Mooshrooms and a Baby Dragon, each with its own sound, food, tricks, walks and play.
 
 ---
 
@@ -86,8 +86,27 @@ Leave the kind off and they get a surprise one. `PetAmount` sets how many pets e
 | Pig | Oink oink! | find truffles |
 | Snake | Hissss! | hide in a boot |
 | Llama | Mmmmm! | spit on command (gross) |
+| Fox | Ring-ding-ding! | do the fox scream |
+| Owl | Hoo hoo! | turn its head all the way round |
+| Penguin | Honk honk! | slide on its belly |
+| Cow | Moooo! | ring its cow bell |
+| Highland Cow | Mooooo! (but fluffier) | flick its fringe |
+| Mini Cow | Moo! (a tiny one) | fit in a basket |
+| Mooshroom | Moo! *mushrooms wobble* | fill a bowl with stew |
+| Minecraft Cow | *blocky moo* | walk into a fence |
+| Pygmy Goat | Meh! (a small one) | climb on your back |
+| Capybara | *calm squeak* | let a bird ride on its head |
+| Red Panda | *happy squeak* | stand up tall to look scary |
+| Axolotl | *blub blub* | regrow a leg |
+| Hedgehog | *snuffle snuffle* | roll into a ball |
+| Bunny | *nose wiggle* | do a binky jump |
+| Sloth | *slow yawn* | move one inch |
+| Frog | Ribbit! | catch a fly with its tongue |
+| Baby Dragon | *tiny roar* | roast a marshmallow |
 
-Each kind has its own walk and play too. A cat refuses its lead, and a goat climbs on top of a car.
+Each kind has its own walk and play too. A cat refuses its lead, a goat climbs on top of a car, and a sloth takes three hours to reach the gate.
+
+**Two-word kinds** work too: `!registerpet Bessie highland cow`, `!registerpet Steve minecraft cow` or `!registerpet Toast baby dragon`.
 
 **Bond:** every bit of care earns the pet XP, and every 100 XP its bond grows: Stranger, Acquaintance, Buddy, Good Friend, Best Friend, Inseparable and finally Soulmate. Chat sees a message each time.
 
