@@ -33,10 +33,10 @@ Done. The commands are switched on for you. Type `!spooky` in chat to test.
 | `!pumpkin` | 10 choices | @Bob, you carved a Scary Face into your pumpkin today! |
 | `!candy` | 10 choices | @Bob, you got A Full-Size Chocolate Bar in your trick-or-treat bag today! |
 | `!trickortreat` | 7 choices | @Bob knocks on the door... TREAT! Here's a chocolate bar. |
-| `!sally` | 6 choices | @Bob, Sally gave you a dress of stitched-together patches today! |
-| `!oogieboogie` | 5 choices | Oogie Boogie rolled the dice against @Bob and got snake eyes. Oogie Boogie wins! |
-| `!halloweentown` | 10 choices | @Bob, your job in Halloween Town today is: Pumpkin King! |
-| `!whatsthis` | 7 choices | @Bob wanders into Christmas Town... What's this? It's snow! |
+| `!sally` | 26 choices | @Bob, Sally gave you a dress of stitched-together patches today! |
+| `!oogieboogie` | 25 choices | Oogie Boogie rolled the dice against @Bob and got snake eyes. Oogie Boogie wins! |
+| `!halloweentown` | 30 choices | @Bob, your job in Halloween Town today is: Pumpkin King! |
+| `!whatsthis` | 33 choices | @Bob wanders into Christmas Town... What's this? It's snow! |
 | `!spook @Sam` | Interaction | @Bob Spooked @Sam with 73% power! |
 | `!pumpkinkingofday` | Pumpkin King of the Day | Who won today. Win it by getting 100% on `!jack` |
 

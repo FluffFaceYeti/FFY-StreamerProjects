@@ -36,7 +36,7 @@ Done. The commands are switched on for you. Type `!activereload` in chat to test
 | `!gearscharacter` | 16 choices | @Bob, today you're fighting as Marcus Fenix! |
 | `!locusttype` | 15 choices | @Bob, in the Locust Horde you'd be a Drone today! |
 | `!execution` | 10 choices | @Bob's signature execution today: Curb Stomp! |
-| `!gearsquote` | 10 choices | @Bob's Gears quote of the day: "Brothers to the end." |
+| `!gearsquote` | 38 choices + 7 rare (3% chance) | @Bob's Gears quote of the day: "Let's do this!" - Marcus |
 | `!curbstomp @Sam` | Interaction | @Bob Curb stomped @Sam with 73% power! |
 | `!revive @Sam` | Interaction | @Bob Revived @Sam with 73% power! |
 | `!chainsaw @Sam` | Duel | @Bob won the chainsaw duel against @Sam (87 vs 38)! BRRRRRR! |

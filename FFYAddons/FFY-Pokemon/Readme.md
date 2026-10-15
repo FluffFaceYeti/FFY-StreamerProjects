@@ -4,11 +4,11 @@ Your chat opens **Pokémon booster packs**: 10 cards plus an Energy, just like a
 
 ```
 Bob: !pokemon
-Chat: @Bob opened pack 1/1: Metal Energy, Zubat, Pichu, Bronzor, Trubbish, Dusclops, Boldore, Whirlipede, Kirlia (Reverse), Vileplume (Rare Reverse), Mewtwo (Ultra Rare). Best pull: Mewtwo (Ultra Rare, PSA 8, $588.01). Pack worth $779.17. Type "!keep" to keep it, "!sell all" to sell it all, or "!sell bulk" to keep only the hits.
+Chat: @Bob opened pack 1/1: Metal Energy, Zubat, Pichu, Bronzor, Trubbish, Dusclops, Boldore, Whirlipede, Kirlia (Reverse Holo), Vileplume (Reverse Holo), Mewtwo. Best: Mewtwo (PSA 8, $588.01). Worth $779.17. !keep, !sell all or !sell bulk
 Bob: !sell bulk
 Chat: @Bob sold 9 bulk cards for $132.03 and kept 2 hits! Wallet: $132.03.
 Bob: !binder
-Chat: @Bob's binder: 2 cards worth $647.14 | Top 3: Mewtwo (Ultra Rare, PSA 8, $588.01), Vileplume (Rare Reverse, PSA 6, $59.13)
+Chat: @Bob's binder: 2 cards worth $647.14 | Top 3: Mewtwo (PSA 8, $588.01), Vileplume (Reverse Holo, PSA 6, $59.13)
 Bob: !pokemonwallet
 Chat: @Bob's wallet: $132.03
 ```
@@ -42,7 +42,7 @@ Done. The commands are switched on for you. Type `!pokemon` in chat to test.
 | `!binder @Sam` | Shows someone else's binder. |
 | `!pokemonwallet` | Shows how much money you have from selling. `!pokemonwallet @Sam` shows someone else's. |
 | `!pokemonseason` | Shows how many days are left until the season resets. |
-| `!bestcards` | The most valuable cards in the whole channel, and who owns them, e.g. *1. Pikachu Galar (1-1, PSA 10, $99,203.63) owned by @Zed*. You choose how many (top 3, 5, 9...). |
+| `!bestcards` | The most valuable cards in the whole channel, and who owns them, e.g. *1. Pikachu Galar (PSA 10, $99,203.63) owned by @Zed*. You choose how many (top 3, 5, 9...). |
 | `!pokemontop` | The top 5 collectors, by binder value. |
 
 > If someone doesn't `!keep` or sell a pack, it goes into their binder automatically when they open their next one.
@@ -64,14 +64,14 @@ Packs follow a real Scarlet & Violet booster:
 | Reverse Holo or better | 1 | Usually a reverse holo, sometimes a Holo, Ultra or Secret Rare |
 | Rare or better | 1 | At least a Rare, with a chance of Holo, Ultra, Secret Rare or a **1-1** |
 
-Reverse holo cards show **(Reverse)** and are worth **double**.
+Reverse holo cards show **(Reverse Holo)** after the name and are worth **double**.
 
 ### God packs
 
-About **1 in 2,000** packs is a **god pack**: every card is a Holo, Ultra or Secret Rare. Chat gets a big announcement before the pack:
+About **1 in 2,000** packs is a **god pack**: every card is a Holo, Ultra or Secret Rare. Chat gets one big announcement, and the pack goes **straight into the binder** (there is nothing to keep or sell):
 
 ```
-GOD PACK ALERT!!! @Bob JUST RIPPED OPEN A GOD PACK!!! EVERY. SINGLE. CARD. IS. A. HIT! The best pull is Gold Rayquaza (S-Rare, PSA 8, $7,966.37) and the whole pack is worth $12,222.68! CHAT, GO WILD!!!
+GOD PACK ALERT!!! @Bob JUST RIPPED OPEN A GOD PACK!!! EVERY. SINGLE. CARD. IS. A. HIT! The best pull is Gold Rayquaza (PSA 8, $7,966.37) and the whole pack is worth $12,222.68! It's gone straight into their binder. CHAT, GO WILD!!!
 ```
 
 ### Big hits
@@ -79,7 +79,7 @@ GOD PACK ALERT!!! @Bob JUST RIPPED OPEN A GOD PACK!!! EVERY. SINGLE. CARD. IS. A
 Pulling an **Ultra Rare** or **Secret Rare** in a normal pack gets its own message after the pack:
 
 ```
-BIG HIT!!! @Bob just pulled Latias (Ultra Rare, PSA 9, $1,204.50)! WHAT A PULL!
+BIG HIT!!! @Bob just pulled Latias (PSA 9, $1,204.50)! WHAT A PULL!
 ```
 
 ### 1-1s
@@ -108,7 +108,7 @@ Pikachu Kanto, Johto, Hoenn, Sinnoh, Hisui, Unova, Kalos, Alola, Galar and Palde
 | Rare | $5 – $40 | 419 | Fully evolved, and Pokémon that don't evolve: Butterfree, Raichu, Tauros |
 | Holo Rare | $20 – $150 | 62 | Final starters, pseudo-legendaries and fan favourites: Charizard, Dragonite, Gengar, Pikachu, Eevee |
 | Ultra Rare | $100 – $800 | 102 | Every legendary and mythical, plus ex/VMAX cards: Mewtwo, Lugia, Charizard ex |
-| Secret Rare (shown as **S-Rare**) | $500 – $5,000, always PSA 7 or better | 14 | Gold, Shiny and Illustrator cards: Gold Charizard, Shiny Umbreon |
+| Secret Rare | $500 – $5,000, always PSA 7 or better | 14 | Gold, Shiny and Illustrator cards: Gold Charizard, Shiny Umbreon |
 | 1-1 | $2,000 – $10,000 (always PSA 10) | 10 | The regional Pikachus |
 
 **The PSA grade** then multiplies the value:
@@ -144,7 +144,6 @@ Pikachu Kanto, Johto, Hoenn, Sinnoh, Hisui, Unova, Kalos, Alola, Galar and Palde
 | `OneOfOne(...)` | Which rarities are 1-1s (always PSA 10, one owner each). |
 | `Grade(...)` lines | The PSA grades: `Grade(grade, chance, value multiplier)`. |
 | `MinGrade(...)` | The lowest PSA a rarity can get, e.g. `MinGrade("Secret Rare", 7);` means Secret Rares are always PSA 7 to 10. Add a line for any rarity, e.g. `MinGrade("Ultra Rare", 5);`. |
-| `Short(...)` | A shorter name shown in chat, e.g. `Short("Secret Rare", "S-Rare");`. Add more to keep messages short, e.g. `Short("Ultra Rare", "U-Rare");`. |
 | The `...Message` lines | Every message chat sees. Change the wording, but keep the `{...}` placeholders. `{opened}/{limit}` is the "pack 2/3" counter. Change `GodPackMessage`, `BigHitMessage` or `OneOfOneMessage` to make the hype your own. |
 
 Click **Save and Compile** after changing anything.
