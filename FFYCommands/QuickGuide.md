@@ -63,7 +63,7 @@ Everything you need to set up, use and customise **FFY Commands** in Streamer.bo
 | **Games** | `!rps @Sam`, `!swordfight @Sam`, `!d20` | Rock-paper-scissors, duels, dice and more |
 | **Titles** | `!dadofday`, `!momofday` | The first person to hit 100% wins the title for the day |
 | **Extras** | `!sotfest`, `!leaderboard` | Countdowns, leaderboards |
-| **Add-ons** *(separate imports)* | Christmas, Halloween, ThanksGiving, Gears Of War, Daily's, Pokemon, Dino, Mining, Counters | Extra packs you can add (see [section 15](#15-add-ons)) |
+| **Add-ons** *(separate imports)* | Christmas, Halloween, ThanksGiving, Gears Of War, Daily's, Pokemon, Dino, Mining, Pets, Counters | Extra packs you can add (see [section 15](#15-add-ons)) |
 
 **Results stay the same all day.** If Bob types `!pp` ten times, he gets the same answer ten times. At midnight everyone gets a new one.
 
@@ -120,6 +120,7 @@ Just import the **`FFYCommands-update`** file over the top. **No need to delete 
 - **Your stuff is never touched:**
   - **FFY Config** and **FFY Switches** (your settings)
   - **FFY Special Users** and **FFY Special Interactions**
+  - **FFY Single Values**, **FFY Do Not Track**, **FFY Of The Day** and **FFY Countdowns**
   - **FFY My Triggers**, **FFY My Number Commands**, **FFY My List Commands**, and any **FFY My ...** action you make
   - any other action you made yourself
   - your existing commands, including whether they're on or off, their cooldowns and permissions
@@ -738,6 +739,7 @@ Add-ons are **extra packs**, each its own import file. Install only the ones you
 | **FFY Pokemon** | Open Pokémon booster packs (10 cards plus an Energy, with PSA grades and values), god packs, 1-1 Pikachus, `!keep`, `!sell all` or `!sell bulk` packs, `!binder` and a season reset after however many days you choose | No |
 | **FFY Dino** | `!dig` for fossils, complete dinosaur skeletons for your `!museum`, amber and 1-1 legendary fossils | No |
 | **FFY Mining** | `!mine` for ores and gems, `!sellores`, `!upgrade` your pickaxe, BIG FIND diamonds and 1-1 gems | No |
+| **FFY Pets** | Pets for chat: one chat pet everyone shares, or every viewer adopts their own. Feed, walk, play, train tricks and cuddle | No |
 | **FFY Counters** | 20 counters, like `!pickle` (+1), `!setpickle 5` and `!pickles` (shows the count) | No |
 
 Each add-on is its own import file with its own guide. **Get them from the [FFYAddons folder](../FFYAddons/Readme.md)**, and install the ones you want the same way as this one.

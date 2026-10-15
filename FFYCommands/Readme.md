@@ -78,7 +78,7 @@ Each pack's commands are **switched on as soon as you import it**. Type `!beard`
 
 **Switching commands on and off:** click the **Commands** tab, open a folder (e.g. **FFY Stats**), click a command (e.g. **!beard**), and tick or untick **Enabled**. To switch every FFY command on or off at once, go to the **Actions** tab → **FFY Core** group, right-click **FFY Enable All Commands** (or **FFY Disable All Commands**) and choose **Run Now**.
 
-> **Updating to a newer version later?** Download the **`FFYCommands-update`** file, and import it the same way (drag and drop it into the Import box) over the top. No need to delete anything. Your settings (FFY Config, FFY Switches), special users and interactions, **FFY My ...** actions and your commands are all kept. Changes made inside built-in actions like FFY Stats *are* replaced, so put your changes in the **FFY My** actions. The [Complete Guide, section 21](QuickGuide.md#21-keeping-your-changes-safe-from-updates) explains how.
+> **Updating to a newer version later?** Download the **`FFYCommands-update`** file, and import it the same way (drag and drop it into the Import box) over the top. No need to delete anything. Your settings (FFY Config, FFY Switches), special users and interactions, Single Values, Do Not Track, Of The Day, Countdowns, **FFY My ...** actions and your commands are all kept. Changes made inside built-in actions like FFY Stats *are* replaced, so put your changes in the **FFY My** actions. The [Complete Guide, section 21](QuickGuide.md#21-keeping-your-changes-safe-from-updates) explains how.
 >
 > **Updating from version 1 (before packs)?** Import `FFYCommands-update`, then import the packs you use. Until you do, their commands won't reply. Your settings and **FFY My** actions are kept.
 >
@@ -446,6 +446,7 @@ Extra packs you can install on top, each with its own guide:
 | **FFY Pokemon** | Open Pokémon booster packs (10 cards plus an Energy, with PSA grades and values), god packs, 1-1 Pikachus, `!keep`, `!sell all` or `!sell bulk`, `!binder`, `!bestcards`, and a season reset after however many days you choose | No |
 | **FFY Dino** | `!dig` for fossils, complete dinosaur skeletons for your `!museum`, amber and 1-1 legendary fossils | No |
 | **FFY Mining** | `!mine` for ores and gems, `!sellores`, `!upgrade` your pickaxe, BIG FIND diamonds and 1-1 gems | No |
+| **FFY Pets** | Pets for chat: one chat pet everyone shares, or every viewer adopts their own. Feed, walk, play, train tricks and cuddle | No |
 | **FFY Counters** | 20 counters, like `!pickle` (+1), `!setpickle 5` and `!pickles` (shows the count) | No |
 
 Each add-on is its own import file with its own guide. **Get them from the [FFYAddons folder](../FFYAddons/Readme.md)**, and install the ones you want the same way as this one.
