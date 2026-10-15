@@ -108,7 +108,7 @@ Each kind has its own walk and play too. A cat refuses its lead, a goat climbs o
 
 **Two-word kinds** work too: `!registerpet Bessie highland cow`, `!registerpet Steve minecraft cow` or `!registerpet Toast baby dragon`.
 
-**Bond:** every bit of care earns the pet XP, and every 100 XP its bond grows: Stranger, Acquaintance, Buddy, Good Friend, Best Friend, Inseparable and finally Soulmate. Chat sees a message each time.
+**Bond:** every bit of care earns the pet XP, and every 1,000 XP its bond grows: Stranger, Acquaintance, Buddy, Good Friend, Best Friend, Inseparable and finally Soulmate. Chat sees a message each time.
 
 ---
 
@@ -126,7 +126,7 @@ At the top of the settings. Set each one to `true` (on) or `false` (off), or a n
 | `AllowTraining = true;` | Switches `!trainpet` and `!pettrick` on or off. |
 | `AllowCuddles = true;` | Switches `!cuddlepet` on or off. |
 | `OncePerDay = true;` | `true` = feeding, walks, play and training reset at midnight. `false` = they use `CareCooldownMinutes` instead. |
-| `CareCooldownMinutes = 60;` | The wait between feeds (and so on) when `OncePerDay = false`. |
+| `CareCooldownMinutes = 120;` | The wait between feeds (and so on) when `OncePerDay = false`. |
 | `ShowWhoDidIt = true;` | Adds *"(by @Bob)"* when a pet has already been looked after. |
 | `AnnounceBondLevels = true;` | Chat sees a message when a pet's bond grows. |
 | `AllowRelease = true;` | Pets can be given up with `!releasepet`, to make room for a different one. |
