@@ -438,15 +438,14 @@ Extra packs you can install on top, each with its own guide:
 
 | Add-on | What it adds | Needs FFY Commands? |
 |---|---|---|
-| **FFY Christmas** | Santa's naughty or nice list (results can last a day or longer), `!present`, `!grinch`, `!reindeer`, `!cracker`, `!snowball @someone`, Grinch of the Day and more | Yes |
-| **FFY Halloween** | `!costume`, `!pumpkin`, `!spooky`, `!candy`, `!trickortreat`, `!spook @someone`, plus Nightmare Before Christmas ones like `!jack`, `!oogieboogie` and `!whatsthis` | Yes |
-| **FFY ThanksGiving** | `!turkey`, `!gobble`, `!pie`, `!thankful`, `!leftovers`, a `!wishbone @someone` duel, Turkey of the Day and more | Yes |
-| **FFY Gears Of War** | `!activereload`, `!gnasher`, `!lancer`, `!gearsweapon`, `!curbstomp @someone`, a `!chainsaw @someone` duel, COG and Locust of the Day and more | Yes |
+| **FFY Seasonal** | A pack for every time of year: Valentine's, Easter, St Patrick's, Summer, Halloween, Bonfire Night, ThanksGiving, Christmas (with Santa) and New Year | Yes |
+| **FFY Game Packs** | Commands for the game you're playing: Fortnite, Minecraft and Gears Of War | Yes |
 | **FFY Daily's** | 20 daily channel point redeems, like *"Bob has redeemed their daily head pat!"* Each viewer can claim each one once a day | No |
 | **FFY Pokemon** | Open Pokémon booster packs (10 cards plus an Energy, with PSA grades and values), god packs, 1-1 Pikachus, `!keep`, `!sell all` or `!sell bulk`, `!binder`, `!bestcards`, and a season reset after however many days you choose | No |
 | **FFY Dino** | `!dig` for fossils, complete dinosaur skeletons for your `!museum`, amber and 1-1 legendary fossils | No |
 | **FFY Mining** | `!mine` for ores and gems, `!sellores`, `!upgrade` your pickaxe, BIG FIND diamonds and 1-1 gems | No |
 | **FFY Pets** | Pets for chat: one chat pet everyone shares, or every viewer adopts their own. Feed, walk, play, train tricks and cuddle | No |
+| **FFY Bounty** | Put a price on someone's head, hunt them down to claim it, or lie low in a hideout | No |
 | **FFY Counters** | 20 counters, like `!pickle` (+1), `!setpickle 5` and `!pickles` (shows the count) | No |
 
 Each add-on is its own import file with its own guide. **Get them from the [FFYAddons folder](../FFYAddons/Readme.md)**, and install the ones you want the same way as this one.
