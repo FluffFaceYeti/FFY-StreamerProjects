@@ -10,6 +10,7 @@ Chat: FluffFaceYeti has eaten 5 pickles!
 - Works on its own. You don't need FFY Commands.
 - Works on **Twitch, Kick and YouTube**.
 - Counts are **kept forever**. They don't reset at midnight, and they survive a restart.
+- Can **show your counts on screen** in OBS (optional, see [Showing a counter in OBS](#showing-a-counter-in-obs)).
 
 ---
 
@@ -117,15 +118,56 @@ For `!cat`, `!cats` and `!setcat`:
 
 ---
 
+## Showing a counter in OBS
+
+Any counter can also update a text on screen. When someone types `!death`, `!setdeath` or `!deaths`, the text changes straight away.
+
+### Step 1: connect Streamer.bot to OBS
+
+Skip this if you've done it before.
+
+1. In **OBS**: **Tools** → **WebSocket Server Settings**. Tick **Enable WebSocket server** and click **Show Connect Info** to see the password.
+2. In **Streamer.bot**: **Stream Apps** tab → **OBS** → right-click → **Add**. Enter the password and tick **Auto Connect**.
+
+### Step 2: add a text in OBS
+
+In the scene you want, add a **Text (GDI+)** source and give it a name, e.g. `Death Counter`. Style it however you like.
+
+### Step 3: tell the counter about it
+
+1. **Actions tab** → **FFY Counters** group → **FFY Counters** → double-click **Execute C# Code**.
+2. Add the text's name, and what it should show, to the end of the counter's line:
+   ```csharp
+   Counter("death", "deaths", "{streamer} has died {count} time{s}!", "Death Counter", "Deaths: {count}");
+   ```
+   - 4th part: the **OBS text's name**. It must match OBS exactly, including capitals.
+   - 5th part: **what the text shows**. Leave it out to show just the number.
+3. Click **Save and Compile**.
+
+Type `!deaths` in chat and the text fills in with the current count.
+
+### Optional: fill in your texts when OBS connects
+
+So your texts are right as soon as Streamer.bot connects to OBS, without anyone typing a command:
+
+1. **Actions tab**: click the **FFY Counters** action.
+2. In the **Triggers** box, right-click → **Add** → **OBS Studio** → **Connected**, and click **OK**.
+
+To fill them in once right now, right-click the **FFY Counters** action → **Test Trigger**.
+
+---
+
 ## Good to know
 
 - **Counts are saved** in the **Global Variables** tab as `counter.pickle`, `counter.crash` and so on. You can edit or delete them there.
 - **Coming from an older FFY Counters?** Your old counts are kept, and old commands like `!removecrash` or `!crashcount` are switched off when you import. You can delete them.
+- **Updating and added your own counters?** Importing replaces the code. Copy your `Counter(...)` lines somewhere first, then paste them back in after importing and click **Save and Compile**.
 
 ---
 
 ## Troubleshooting
 
 - **No reply:** is the command switched on in the **Commands** tab, and is it a trigger on the **FFY Counters** action?
+- **OBS text not changing:** check the text's name matches the 4th part of the counter's line exactly, including capitals, and that OBS shows as connected in the **Stream Apps** tab. The **Logs** tab says `OBS isn't connected` if it can't reach OBS.
 - **Commands named "... (Copy)":** Streamer.bot adds "(Copy)" when you import a command whose name already exists. Delete the old commands, delete the copies, and import again.
 - **Anything else:** check the **Logs** tab for **FFY Counters**.
