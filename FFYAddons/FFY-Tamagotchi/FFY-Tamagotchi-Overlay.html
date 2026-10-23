@@ -1,0 +1,599 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>FFY Tamagotchi Overlay</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  :root { --shell: #ff9ec7; --shell-dark: #d9709c; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: transparent; overflow: hidden; }
+  body.preview { background: #2b2d36; }
+  #wrap { width: 360px; padding: 112px 10px 10px; transform-origin: top left; font-family: "Press Start 2P", monospace; color: #2a2a2a; }
+
+  #bubble { position: absolute; top: 8px; left: 20px; width: 320px; padding: 10px 12px; background: #fffef6; border: 3px solid #263020;
+    border-radius: 12px; font-size: 12px; line-height: 1.5; text-align: center; opacity: 0; transform: translateY(6px); transition: opacity .3s, transform .3s; }
+  #bubble.show { opacity: 1; transform: translateY(0); }
+  #bubble::after { content: ""; position: absolute; left: 50%; bottom: -12px; margin-left: -9px; border: 9px solid transparent; border-top-color: #263020; border-bottom: 0; }
+
+  #shellbox { position: relative; width: 260px; height: 290px; margin: 0 auto; }
+  #shellbox svg { position: absolute; left: 0; top: 0; width: 260px; height: 290px; overflow: visible; pointer-events: none; }
+  #back { z-index: 0; } #front { z-index: 2; }
+  #device { position: relative; z-index: 1; width: 260px; height: 290px; margin: 0 auto; border-radius: 50% 50% 46% 46% / 56% 56% 44% 44%;
+    background: radial-gradient(circle at 35% 25%, rgba(255,255,255,.55), transparent 38%), linear-gradient(160deg, var(--shell), var(--shell-dark));
+    box-shadow: inset 0 -10px 22px rgba(0,0,0,.25), inset 0 8px 16px rgba(255,255,255,.35), 0 8px 18px rgba(0,0,0,.35); }
+  #device.rainbow { background: radial-gradient(circle at 35% 25%, rgba(255,255,255,.5), transparent 38%),
+    linear-gradient(120deg, #ff6b6b, #ffa94d, #ffe066, #7ed77e, #6fb3ff, #b98cff, #ff6b6b); background-size: 100% 100%, 300% 300%; animation: rainbow 6s linear infinite; }
+  #device.glitter::before { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+    background-image: radial-gradient(#fff 1px, transparent 1.6px), radial-gradient(#fff6 1px, transparent 1.6px);
+    background-size: 18px 18px, 11px 11px; background-position: 0 0, 5px 7px; animation: twinkle 1.6s steps(2) infinite; }
+  #device.clear { background: radial-gradient(circle at 35% 25%, rgba(255,255,255,.6), transparent 40%), linear-gradient(160deg, rgba(220,235,255,.45), rgba(150,170,200,.35));
+    border: 2px solid rgba(255,255,255,.6); }
+  @keyframes rainbow { from { background-position: 0 0, 0% 50%; } to { background-position: 0 0, 300% 50%; } }
+  @keyframes twinkle { 50% { opacity: .35; } }
+  #device.bump { animation: bump .35s ease; }
+  #device.crochet { background: repeating-linear-gradient(45deg, rgba(255,255,255,.22) 0 3px, transparent 3px 7px), repeating-linear-gradient(-45deg, rgba(0,0,0,.10) 0 3px, transparent 3px 7px),
+    radial-gradient(circle at 35% 25%, rgba(255,255,255,.4), transparent 38%), linear-gradient(160deg, var(--shell), var(--shell-dark)); }
+  #device.fur { box-shadow: inset 0 -10px 22px rgba(0,0,0,.15), inset 0 8px 16px rgba(255,255,255,.35); }
+  @keyframes bump { 30% { transform: rotate(-3deg) scale(1.03); } 60% { transform: rotate(3deg); } }
+
+  #frame { position: absolute; top: 52px; left: 30px; width: 200px; height: 152px; padding: 4px; border-radius: 18px;
+    background: #4a4f58; box-shadow: inset 0 3px 8px rgba(0,0,0,.6); }
+  #screen { display: block; width: 192px; height: 144px; border-radius: 10px; image-rendering: pixelated; background: #c8d6a2; }
+  #grid { position: absolute; inset: 4px; border-radius: 10px; pointer-events: none;
+    background: repeating-linear-gradient(0deg, rgba(0,0,0,.05) 0 1px, transparent 1px 3px), repeating-linear-gradient(90deg, rgba(0,0,0,.05) 0 1px, transparent 1px 3px); }
+  #label { position: absolute; top: 26px; width: 100%; text-align: center; font-size: 8px; letter-spacing: 2px; color: rgba(0,0,0,.45); }
+  .btn { position: absolute; width: 28px; height: 28px; border-radius: 50%; background: radial-gradient(circle at 40% 35%, #fff9, #0000 45%), #f2f2f2;
+    box-shadow: 0 4px 0 rgba(0,0,0,.3), inset 0 -3px 5px rgba(0,0,0,.2); transition: transform .1s, box-shadow .1s; }
+  .btn.press { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0,0,0,.3), inset 0 -3px 5px rgba(0,0,0,.2); }
+  #b1 { left: 72px; top: 222px; } #b2 { left: 116px; top: 232px; } #b3 { left: 160px; top: 222px; }
+
+  #card { margin: 12px auto 0; width: 320px; padding: 12px 14px; background: #fff; color: #111; border: 3px solid #111; border-radius: 10px; text-align: center; }
+  #card.hidden { display: none; }
+  #name { font-size: 17px; line-height: 1.4; word-break: break-word; }
+  #sub { font-size: 12px; margin-top: 8px; }
+  #mood { font-size: 12px; margin-top: 8px; line-height: 1.6; }
+  #status { margin-top: 8px; font-size: 10px; line-height: 1.6; color: #b03030; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="bubble"></div>
+  <div id="shellbox">
+  <svg id="back" viewBox="0 0 260 290"></svg>
+  <div id="device">
+    <div id="label">TAMAGOTCHI</div>
+    <div id="frame"><canvas id="screen" width="64" height="48"></canvas><div id="grid"></div></div>
+    <div class="btn" id="b1"></div><div class="btn" id="b2"></div><div class="btn" id="b3"></div>
+  </div>
+  <svg id="front" viewBox="0 0 260 290"></svg>
+  </div>
+  <div id="card">
+    <div id="name">...</div>
+    <div id="sub"></div>
+    <div id="mood"></div>
+    <div id="status"></div>
+  </div>
+</div>
+<script>
+// ===== SETTINGS: change these to match your Streamer.bot =====
+const SETTINGS = {
+  host: "127.0.0.1",            // Streamer.bot: Servers/Clients > WebSocket Server > Address
+  port: 8080,                   // Streamer.bot: Servers/Clients > WebSocket Server > Port
+  endpoint: "/",                // Streamer.bot: Servers/Clients > WebSocket Server > Endpoint
+  password: "",                 // only needed if you switched on Authentication there
+  actionName: "FFY Tamagotchi", // the action's name in the Actions tab
+  showCard: true,               // true = show the name, age and mood under the Tamagotchi
+  showBubble: true,             // true = show a speech bubble when chat looks after it
+  bubbleSeconds: 6,             // how long the speech bubble stays
+  scale: 1,                     // size of the whole overlay, e.g. 0.75 or 1.5
+  shell: "auto",                // "auto" = the shell chat picks with !tamashell. Or always use one: "Classic", "Dinosaur", "Yeti",
+                                // "Crochet", "Cat", "Bunny", "Bear", "Frog", "Alien" or "Crown"
+  refreshMinutes: 2,            // how often it re-checks its needs while nobody uses a command
+};
+// ===== END OF SETTINGS =====
+
+// URL OPTIONS: e.g. FFY-Tamagotchi-Overlay.html?port=8080&password=abc&scale=1.5&demo=1
+const params = new URLSearchParams(location.search);
+for (const key of Object.keys(SETTINGS)) {
+  if (!params.has(key)) continue;
+  const value = params.get(key);
+  SETTINGS[key] = typeof SETTINGS[key] === "number" ? Number(value) : typeof SETTINGS[key] === "boolean" ? value !== "false" && value !== "0" : value;
+}
+const DEMO = params.get("demo");
+if (params.has("preview") || DEMO) document.body.classList.add("preview");
+document.getElementById("wrap").style.transform = "scale(" + (SETTINGS.scale || 1) + ")";
+if (!SETTINGS.showCard) document.getElementById("card").classList.add("hidden");
+
+// SPRITES: 16x16. o = outline, b = body, e = eye, m = mouth, c = cheek, w = white, s = spot
+const SPRITES = {
+  egg: [
+    "................", "................", "......oooo......", ".....obbbbo.....", "....obbbbbbo....", "...obbsbbbbbo...", "...obbbbbsbbo...", "..obbbbbbbbbbo..",
+    "..obsbbbbbbbbo..", "..obbbbbbsbbbo..", "..obbbbbbbbbbo..", "...obbbbbbbbo...", "....obbbbbbo....", ".....oooooo.....", "................", "................"],
+  baby: [
+    "................", "................", "................", "................", "................", "......oooo......", "....oobbbboo....", "...obbbbbbbbo...",
+    "...obebbbbebo...", "..obbebbbbebbo..", "..obcbbmmbbcbo..", "..obbbbbbbbbbo..", "...obbbbbbbbo...", "....oooooooo....", "................", "................"],
+  child: [
+    "................", "................", "................", ".....oooooo.....", "....obbbbbbo....", "...obbbbbbbbo...", "..obbebbbbebbo..", "..obbebbbbebbo..",
+    "..obcbbbbbbcbo..", "..obbbbmmbbbbo..", "...obbbbbbbbo...", "....obbbbbbo....", ".....oo..oo.....", "....obo..obo....", "....ooo..ooo....", "................"],
+  teen: [
+    "..oo........oo..", "..obo......obo..", "..obboooooobbo..", "..obbbbbbbbbbo..", ".obbbbbbbbbbbbo.", ".obbebbbbbbebbo.", ".obbebbbbbbebbo.", ".obcbbbbbbbbcbo.",
+    ".obbbbbmmbbbbbo.", "..obbbbbbbbbbo..", "...obbbbbbbbo...", "....oooooooo....", "....obo..obo....", "....ooo..ooo....", "................", "................"],
+  adult: [
+    ".......oo.......", "......obbo......", ".......oo.......", "....oooooooo....", "...obbbbbbbbo...", "..obbbbbbbbbbo..", "..obbebbbbebbo..", "..obbebbbbebbo..",
+    "oobcbbbbbbbbcboo", "obobbbbmmbbbbobo", ".oobbbbbbbbbboo.", "..obbbbbbbbbbo..", "...obbbbbbbbo...", "...oobo..oboo...", "...obbo..obbo...", "...oooo..oooo..."],
+  senior: [
+    "................", "................", "....oooooooo....", "...obbbbbbbbo...", "..obwwbbbbwwbo..", "..obbebbbbebbo..", "..obbebbbbebbo..", "..obcbbbbbbcbo..",
+    "..obbwwwwwwbbo..", "...obbbmmbbbo...", "...obbbbbbbbo.o.", "..obbbbbbbbbboo.", "..obbbbbbbbbbo..", "...oobo..oboo.o.", "...obbo..obbo.o.", "...oooo..oooo.o."],
+};
+const STAGE_SPRITES = ["baby", "child", "teen", "adult", "senior"];
+const ICONS = {
+  food:  ["...oo...", "..obbo..", ".obbbbo.", ".obbbbo.", "obbbbbbo", "oddddddo", "oddddddo", ".oooooo."],
+  poop:  ["...o....", "..obo...", "..oooo..", ".obbbbo.", ".oooooo.", "obbbbbbo", "oooooooo", "........"],
+  heart: [".oo..oo.", "orroorro", "orrrrrro", "orrrrrro", ".orrrro.", "..orro..", "...oo...", "........"],
+  skull: ["..oooo..", ".owwwwo.", "owowwowo", "owwwwwwo", ".owoowo.", "..owwo..", "..oooo..", "........"],
+  ball:  ["..oooo..", ".obbrro.", "obbbrrro", "orrrbbbo", "orrrbbbo", ".orrbbo.", "..oooo..", "........"],
+  alert: ["...oo...", "...oo...", "...oo...", "...oo...", "...oo...", "........", "...oo...", "...oo..."],
+  spark: ["...o....", "...o....", ".o.o.o..", "..ooo...", "ooooooo.", "..ooo...", ".o.o.o..", "...o...."],
+  zed:   ["ooooo", "...o.", "..o..", ".o...", "ooooo"],
+  moon:  ["..ooo..", ".oo....", "oo.....", "oo.....", "oo.....", ".oo....", "..ooo.."],
+  halo:  [".oooooo.", "o......o", ".oooooo."],
+  full:  [".oo.oo.", "orrorro", "orrrrro", ".orrro.", "..oro..", "...o..."],
+  big:   [".ooo.ooo.", "orrrorrro", "orrrrrrro", "orrrrrrro", ".orrrrro.", "..orrro..", "...oro...", "....o...."],
+  bigoff:[".ooo.ooo.", "o...o...o", "o.......o", "o.......o", ".o.....o.", "..o...o..", "...o.o...", "....o...."],
+  empty: [".oo.oo.", "o..o..o", "o.....o", ".o...o.", "..o.o..", "...o..."],
+};
+const FONT = {
+  A: ["111", "1.1", "111", "1.1", "1.1"], C: ["111", "1..", "1..", "1..", "111"], E: ["111", "1..", "11.", "1..", "111"],
+  G: ["111", "1..", "1.1", "1.1", "111"], H: ["1.1", "1.1", "111", "1.1", "1.1"], L: ["1..", "1..", "1..", "1..", "111"],
+  N: ["11.", "1.1", "1.1", "1.1", "1.1"], P: ["111", "1.1", "111", "1..", "1.."], R: ["11.", "1.1", "11.", "1.1", "1.1"],
+  S: ["111", "1..", "111", "..1", "111"], T: ["111", ".1.", ".1.", ".1.", ".1."], U: ["1.1", "1.1", "1.1", "1.1", "111"],
+  Y: ["1.1", "1.1", "111", ".1.", ".1."],
+};
+function drawText(text, ox, oy) {
+  ctx.fillStyle = DARK;
+  [...text].forEach((ch, i) => (FONT[ch] || []).forEach((row, y) => [...row].forEach((on, x2) => { if (on === "1") ctx.fillRect(ox + i * 4 + x2, oy + y, 1, 1); })));
+}
+
+// COLOURS
+const LCD = "#c8d6a2", DARK = "#263020", CHEEK = "#ff8fa3", WHITE = "#fbfbf3";
+const NAMED = { pink: "#ff9ec7", blue: "#6fb3ff", yellow: "#ffe066", green: "#7ed77e", purple: "#b98cff", orange: "#ffa94d", red: "#ff6b6b",
+  white: "#f5f5f0", black: "#5a5a5a", teal: "#3cc9b9", lilac: "#d6b4fc", glitter: "#f3c4ff", "see-through": "rgba(255,255,255,.35)" };
+function colourOf(name) {
+  const key = String(name || "pink").toLowerCase();
+  if (NAMED[key]) return NAMED[key];
+  const probe = document.createElement("canvas").getContext("2d");
+  probe.fillStyle = "#010203";
+  probe.fillStyle = key.replace(/\s+/g, "");
+  return probe.fillStyle === "#010203" ? NAMED.pink : probe.fillStyle;
+}
+function darker(hex, amount) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex);
+  if (!m) return "rgba(0,0,0,.25)";
+  const n = parseInt(m[1], 16), f = 1 - amount;
+  return "rgb(" + [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => Math.round(v * f)).join(",") + ")";
+}
+
+// STATE
+const canvas = document.getElementById("screen"), ctx = canvas.getContext("2d");
+let pet = null, notShared = false, ghost = null, tick = 0;
+let x = 22, dir = 1, pauseUntil = 0;
+let current = null; const queue = [];
+const DURATION = { shell: 16, stats: 64, hatch: 28, feed: 24, play: 28, clean: 24, sleep: 48, name: 16, colour: 16, grewUp: 24, care: 16, gone: 36 };
+
+function spriteFor(p) {
+  const count = Math.max(1, p.stageCount || 5), index = Math.max(0, p.stageIndex || 0);
+  const scaled = count <= 1 ? 0 : Math.round(index * (STAGE_SPRITES.length - 1) / (count - 1));
+  return SPRITES[STAGE_SPRITES[Math.min(STAGE_SPRITES.length - 1, scaled)]];
+}
+function topRow(sprite) { for (let y = 0; y < sprite.length; y++) if (sprite[y].replace(/\./g, "")) return y; return 0; }
+function bottomRow(sprite) { for (let y = sprite.length - 1; y >= 0; y--) if (sprite[y].replace(/\./g, "")) return y; return 15; }
+
+function bodyColour(p, px, py) {
+  const name = String(p.colour || "").toLowerCase();
+  if (name === "rainbow") return "hsl(" + ((tick * 12 + px * 18 + py * 10) % 360) + ",85%,68%)";
+  if (name === "glitter") return ((px * 7 + py * 13 + tick) % 11 === 0) ? "#ffffff" : NAMED.glitter;
+  return colourOf(p.colour);
+}
+
+function drawSprite(sprite, p, ox, oy, size, opts = {}) {
+  ctx.globalAlpha = opts.alpha == null ? 1 : opts.alpha;
+  for (let y = 0; y < 16; y++) for (let x2 = 0; x2 < 16; x2++) {
+    const sx = opts.flip ? 15 - x2 : x2, ch = sprite[y][sx];
+    if (ch === ".") continue;
+    let colour = DARK;
+    if (ch === "b") colour = opts.egg ? WHITE : bodyColour(p, sx, y);
+    else if (ch === "s") colour = colourOf(p && p.colour);
+    else if (ch === "c") colour = CHEEK;
+    else if (ch === "w") colour = WHITE;
+    else if (ch === "e" && opts.closed) colour = (y + 1 < 16 && sprite[y + 1][sx] === "e") ? bodyColour(p, sx, y) : DARK;
+    else if (ch === "m" && opts.chomp) colour = bodyColour(p, sx, y);
+    ctx.fillStyle = colour;
+    ctx.fillRect(ox + x2 * size, oy + y * size, size, size);
+    if (ch === "e" && opts.closed && colour === DARK) ctx.fillRect(ox + (x2 + (opts.flip ? -1 : 1)) * size, oy + y * size, size, size);
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawIcon(name, ox, oy, alpha, size = 1) {
+  const rows = ICONS[name];
+  ctx.globalAlpha = alpha == null ? 1 : alpha;
+  for (let y = 0; y < rows.length; y++) for (let x2 = 0; x2 < rows[y].length; x2++) {
+    const ch = rows[y][x2];
+    if (ch === ".") continue;
+    ctx.fillStyle = ch === "r" ? "#e04050" : ch === "b" ? WHITE : ch === "w" ? "#ffffff" : DARK;
+    ctx.fillRect(Math.round(ox) + x2 * size, Math.round(oy) + y * size, size, size);
+  }
+  ctx.globalAlpha = 1;
+}
+
+// DRAWING
+function draw() {
+  tick++;
+  if (!current && queue.length) { current = queue.shift(); current.start = tick; }
+  if (current && tick - current.start >= (DURATION[current.kind] || 16)) current = null;
+  const t = current ? tick - current.start : 0, kind = current && current.kind;
+  ctx.fillStyle = LCD; ctx.fillRect(0, 0, 64, 48);
+
+  if (kind === "stats" && pet) {
+    const SLIDE = 4, SHOW = 24, k = (n) => Math.min(64, (n + 1) * 16);
+    let pages;
+    if (t < SLIDE) pages = [["pet", -k(t)], ["page1", 64 - k(t)]];
+    else if (t < SLIDE + SHOW) pages = [["page1", 0]];
+    else if (t < 2 * SLIDE + SHOW) pages = [["page1", -k(t - SLIDE - SHOW)], ["page2", 64 - k(t - SLIDE - SHOW)]];
+    else if (t < 2 * SLIDE + 2 * SHOW) pages = [["page2", 0]];
+    else pages = [["page2", -k(t - 2 * SLIDE - 2 * SHOW)], ["pet", 64 - k(t - 2 * SLIDE - 2 * SHOW)]];
+    for (const [page, dx] of pages) {
+      ctx.save(); ctx.translate(dx, 0);
+      ctx.fillStyle = LCD; ctx.fillRect(0, 0, 64, 48);
+      if (page === "pet") scene(null, 0); else statsPage(page);
+      ctx.restore();
+    }
+    return;
+  }
+  scene(kind, t);
+}
+
+function statsPage(page) {
+  const rows = page === "page1" ? [["HUNGER", pet.hunger], ["HAPPY", pet.happiness]] : [["REST", pet.rest], ["CLEAN", pet.cleanliness]];
+  rows.forEach(([label, value], i) => {
+    const y = 2 + i * 23, filled = Math.round((value || 0) / 25);
+    drawText(label, 3, y);
+    for (let h = 0; h < 4; h++) drawIcon(h < filled ? "full" : "empty", 3 + h * 15, y + 7, 1, 2);
+  });
+}
+
+function drawHealth() {
+  const filled = Math.ceil((pet.health || 0) / 20);
+  for (let h = 0; h < 5; h++) drawIcon(h < filled ? "big" : "bigoff", 2 + h * 10, 2);
+}
+
+function scene(kind, t) {
+  const GROUND = 44;
+
+  if (kind === "gone" && ghost) {
+    const sprite = spriteFor(ghost), rise = t * 1.2, fade = Math.max(0, 1 - t / 34);
+    const gy = GROUND - (bottomRow(sprite) + 1) * 2 - rise;
+    drawSprite(sprite, ghost, 16, gy, 2, { closed: true, alpha: fade });
+    drawIcon("halo", 28, gy + topRow(sprite) * 2 - 5, fade);
+    return;
+  }
+  if (!pet) {
+    const wobble = Math.floor(tick / 4) % 2 ? 1 : -1;
+    drawSprite(SPRITES.egg, { colour: "pink" }, 16 + (tick % 24 < 6 ? wobble : 0), GROUND - 28, 2, { egg: true });
+    if (notShared || Math.floor(tick / 8) % 2) drawIcon(notShared ? "alert" : "spark", 52, 6);
+    return;
+  }
+
+  const sprite = spriteFor(pet), sick = pet.health < 50;
+  const hungry = pet.hunger < 30, sleepy = pet.rest < 30, dirty = pet.cleanliness < 30, bored = pet.happiness < 30;
+  const fine = !sick && !hungry && !sleepy && !dirty && !bored;
+  const avg = (pet.hunger + pet.happiness + pet.rest + pet.cleanliness) / 4;
+
+  if (kind === "hatch") {
+    if (t < 14) { drawSprite(SPRITES.egg, pet, 16 + (Math.floor(t / 2) % 2 ? 1 : -1), GROUND - 28, 2, { egg: true }); return; }
+    if (t < 18) {
+      drawSprite(SPRITES.egg, pet, 16, GROUND - 28, 2, { egg: true });
+      ctx.fillStyle = DARK; for (let i = 0; i < 9; i++) ctx.fillRect(21 + i * 2, GROUND - 18 + (i % 2 ? 1 : -1), 2, 1);
+      return;
+    }
+  }
+
+  // where it stands
+  const busy = !!kind && kind !== "name" && kind !== "colour" && kind !== "shell";
+  const still = sick || pet.rest < 10 || kind === "sleep";
+  if (!busy && !still && tick > pauseUntil) {
+    x += dir;
+    if (x < 2 || x > 30) { dir = -dir; x += dir * 2; }
+    if (Math.random() < 0.04) pauseUntil = tick + 6 + Math.floor(Math.random() * 10);
+  }
+  if (busy) x += (16 - x) > 0 ? 1 : (16 - x) < 0 ? -1 : 0;
+  const hop = (fine && avg >= 75 && !busy && tick % 4 < 2) || (kind === "play" && t % 4 < 2) || (kind === "grewUp" && t > 16 && t % 4 < 2) ? 2 : 0;
+  const shake = sick && !busy ? (tick % 2 ? 1 : 0) : 0;
+  const top = GROUND - (bottomRow(sprite) + 1) * 2 - hop;
+  const blink = tick % 37 === 0 || tick % 37 === 1;
+  const closed = kind === "sleep" || blink || (pet.rest < 10 && tick % 16 < 10) || (sleepy && tick % 30 < 6);
+  const chomp = kind === "feed" && t > 10 && t % 4 < 2;
+
+  if (kind === "grewUp" && t < 16 && t % 4 < 2) { ctx.fillStyle = DARK; ctx.fillRect(0, 0, 64, 48); }
+  drawSprite(sprite, pet, x + shake, top, 2, { flip: dir < 0, closed, chomp });
+  drawHealth();
+
+  // needs
+  if (!kind || kind === "name" || kind === "colour" || kind === "shell") {
+    if (dirty) {
+      drawIcon("poop", 54, GROUND - 7);
+      if (pet.cleanliness < 10) drawIcon("poop", 46, GROUND - 7);
+      ctx.fillStyle = DARK;
+      for (let i = 0; i < 3; i++) ctx.fillRect(56 + i * 2 + (tick % 4 < 2 ? 0 : 1), GROUND - 10 - i, 1, 1);
+    }
+    if (hungry && Math.floor(tick / 6) % 2) { drawIcon("food", 2, 13); }
+    if (sick) drawIcon("skull", 54, 2, Math.floor(tick / 5) % 2 ? 1 : 0.4);
+    else if (bored && Math.floor(tick / 4) % 2) drawIcon("alert", 54, 2);
+    if (sleepy) drawIcon("zed", x + (dir < 0 ? 4 : 26), top - 4 - (tick % 12) / 3, 1 - (tick % 12) / 14);
+    if (fine && avg >= 75 && tick % 40 < 12) drawIcon("heart", x + 26, top - (tick % 40) / 2);
+  }
+
+  // what chat just did
+  if (kind === "feed" && t <= 10) drawIcon("food", x + 12, -8 + t * 2.4);
+  if (kind === "feed" && t > 10 && t % 8 < 4) drawIcon("heart", x + 28, top - 2 - (t - 10) / 2);
+  if (kind === "play") { const bx = 4 + Math.abs(((t * 3) % 96) - 48); drawIcon("ball", Math.min(54, bx), GROUND - 10 - Math.abs(Math.sin(t / 2.2)) * 18); }
+  if (kind === "play" && t % 10 < 5) drawIcon("heart", x + 26, top - 4);
+  if (kind === "clean") { const sx = t * 3 - 8; for (let i = 0; i < 4; i++) drawIcon("spark", sx, 4 + i * 10); }
+  if (kind === "name" || kind === "colour" || kind === "shell" || kind === "care" || (kind === "hatch" && t >= 18) || (kind === "grewUp" && t >= 16)) {
+    const ring = [[-6, -2], [30, 0], [-4, 20], [32, 22]];
+    ring.forEach(([dx, dy], i) => { if ((t + i) % 4 < 2) drawIcon(kind === "care" ? "heart" : "spark", x + dx, top + dy); });
+  }
+  if (kind === "sleep") {
+    ctx.fillStyle = "rgba(20,28,16,.55)"; ctx.fillRect(0, 0, 64, 48);
+    drawIcon("moon", 54, 3);
+    drawIcon("zed", x + 26, top - 2 - (t % 12) / 2);
+  }
+}
+
+// SHELLS: extra bits drawn around the egg
+const SHELLS = ["Classic", "Dinosaur", "Yeti", "Crochet", "Cat", "Bunny", "Bear", "Frog", "Alien", "Crown"];
+function lighter(hex, amount) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex);
+  if (!m) return "#ffffff";
+  const n = parseInt(m[1], 16);
+  return "rgb(" + [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => Math.round(v + (255 - v) * amount)).join(",") + ")";
+}
+function edge(deg, out = 0) {
+  const a = deg * Math.PI / 180, ry = Math.sin(a) > 0 ? 162 : 128;
+  return [130 + (130 + out) * Math.cos(a), 162 - (ry + out) * Math.sin(a)];
+}
+const pt = (p) => p[0].toFixed(1) + "," + p[1].toFixed(1);
+function shellParts(shape, main, dark) {
+  const ink = "#263020", light = lighter(main, 0.55);
+  let back = "", front = "";
+  switch (shape) {
+    case "dinosaur":
+      for (let d = 38; d <= 142; d += 17.3) back += '<polygon points="' + pt(edge(d - 7, -6)) + " " + pt(edge(d, 26)) + " " + pt(edge(d + 7, -6)) + '" fill="' + dark + '" stroke="' + ink + '" stroke-width="3" stroke-linejoin="round"/>';
+      back += '<polygon points="' + pt(edge(-12, -10)) + " 300,262 " + pt(edge(-42, -10)) + '" fill="' + main + '" stroke="' + ink + '" stroke-width="3" stroke-linejoin="round"/>';
+      for (const [x, y, r] of [[38, 232, 11], [222, 236, 9], [130, 268, 7], [20, 150, 7], [240, 150, 8], [70, 262, 6]]) front += '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="' + dark + '" opacity=".55"/>';
+      break;
+    case "yeti":
+      for (const side of [1, -1]) back += '<path d="M' + (130 + side * 52) + ",18 C" + (130 + side * 80) + ",-6 " + (130 + side * 96) + ",-30 " + (130 + side * 84) + ",-44 C" + (130 + side * 76) + ",-26 " + (130 + side * 62) + ",-16 " + (130 + side * 40) + ',4 Z" fill="#efe3c4" stroke="' + ink + '" stroke-width="3" stroke-linejoin="round"/>';
+      for (let d = 0; d < 360; d += 9) { const [x, y] = edge(d, -3); front += '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="14" fill="#f6f9ff" stroke="#c9d4e4" stroke-width="2"/>'; }
+      break;
+    case "crochet": {
+      let d = "";
+      for (let a = 0; a <= 360; a += 4) { const p = edge(a, -10); d += (a ? "L" : "M") + pt(p); }
+      front += '<path d="' + d + 'Z" fill="none" stroke="' + ink + '" stroke-width="3" stroke-dasharray="7 5" opacity=".45"/>';
+      for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3; front += '<circle cx="' + (36 + Math.cos(a) * 9).toFixed(1) + '" cy="' + (236 + Math.sin(a) * 9).toFixed(1) + '" r="7" fill="' + light + '" stroke="' + ink + '" stroke-width="2"/>'; }
+      front += '<circle cx="36" cy="236" r="6" fill="#ffd34d" stroke="' + ink + '" stroke-width="2"/>';
+      back += '<path d="M130,6 C110,-30 150,-50 158,-24 C164,-6 140,-2 134,-18" fill="none" stroke="' + dark + '" stroke-width="6" stroke-linecap="round"/>';
+      back += '<circle cx="176" cy="-30" r="16" fill="' + main + '" stroke="' + ink + '" stroke-width="3"/><path d="M164,-38 C176,-28 182,-26 190,-30 M162,-28 C172,-20 182,-18 190,-22" stroke="' + dark + '" stroke-width="2" fill="none"/>';
+      break;
+    }
+    case "cat":
+      for (const d of [124, 56]) {
+        back += '<polygon points="' + pt(edge(d - 17, -14)) + " " + pt(edge(d, 58)) + " " + pt(edge(d + 17, -14)) + '" fill="' + main + '" stroke="' + ink + '" stroke-width="3" stroke-linejoin="round"/>';
+        back += '<polygon points="' + pt(edge(d - 9, -4)) + " " + pt(edge(d, 40)) + " " + pt(edge(d + 9, -4)) + '" fill="#ffb3c7"/>';
+      }
+      for (const side of [1, -1]) for (const dy of [-8, 2, 12]) {
+        const x0 = side > 0 ? 238 : 22, x1 = side > 0 ? 286 : -26;
+        front += '<line x1="' + x0 + '" y1="' + (222 + dy / 2) + '" x2="' + x1 + '" y2="' + (222 + dy * 1.6) + '" stroke="' + ink + '" stroke-width="3" stroke-linecap="round"/>';
+      }
+      break;
+    case "bunny":
+      for (const [cx, rot] of [[92, -12], [168, 12]]) {
+        back += '<ellipse cx="' + cx + '" cy="-34" rx="22" ry="60" transform="rotate(' + rot + " " + cx + ' 10)" fill="' + main + '" stroke="' + ink + '" stroke-width="3"/>';
+        back += '<ellipse cx="' + cx + '" cy="-30" rx="10" ry="44" transform="rotate(' + rot + " " + cx + ' 10)" fill="#ffb3c7"/>';
+      }
+      break;
+    case "bear":
+      for (const d of [128, 52]) { const [x, y] = edge(d, 4); back += '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="30" fill="' + main + '" stroke="' + ink + '" stroke-width="3"/><circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="15" fill="' + dark + '"/>'; }
+      break;
+    case "frog":
+      for (const x of [48, 212]) front += '<circle cx="' + x + '" cy="6" r="30" fill="' + main + '" stroke="' + ink + '" stroke-width="3"/><circle cx="' + x + '" cy="4" r="19" fill="#fff" stroke="' + ink + '" stroke-width="2"/><circle cx="' + (x + 3) + '" cy="6" r="9" fill="' + ink + '"/>';
+      front += '<path d="M90,262 Q130,282 170,262" fill="none" stroke="' + ink + '" stroke-width="3" stroke-linecap="round"/>';
+      break;
+    case "alien":
+      for (const side of [-1, 1]) {
+        const [x, y] = edge(90 - side * 22, -4), tx = 130 + side * 46, ty = -52;
+        back += '<path d="M' + pt([x, y]) + " Q" + (130 + side * 20) + "," + (ty + 10) + " " + tx + "," + ty + '" fill="none" stroke="' + ink + '" stroke-width="4"/>';
+        back += '<circle cx="' + tx + '" cy="' + ty + '" r="11" fill="#9cff7a" stroke="' + ink + '" stroke-width="3"/>';
+      }
+      break;
+    case "crown":
+      front += '<polygon points="82,16 82,-18 103,4 130,-34 157,4 178,-18 178,16" fill="#ffd34d" stroke="#a87a10" stroke-width="3" stroke-linejoin="round"/>';
+      front += '<circle cx="130" cy="0" r="6" fill="#e04050" stroke="#a87a10" stroke-width="2"/><circle cx="102" cy="8" r="4" fill="#6fb3ff"/><circle cx="158" cy="8" r="4" fill="#6fb3ff"/>';
+      break;
+    default:
+      back += '<circle cx="130" cy="-14" r="13" fill="none" stroke="#d8d8d8" stroke-width="5"/><rect x="124" y="-4" width="12" height="12" rx="3" fill="#bdbdbd"/>';
+  }
+  return { back, front };
+}
+
+// THE CARD
+function render() {
+  const device = document.getElementById("device"), colour = pet ? String(pet.colour || "").toLowerCase() : "pink";
+  device.classList.toggle("rainbow", colour === "rainbow");
+  device.classList.toggle("glitter", colour === "glitter");
+  device.classList.toggle("clear", colour === "see-through");
+  const shell = pet ? colourOf(pet.colour) : NAMED.pink;
+  device.style.setProperty("--shell", shell.startsWith("#") ? shell : NAMED.pink);
+  device.style.setProperty("--shell-dark", darker(shell.startsWith("#") ? shell : NAMED.pink, 0.22));
+  const shape = String(SETTINGS.shell && SETTINGS.shell.toLowerCase() !== "auto" ? SETTINGS.shell : (pet && pet.shell) || "Classic").toLowerCase();
+  device.classList.toggle("crochet", shape === "crochet");
+  device.classList.toggle("fur", shape === "yeti");
+  const main = shell.startsWith("#") ? shell : NAMED.pink, parts = shellParts(shape, main, darker(main, 0.25));
+  document.getElementById("back").innerHTML = parts.back;
+  document.getElementById("front").innerHTML = parts.front;
+
+  document.getElementById("name").textContent = pet ? pet.name : notShared ? "Not shared" : "No Tamagotchi yet";
+  document.getElementById("sub").textContent = pet ? pet.stage + " - " + pet.age : notShared ? "The overlay shows the chat's Tamagotchi" : "Type !tama to hatch one";
+  document.getElementById("mood").textContent = pet ? "Mood: " + pet.mood : notShared ? "Set SharedTamagotchi = true; in Streamer.bot" : "";
+}
+
+let bubbleTimer = 0;
+function say(text) {
+  if (!SETTINGS.showBubble || !text) return;
+  const el = document.getElementById("bubble");
+  el.textContent = text;
+  el.classList.add("show");
+  clearTimeout(bubbleTimer);
+  bubbleTimer = setTimeout(() => el.classList.remove("show"), SETTINGS.bubbleSeconds * 1000);
+}
+function press(id) {
+  const el = document.getElementById(id);
+  el.classList.add("press");
+  setTimeout(() => el.classList.remove("press"), 220);
+}
+
+const SAYS = {
+  shell: (d, p) => p.name + " has a new " + p.shell + " shell!",
+  stats: (d, p) => d.user + " is checking on " + p.name + "!",
+  hatch: (d, p) => d.user + " hatched " + p.name + "!",
+  feed: (d, p) => d.user + " fed " + p.name + "!",
+  play: (d, p) => d.user + " played with " + p.name + "!",
+  clean: (d, p) => d.user + " cleaned up after " + p.name + "!",
+  sleep: (d, p) => p.name + " is having a nap. Zzz...",
+  name: (d, p) => d.user + " named it " + p.name + "!",
+  colour: (d, p) => p.name + " is now " + p.colour + "!",
+  grewUp: (d, p) => p.name + " grew up into a " + p.stage + "!",
+  care: (d, p) => d.user + " gave " + p.name + " some love!",
+  gone: (d) => d.gone + " went back to the Tamagotchi Planet...",
+};
+const BUTTON = { shell: "b3", stats: "b1", feed: "b1", play: "b2", clean: "b3", sleep: "b2", hatch: "b2", name: "b1", colour: "b3" };
+
+function handle(d) {
+  if (!d || !d.ffyTamagotchi) return;
+  clearTimeout(answerTimer);
+  if (!DEMO) status("");
+  const events = d.events || [];
+  notShared = events.includes("notShared");
+  if (events.includes("gone")) ghost = pet;
+  pet = d.pet || null;
+  const lines = [];
+  for (const e of events) {
+    if (!DURATION[e]) continue;
+    queue.push({ kind: e });
+    if (BUTTON[e]) press(BUTTON[e]);
+    if (SAYS[e] && (pet || e === "gone")) lines.push(SAYS[e](d, pet || {}));
+  }
+  if (events.length && events.some((e) => DURATION[e])) {
+    const device = document.getElementById("device");
+    device.classList.remove("bump"); void device.offsetWidth; device.classList.add("bump");
+  }
+  say(lines.join(" "));
+  render();
+}
+
+// STREAMER.BOT CONNECTION
+let socket = null, helloTimer = 0, refreshTimer = 0, answerTimer = 0;
+function status(text) { document.getElementById("status").textContent = text || ""; }
+function send(message) { if (socket && socket.readyState === 1) socket.send(JSON.stringify(message)); }
+function ready() {
+  send({ request: "Subscribe", id: "ffy-tama-sub", events: { General: ["Custom"] } });
+  refresh();
+  clearInterval(refreshTimer);
+  refreshTimer = setInterval(refresh, Math.max(0.5, SETTINGS.refreshMinutes) * 60000);
+  status("Connected. Waiting for the \"" + SETTINGS.actionName + "\" action to answer...");
+  clearTimeout(answerTimer);
+  answerTimer = setTimeout(() => status("Connected, but no answer from the \"" + SETTINGS.actionName + "\" action. Import the latest FFY Tamagotchi and check Overlay = true;"), 8000);
+}
+function refresh() { send({ request: "DoAction", id: "ffy-tama-refresh", action: { name: SETTINGS.actionName }, args: { tamaOverlay: "refresh" } }); }
+async function sha256(text) {
+  const bytes = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return btoa(String.fromCharCode(...new Uint8Array(bytes)));
+}
+function connect() {
+  const address = "ws://" + SETTINGS.host + ":" + SETTINGS.port + (SETTINGS.endpoint || "/");
+  try { socket = new WebSocket(address); } catch (e) { status("Can't connect to " + address); setTimeout(connect, 5000); return; }
+  status("Connecting to Streamer.bot at " + address + "...");
+  socket.onopen = () => { helloTimer = setTimeout(ready, 1500); };
+  socket.onmessage = async (e) => {
+    let m; try { m = JSON.parse(e.data); } catch { return; }
+    if (m.op !== undefined && m.d) {
+      clearTimeout(helloTimer);
+      status("Port " + SETTINGS.port + " is OBS's WebSocket, not Streamer.bot's. Use the port from Streamer.bot: Servers/Clients > WebSocket Server (usually 8080).");
+      socket.onclose = null; socket.close();
+      return;
+    }
+    if (m.request === "Hello") {
+      clearTimeout(helloTimer);
+      if (m.authentication) {
+        if (!SETTINGS.password) { status("Streamer.bot wants a password. Add it to the SETTINGS at the top of this file."); return; }
+        const secret = await sha256(SETTINGS.password + m.authentication.salt);
+        send({ request: "Authenticate", id: "ffy-tama-auth", authentication: await sha256(secret + m.authentication.challenge) });
+        return;
+      }
+      ready();
+      return;
+    }
+    if (m.id === "ffy-tama-auth") { if (m.status === "ok") ready(); else status("Streamer.bot said the password is wrong."); return; }
+    if (m.id === "ffy-tama-refresh" && m.status === "error") { status("Couldn't find the \"" + SETTINGS.actionName + "\" action in Streamer.bot."); return; }
+    if (m.event && m.event.source === "General" && m.event.type === "Custom") {
+      let d = m.data;
+      if (typeof d === "string") { try { d = JSON.parse(d); } catch { return; } }
+      if (d && d.data && !d.ffyTamagotchi) d = d.data;
+      handle(d);
+    }
+  };
+  socket.onclose = () => {
+    clearTimeout(helloTimer); clearInterval(refreshTimer);
+    status("Can't reach Streamer.bot at " + address + ". Is its WebSocket Server running?");
+    setTimeout(connect, 5000);
+  };
+}
+
+// DEMO: open with ?demo=1 to see it without Streamer.bot (or ?demo=hungry, sleepy, messy, bored, sick, happy, egg, stats, shells)
+function demo(mode) {
+  const base = { name: "Pickle", colour: "Pink", stage: "Child", stageIndex: 1, stageCount: 5, age: "3 streams old", health: 100, hunger: 85, happiness: 90, rest: 80, cleanliness: 90, mood: "Over the moon *does a happy little dance*", needs: [] };
+  const looks = {
+    hungry: { hunger: 18, mood: "Hungry *stares at the fridge*" }, sleepy: { rest: 8, mood: "Exhausted *can barely keep its eyes open*" },
+    messy: { cleanliness: 6, mood: "Stinky *there's a mess everywhere*" }, bored: { happiness: 20, mood: "Bored *taps on the screen*" },
+    sick: { health: 40, hunger: 25, mood: "Poorly and Hungry *sniffle sniffle*" }, happy: {},
+  };
+  if (mode === "stats") { handle({ ffyTamagotchi: true, events: ["stats"], user: "@Sam", pet: Object.assign({}, base, { hunger: 55, happiness: 90, rest: 30, cleanliness: 10 }) }); setInterval(() => handle({ ffyTamagotchi: true, events: ["stats"], user: "@Sam", pet: Object.assign({}, base, { hunger: 55, happiness: 90, rest: 30, cleanliness: 10 }) }), 9000); return; }
+  if (mode === "shells") {
+    let n = 0;
+    const show = () => { handle({ ffyTamagotchi: true, events: ["refresh"], pet: Object.assign({}, base, { shell: SHELLS[n % SHELLS.length], colour: ["Pink", "Green", "White", "Lilac", "Orange", "Blue", "Yellow", "Green", "Teal", "Purple"][n % 10] }) }); n++; };
+    show(); setInterval(show, 1000);
+    return;
+  }
+  if (mode === "egg") { handle({ ffyTamagotchi: true, events: ["refresh"], pet: null }); return; }
+  if (looks[mode]) { handle({ ffyTamagotchi: true, events: ["refresh"], user: "@Sam", pet: Object.assign({}, base, looks[mode]) }); return; }
+  const colours = ["Pink", "Blue", "Rainbow", "Glitter", "Teal", "Yellow", "See-through", "Lilac"];
+  const steps = [["hatch", {}], ["feed", {}], ["play", {}], ["stats", looks.hungry], ["refresh", looks.hungry], ["clean", {}], ["refresh", looks.messy], ["sleep", {}],
+    ["refresh", looks.sick], ["grewUp", { stage: "Teen", stageIndex: 2 }], ["colour", {}], ["refresh", { stage: "Adult", stageIndex: 3 }], ["refresh", { stage: "Senior", stageIndex: 4 }], ["gone", {}]];
+  let i = 0;
+  const step = () => {
+    const [event, look] = steps[i % steps.length];
+    const p = Object.assign({}, base, look, { colour: colours[Math.floor(i / 2) % colours.length], shell: SHELLS[i % SHELLS.length] });
+    handle({ ffyTamagotchi: true, events: event === "gone" ? ["gone", "hatch"] : [event], user: "@Sam", gone: "Pickle", pet: p });
+    i++;
+  };
+  step(); setInterval(step, 5000);
+}
+
+render();
+setInterval(draw, 125);
+if (DEMO) demo(DEMO); else connect();
+</script>
+</body>
+</html>
