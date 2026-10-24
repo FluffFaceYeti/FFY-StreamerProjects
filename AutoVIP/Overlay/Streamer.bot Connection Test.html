@@ -1,0 +1,76 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Streamer.bot Connection Test</title>
+<style>
+  body { margin: 0; padding: 32px; background: #141414; color: #f2f2f2; font: 16px/1.5 "Segoe UI", Arial, sans-serif; }
+  h1 { margin: 0 0 6px; font-size: 26px; color: #ff7a1a; }
+  p { margin: 6px 0; }
+  #run { margin: 16px 0; padding: 10px 22px; border: 0; border-radius: 8px; background: #ff6b1a; color: #fff; font-size: 16px; font-weight: 700; cursor: pointer; }
+  #run:disabled { opacity: .5; cursor: default; }
+  #log { margin-top: 10px; padding: 14px; border-radius: 8px; background: #1f1f1f; font: 14px/1.6 Consolas, monospace; white-space: pre-wrap; min-height: 80px; }
+  #answer { margin-top: 18px; padding: 16px 18px; border-radius: 10px; font-size: 17px; display: none; }
+  #answer.good { display: block; background: #12361c; border: 2px solid #3ccf6a; }
+  #answer.bad { display: block; background: #3a1414; border: 2px solid #e8332a; }
+  code { background: #000; padding: 2px 6px; border-radius: 4px; color: #ffb37a; }
+</style>
+</head>
+<body>
+<h1>Streamer.bot Connection Test</h1>
+<p>Open this on the PC that runs OBS, with Streamer.bot open, then click the button.</p>
+<p>It looks for Streamer.bot's WebSocket Server and tells you what to put in the overlay's settings.</p>
+<button id="run">Test the connection</button>
+<div id="log"></div>
+<div id="answer"></div>
+<script>
+const HOSTS = ["127.0.0.1", "localhost"];
+const PORTS = [8080, 8081, 8082, 8083, 8084, 8085, 8090, 8000, 8888, 7474, 4455, 4456, 4444];
+const log = (t) => { document.getElementById("log").textContent += t + "\n"; };
+function probe(host, port) {
+  return new Promise((resolve) => {
+    let done = false, ws;
+    const finish = (r) => { if (done) return; done = true; try { ws.close(); } catch {} resolve(r); };
+    try { ws = new WebSocket("ws://" + host + ":" + port + "/"); } catch { return resolve({ kind: "none" }); }
+    const timer = setTimeout(() => finish({ kind: ws.readyState === 1 ? "silent" : "none" }), 2500);
+    ws.onmessage = (e) => {
+      clearTimeout(timer);
+      let m; try { m = JSON.parse(e.data); } catch { return finish({ kind: "other" }); }
+      if (m.request === "Hello") finish({ kind: "streamerbot", version: m.info && m.info.version, auth: !!m.authentication });
+      else if (m.op !== undefined) finish({ kind: "obs" });
+      else finish({ kind: "other" });
+    };
+    ws.onerror = () => { clearTimeout(timer); finish({ kind: "none" }); };
+  });
+}
+function answer(cls, html) { const a = document.getElementById("answer"); a.className = cls; a.innerHTML = html; }
+document.getElementById("run").onclick = async () => {
+  const btn = document.getElementById("run");
+  btn.disabled = true; document.getElementById("log").textContent = ""; document.getElementById("answer").className = "";
+  const found = [];
+  for (const port of PORTS) for (const host of HOSTS) {
+    const r = await probe(host, port);
+    const label = host + ":" + port;
+    if (r.kind === "streamerbot") log("FOUND  " + label + "  Streamer.bot " + (r.version || "") + (r.auth ? "  (password is switched on)" : ""));
+    else if (r.kind === "obs") log("OBS    " + label + "  this is OBS's WebSocket, not Streamer.bot's");
+    else if (r.kind === "silent") log("OPEN   " + label + "  something is here, but it isn't Streamer.bot");
+    else if (r.kind === "other") log("OTHER  " + label + "  something else answered");
+    else log("-      " + label + "  nothing here");
+    if (r.kind !== "none") found.push({ host, port, ...r });
+    if (r.kind === "streamerbot") break;
+  }
+  const sb = found.find((f) => f.kind === "streamerbot");
+  if (sb) {
+    answer("good", "<b>Found Streamer.bot.</b> Put this at the top of the overlay file (SETTINGS):<br><br><code>host: \"" + sb.host + "\",</code><br><code>port: " + sb.port + ",</code>" +
+      (sb.auth ? "<br><br>Streamer.bot's WebSocket Server has <b>Authentication</b> switched on, so also put its password in <code>password: \"\"</code>, or switch Authentication off." : "") +
+      "<br><br>Then right-click the Browser source in OBS and click <b>Refresh</b>.");
+  } else if (found.some((f) => f.kind === "obs")) {
+    answer("bad", "<b>Only OBS answered, not Streamer.bot.</b><br>Streamer.bot's WebSocket Server isn't running on this PC.<br><br>In Streamer.bot: <b>Servers/Clients</b> tab, then <b>WebSocket Server</b>. Set the address to <code>127.0.0.1</code> and the port to <code>8080</code> (not 4455, that's OBS's), tick <b>Auto Start</b>, then click <b>Start Server</b>. Then run this test again.");
+  } else {
+    answer("bad", "<b>Streamer.bot's WebSocket Server isn't running on this PC.</b><br><br>In Streamer.bot: <b>Servers/Clients</b> tab, then <b>WebSocket Server</b>. Set the address to <code>127.0.0.1</code> and the port to <code>8080</code>, tick <b>Auto Start</b>, then click <b>Start Server</b>. Then run this test again.<br><br>If Streamer.bot is on a different PC, its WebSocket Server address must be <code>0.0.0.0</code>, and the overlay's <code>host</code> must be that PC's IP address.");
+  }
+  btn.disabled = false;
+};
+</script>
+</body>
+</html>

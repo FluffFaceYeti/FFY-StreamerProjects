@@ -1,0 +1,278 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>AutoVIP Overlay Settings</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #121212; color: #eee; font: 15px/1.45 "Segoe UI", Arial, sans-serif; }
+  header { padding: 16px 24px; border-bottom: 1px solid #2a2a2a; }
+  h1 { margin: 0; font-size: 22px; color: #ff7a1a; }
+  header p { margin: 4px 0 0; color: #aaa; }
+  main { display: grid; grid-template-columns: 380px 1fr; gap: 20px; padding: 20px 24px; }
+  aside { max-height: calc(100vh - 110px); overflow: auto; padding-right: 8px; }
+  section { margin-bottom: 18px; padding: 14px; border-radius: 10px; background: #1c1c1c; }
+  h2 { margin: 0 0 10px; font-size: 15px; text-transform: uppercase; letter-spacing: 1px; color: #ffb37a; }
+  label { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 8px 0; }
+  label span { color: #ccc; }
+  input[type=text], input[type=number], input[type=password], select { width: 190px; padding: 6px 8px; border: 1px solid #333; border-radius: 6px; background: #111; color: #eee; font: inherit; }
+  input[type=color] { width: 54px; height: 30px; padding: 0; border: 1px solid #333; border-radius: 6px; background: none; cursor: pointer; }
+  input[type=checkbox] { width: 18px; height: 18px; accent-color: #ff6b1a; }
+  .themes { display: flex; flex-wrap: wrap; gap: 6px; }
+  .themes button { padding: 6px 10px; border: 0; border-radius: 6px; color: #fff; font: 600 13px inherit; cursor: pointer; }
+  .previewbox { position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: 10px; overflow: hidden; background: #2b2d36; }
+  .previewbox iframe { position: absolute; left: 0; top: 0; width: 2560px; height: 1440px; border: 0; transform-origin: top left; }
+  .out { margin-top: 16px; padding: 14px; border-radius: 10px; background: #1c1c1c; }
+  .out h2 { margin-bottom: 6px; }
+  textarea { width: 100%; min-height: 70px; padding: 8px; border: 1px solid #333; border-radius: 6px; background: #0b0b0b; color: #ffb37a; font: 13px Consolas, monospace; resize: vertical; }
+  .row { display: flex; gap: 8px; margin-top: 8px; align-items: center; }
+  .btn { padding: 8px 16px; border: 0; border-radius: 8px; background: #ff6b1a; color: #fff; font-weight: 700; cursor: pointer; }
+  .btn.grey { background: #333; }
+  .note { color: #999; font-size: 13px; }
+  #copied { color: #3ccf6a; font-weight: 700; display: none; }
+</style>
+</head>
+<body>
+<header>
+  <h1>AutoVIP Overlay Settings</h1>
+  <p>Pick your colours and animation, watch the preview, then copy the OBS link. Keep this file in the same folder as the overlay.</p>
+</header>
+<main>
+  <aside>
+    <section>
+      <h2>Animation</h2>
+      <label><span>Style</span><select id="animation">
+        <option value="knockout">Knockout (flies off the corner)</option>
+        <option value="slam">Slam (squashed from above)</option>
+        <option value="yoink">Yoink (badge snatched, dizzy)</option>
+        <option value="rocket">Rocket (launched upwards)</option>
+        <option value="bowling">Bowling (rolled off the side)</option>
+        <option value="random">Random (different every time)</option>
+      </select></label>
+      <label><span>Speed lines</span><input type="checkbox" id="showStreaks"></label>
+      <label><span>Flash on hit</span><input type="checkbox" id="showFlash"></label>
+      <label><span>Screen shake</span><input type="checkbox" id="showShake"></label>
+      <label><span>Overall size</span><input type="number" id="scale" min="0.25" max="3" step="0.05"></label>
+    </section>
+    <section>
+      <h2>Banner</h2>
+      <label><span>Show banner</span><input type="checkbox" id="showBanner"></label>
+      <label><span>Message</span><input type="text" id="message"></label>
+      <p class="note">{new} = who stole it, {old} = who lost it, {amount} = their bits, subs or streak</p>
+      <label><span>Show bits/subs line</span><input type="checkbox" id="showAmount"></label>
+      <label><span>Seconds on screen</span><input type="number" id="holdSeconds" min="1" max="30" step="0.5"></label>
+    </section>
+    <section>
+      <h2>Sound</h2>
+      <label><span>Sound file</span><input type="text" id="soundFile" placeholder="No sound picked" readonly></label>
+      <div class="row"><button class="btn grey" id="browse" type="button">Browse...</button><button class="btn grey" id="clearSound" type="button">Remove</button><input type="file" id="picker" accept="audio/*,.mp3,.wav,.ogg" style="display:none"><button class="btn grey" id="embed" type="button" style="display:none">Put the sound inside the link</button></div>
+      <p class="note" id="pickNote">Click Browse to pick a sound (mp3, wav or ogg). It works best saved in the same folder as the overlay.</p>
+      <label><span>Volume</span><input type="range" id="volume" min="0" max="100"></label>
+      <label><span>Play it</span><select id="soundAt">
+        <option value="hit">On the hit</option>
+        <option value="start">When the loser appears</option>
+        <option value="land">When the badge lands</option>
+      </select></label>
+      <div class="row"><button class="btn grey" id="testSound" type="button">Test sound</button><span class="note" id="soundNote"></span></div>
+      <p class="note">In OBS, tick <b>Control audio via OBS</b> on the Browser source so the sound shows in your audio mixer.</p>
+    </section>
+    <section>
+      <h2>Colour themes</h2>
+      <div class="themes" id="themes"></div>
+    </section>
+    <section>
+      <h2>Colours</h2>
+      <div id="colours"></div>
+    </section>
+    <section>
+      <h2>Streamer.bot connection</h2>
+      <label><span>Address</span><input type="text" id="host"></label>
+      <label><span>Port</span><input type="number" id="port"></label>
+      <label><span>Password</span><input type="password" id="password" placeholder="only if switched on"></label>
+      <label><span>Overlay file name</span><input type="text" id="file"></label>
+    </section>
+  </aside>
+  <div>
+    <div class="previewbox" id="previewbox"><iframe id="preview" title="Preview"></iframe></div>
+    <div class="out">
+      <h2>OBS link</h2>
+      <p class="note">In OBS: Browser source, untick <b>Local file</b>, paste this into <b>URL</b>, size <b>2560 x 1440</b>.</p>
+      <textarea id="url" readonly></textarea>
+      <div class="row"><button class="btn" id="copyUrl">Copy OBS link</button><button class="btn grey" id="reset">Reset everything</button><span id="copied">Copied!</span></div>
+    </div>
+    <div class="out">
+      <h2>Or: OBS Custom CSS (colours only)</h2>
+      <p class="note">If you'd rather keep <b>Local file</b> ticked, paste this into the Browser source's <b>Custom CSS</b> box instead.</p>
+      <textarea id="css" readonly></textarea>
+      <div class="row"><button class="btn grey" id="copyCss">Copy Custom CSS</button></div>
+    </div>
+  </div>
+</main>
+<script>
+const DEFAULTS = {
+  animation: "knockout", showStreaks: true, showFlash: true, showShake: true, scale: 1,
+  showBanner: true, message: "{new} stole {old}'s VIP badge!", showAmount: true, holdSeconds: 4,
+  host: "127.0.0.1", port: 8080, password: "", file: "AutoVIP Steal Overlay.html",
+  soundFile: "", volume: 80, soundAt: "hit",
+};
+const EMBED_LIMIT = 500 * 1024;
+const NOT_IN_LINK = ["file", "soundFile"];
+const COLOURS = [
+  ["loserRing", "--loser-ring", "Loser's ring", "#ff6b1a"],
+  ["thiefRing", "--thief-ring", "Thief's ring", "#ffffff"],
+  ["nameTag", "--name-tag", "Name tag", "#141414"],
+  ["nameTagBorder", "--name-tag-border", "Name tag edge", "#ff6b1a"],
+  ["nameText", "--name-text", "Name text", "#ffffff"],
+  ["badge", "--badge", "VIP badge", "#ff6b1a"],
+  ["badgeShine", "--badge-shine", "VIP badge shine", "#ffa055"],
+  ["bannerFrom", "--banner-from", "Banner left", "#ff7a1a"],
+  ["bannerTo", "--banner-to", "Banner right", "#e8332a"],
+  ["bannerBorder", "--banner-border", "Banner edge", "#141414"],
+  ["bannerWords", "--banner-words", "Banner text", "#ffffff"],
+  ["streaks", "--streaks", "Speed lines", "#ff9646"],
+  ["flash", "--flash", "Hit flash", "#ffd6aa"],
+];
+const THEMES = {
+  "Beardly Orange": {},
+  "Twitch purple": { loserRing: "#9147ff", nameTagBorder: "#9147ff", badge: "#e005b9", badgeShine: "#ff4fd8", bannerFrom: "#9147ff", bannerTo: "#e005b9", bannerBorder: "#18181b", nameTag: "#18181b", streaks: "#bf94ff", flash: "#e9d9ff" },
+  "Ice blue": { loserRing: "#3cb4ff", nameTagBorder: "#3cb4ff", badge: "#3cb4ff", badgeShine: "#a8e0ff", bannerFrom: "#3cb4ff", bannerTo: "#2563eb", bannerBorder: "#0b1a2e", nameTag: "#0b1a2e", streaks: "#9fd8ff", flash: "#dff3ff" },
+  "Toxic green": { loserRing: "#39ff6a", nameTagBorder: "#39ff6a", badge: "#39ff6a", badgeShine: "#b6ffc8", bannerFrom: "#39ff6a", bannerTo: "#0f9d3a", bannerBorder: "#0a1a0e", nameTag: "#0a1a0e", bannerWords: "#ffffff", streaks: "#8dffab", flash: "#e2ffe9" },
+  "Hot pink": { loserRing: "#ff3ea5", nameTagBorder: "#ff3ea5", badge: "#ff3ea5", badgeShine: "#ffa6d6", bannerFrom: "#ff6ec7", bannerTo: "#ff2d6f", bannerBorder: "#1d0a14", nameTag: "#1d0a14", streaks: "#ff9fd2", flash: "#ffe0f1" },
+  "Gold": { loserRing: "#ffc83d", nameTagBorder: "#ffc83d", badge: "#ffc83d", badgeShine: "#fff0b3", bannerFrom: "#ffd65c", bannerTo: "#e09a00", bannerBorder: "#1f1600", nameTag: "#1f1600", bannerWords: "#ffffff", streaks: "#ffe08a", flash: "#fff4d1" },
+  "Black & white": { loserRing: "#ffffff", thiefRing: "#ffffff", nameTagBorder: "#ffffff", badge: "#ffffff", badgeShine: "#cccccc", bannerFrom: "#2a2a2a", bannerTo: "#000000", bannerBorder: "#ffffff", nameTag: "#000000", streaks: "#ffffff", flash: "#ffffff" },
+};
+const $ = (id) => document.getElementById(id);
+let state = load();
+
+function load() {
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem("autovip-overlay-settings") || "{}"); } catch {}
+  const s = Object.assign({}, DEFAULTS, saved);
+  for (const [key, , , def] of COLOURS) if (!s[key]) s[key] = def;
+  return s;
+}
+function save() { try { localStorage.setItem("autovip-overlay-settings", JSON.stringify(state)); } catch {} }
+
+function buildColours() {
+  $("colours").innerHTML = COLOURS.map(([key, , label]) => '<label><span>' + label + '</span><input type="color" id="' + key + '"></label>').join("");
+  $("themes").innerHTML = Object.keys(THEMES).map((name) => {
+    const t = Object.assign({}, Object.fromEntries(COLOURS.map(([k, , , d]) => [k, d])), THEMES[name]);
+    return '<button data-theme="' + name + '" style="background: linear-gradient(135deg, ' + t.bannerFrom + ', ' + t.bannerTo + ')">' + name + '</button>';
+  }).join("");
+  $("themes").querySelectorAll("button").forEach((b) => b.onclick = () => {
+    for (const [key, , , def] of COLOURS) state[key] = THEMES[b.dataset.theme][key] || def;
+    fill(); update();
+  });
+}
+function fill() {
+  for (const key of Object.keys(DEFAULTS)) {
+    const el = $(key);
+    if (el.type === "checkbox") el.checked = !!state[key]; else el.value = state[key];
+  }
+  for (const [key] of COLOURS) $(key).value = state[key];
+}
+function read() {
+  for (const key of Object.keys(DEFAULTS)) {
+    const el = $(key);
+    state[key] = el.type === "checkbox" ? el.checked : el.type === "number" || el.type === "range" ? Number(el.value) : el.value;
+  }
+  for (const [key] of COLOURS) state[key] = $(key).value;
+}
+function overlayUrl(extra) {
+  const url = new URL(state.file || DEFAULTS.file, location.href);
+  const p = url.searchParams;
+  for (const key of Object.keys(DEFAULTS)) {
+    if (NOT_IN_LINK.includes(key) || state[key] === DEFAULTS[key] || state[key] === "") continue;
+    p.set(key, typeof state[key] === "boolean" ? (state[key] ? "1" : "0") : state[key]);
+  }
+  const sound = soundValue();
+  if (sound) p.set("sound", sound); else { p.delete("volume"); p.delete("soundAt"); }
+  for (const [key, , , def] of COLOURS) if (state[key].toLowerCase() !== def) p.set(key, state[key]);
+  for (const [k, v] of Object.entries(extra || {})) p.set(k, v);
+  return url.toString();
+}
+let timer = 0;
+function update() {
+  read(); save();
+  $("url").value = overlayUrl();
+  $("css").value = ":root {\n" + COLOURS.map(([key, cssVar]) => "  " + cssVar + ": " + state[key] + ";").join("\n") + "\n}";
+  clearTimeout(timer);
+  timer = setTimeout(() => { $("preview").src = overlayUrl({ demo: "1", mute: "1" }); }, 300);
+}
+function soundValue() {
+  const name = state.soundFile.trim();
+  if (name.startsWith("Inside the link: ") && state.soundData) return state.soundData;
+  return name;
+}
+function overlayFolder() {
+  return decodeURIComponent(location.pathname).replace(/^\/([a-z]:)/i, "$1").replace(/\/[^/]*$/, "").replace(/\//g, "\\");
+}
+let picked = null;
+function checkPicked(file) {
+  picked = file;
+  $("embed").style.display = "none";
+  $("pickNote").textContent = "Looking for " + file.name + " next to the overlay...";
+  const probe = new Audio();
+  probe.oncanplaythrough = () => { probe.oncanplaythrough = null; $("pickNote").textContent = "Found " + file.name + " in the overlay's folder. All set!"; };
+  probe.onerror = () => {
+    $("pickNote").textContent = file.name + " isn't in the overlay's folder. Copy it into " + overlayFolder() + (file.size <= EMBED_LIMIT ? ", or put the sound inside the link instead:" : ". (It's too big to put inside the link, so it needs copying.)");
+    if (file.size <= EMBED_LIMIT) $("embed").style.display = "";
+  };
+  probe.src = new URL(file.name, location.href).toString();
+  probe.load();
+}
+function embedPicked() {
+  if (!picked) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    state.soundData = reader.result;
+    $("soundFile").value = "Inside the link: " + picked.name;
+    $("embed").style.display = "none";
+    $("pickNote").textContent = picked.name + " is now inside the OBS link, so it works from any folder. Copy the OBS link again.";
+    update();
+  };
+  reader.readAsDataURL(picked);
+}
+let ctx = null;
+function testSound() {
+  const v = soundValue(), vol = Math.max(0, Math.min(1, state.volume / 100));
+  $("soundNote").textContent = "";
+  if (!v) { $("soundNote").textContent = "Click Browse to pick a sound first."; return; }
+  const src = /^[a-z]:[\\/]/i.test(v) ? "file:///" + v.replace(/\\/g, "/") : new URL(v, location.href).toString();
+  const a = new Audio(src);
+  a.volume = vol;
+  a.play().then(() => { $("soundNote").textContent = "Playing!"; }, () => { $("soundNote").textContent = "Couldn't find or play that file. Check the name and that it's in this folder."; });
+}
+function fit() { const box = $("previewbox"); $("preview").style.transform = "scale(" + box.clientWidth / 2560 + ")"; }
+function copy(text) {
+  const done = () => { $("copied").style.display = "inline"; setTimeout(() => $("copied").style.display = "none", 1500); };
+  if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, () => { fallbackCopy(text); done(); });
+  else { fallbackCopy(text); done(); }
+}
+function fallbackCopy(text) { const t = document.createElement("textarea"); t.value = text; document.body.appendChild(t); t.select(); try { document.execCommand("copy"); } catch {} t.remove(); }
+
+buildColours();
+fill();
+document.querySelectorAll("input, select").forEach((el) => el.addEventListener("input", update));
+$("copyUrl").onclick = () => copy($("url").value);
+$("copyCss").onclick = () => copy($("css").value);
+$("testSound").onclick = testSound;
+$("browse").onclick = () => $("picker").click();
+$("picker").onchange = () => {
+  const file = $("picker").files[0];
+  if (!file) return;
+  $("soundFile").value = file.name;
+  state.soundData = "";
+  update();
+  checkPicked(file);
+  $("picker").value = "";
+};
+$("embed").onclick = embedPicked;
+$("clearSound").onclick = () => { $("soundFile").value = ""; state.soundData = ""; picked = null; $("embed").style.display = "none"; $("soundNote").textContent = ""; $("pickNote").textContent = "No sound will play."; update(); };
+$("reset").onclick = () => { state = Object.assign({}, DEFAULTS); for (const [key, , , def] of COLOURS) state[key] = def; fill(); update(); };
+window.addEventListener("resize", fit);
+fit();
+update();
+</script>
+</body>
+</html>

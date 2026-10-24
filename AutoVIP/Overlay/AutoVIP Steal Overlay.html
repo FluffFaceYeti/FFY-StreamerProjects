@@ -1,0 +1,275 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>AutoVIP Steal Overlay</title>
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:wght@800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --loser-ring: #ff6b1a;
+    --thief-ring: #ffffff;
+    --name-tag: #141414;
+    --name-tag-border: #ff6b1a;
+    --name-text: #ffffff;
+    --badge: #ff6b1a;
+    --badge-shine: #ffa055;
+    --banner-from: #ff7a1a;
+    --banner-to: #e8332a;
+    --banner-border: #141414;
+    --banner-words: #ffffff;
+    --streaks: #ff9646;
+    --flash: #ffd6aa;
+  }
+  html, body { margin: 0; padding: 0; background: transparent; overflow: hidden; }
+  body.preview { background: #2b2d36; }
+  #stage { position: relative; width: 2560px; height: 1440px; transform-origin: top left; font-family: "Nunito", sans-serif; }
+  .who { position: absolute; left: 0; top: 0; width: 270px; text-align: center; opacity: 0; transform-origin: 135px 135px; will-change: transform, opacity; }
+  .face { width: 270px; height: 270px; border-radius: 50%; border: 11px solid var(--thief-ring); box-shadow: 0 12px 30px rgba(0,0,0,.45); background: #141414 center/cover no-repeat;
+    display: flex; align-items: center; justify-content: center; color: #fff; font: 900 120px "Nunito", sans-serif; box-sizing: border-box; }
+  .name { display: inline-block; margin-top: 16px; padding: 6px 22px; border-radius: 999px; background: var(--name-tag); color: var(--name-text); border: 4px solid var(--name-tag-border);
+    font-size: 34px; font-weight: 900; max-width: 380px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 4px 10px rgba(0,0,0,.4); }
+  #victim .face { border-color: var(--loser-ring); }
+  #streaks { position: absolute; left: 0; top: 0; width: 420px; height: 270px; opacity: 0; pointer-events: none;
+    background: repeating-linear-gradient(180deg, transparent 0 28px, var(--streaks) 28px 34px, transparent 34px 52px);
+    -webkit-mask: linear-gradient(90deg, transparent, #000 70%); mask: linear-gradient(90deg, transparent, #000 70%); }
+  #badge { position: absolute; left: 0; top: 0; width: 100px; height: 100px; opacity: 0; transform-origin: 50px 50px; --glow: 1; filter: drop-shadow(0 0 calc(10px * var(--glow)) var(--badge)) drop-shadow(0 0 calc(24px * var(--glow)) var(--badge)); overflow: visible; }
+  #flash { position: absolute; inset: 0; background: radial-gradient(circle at 1280px 670px, var(--flash), transparent 420px); opacity: 0; pointer-events: none; }
+  #banner { position: absolute; left: 50%; top: 1000px; transform: translateX(-50%); min-width: 900px; max-width: 1900px; padding: 22px 44px; border-radius: 28px;
+    background: linear-gradient(135deg, var(--banner-from), var(--banner-to)); color: var(--banner-words); text-align: center; border: 6px solid var(--banner-border);
+    box-shadow: 0 10px 26px rgba(0,0,0,.45); opacity: 0; }
+  #banner .big { font: 72px "Bangers", "Impact", sans-serif; letter-spacing: 1.5px; line-height: 1.1; text-shadow: 0 4px 0 var(--banner-border); -webkit-text-stroke: 2px var(--banner-border); }
+  #banner .small { margin-top: 6px; font-size: 34px; font-weight: 800; opacity: .95; }
+  #status { position: absolute; left: 10px; top: 10px; max-width: 600px; padding: 8px 12px; border-radius: 8px; background: rgba(0,0,0,.75); color: #ffb3b3;
+    font: 800 14px "Nunito", sans-serif; display: none; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="flash"></div>
+  <div class="who" id="victim"><div class="face"></div><div class="name"></div></div>
+  <div id="streaks"></div>
+  <div class="who" id="thief"><div class="face"></div><div class="name"></div></div>
+  <svg id="badge" viewBox="0 0 64 64"><polygon points="32,4 60,26 32,60 4,26" style="fill: var(--badge)"/>
+    <polygon points="32,4 44,26 32,60 20,26" style="fill: var(--badge-shine)"/><polygon points="4,26 60,26 32,60" fill="rgba(0,0,0,.12)"/></svg>
+  <div id="banner"><div class="big"></div><div class="small"></div></div>
+  <div id="status"></div>
+</div>
+<script>
+const SETTINGS = {
+  host: "127.0.0.1",
+  port: 8080,
+  endpoint: "/",
+  password: "",
+  scale: 1,
+  holdSeconds: 4,
+  animation: "knockout",
+  sound: "",
+  volume: 80,
+  soundAt: "hit",
+  message: "{new} stole {old}'s VIP badge!",
+  showBanner: true,
+  showAmount: true,
+  showStreaks: true,
+  showFlash: true,
+  showShake: true,
+  showStatus: true,
+};
+
+const COLOURS = {
+  loserRing: "--loser-ring", thiefRing: "--thief-ring", nameTag: "--name-tag", nameTagBorder: "--name-tag-border", nameText: "--name-text",
+  badge: "--badge", badgeShine: "--badge-shine", bannerFrom: "--banner-from", bannerTo: "--banner-to", bannerBorder: "--banner-border",
+  bannerWords: "--banner-words", streaks: "--streaks", flash: "--flash",
+};
+
+const params = new URLSearchParams(location.search);
+for (const key of Object.keys(SETTINGS)) {
+  if (!params.has(key)) continue;
+  const v = params.get(key);
+  SETTINGS[key] = typeof SETTINGS[key] === "number" ? Number(v) : typeof SETTINGS[key] === "boolean" ? v !== "false" && v !== "0" : v;
+}
+for (const [key, cssVar] of Object.entries(COLOURS)) {
+  if (!params.has(key)) continue;
+  let v = params.get(key).trim();
+  if (/^[0-9a-f]{3,8}$/i.test(v)) v = "#" + v;
+  document.documentElement.style.setProperty(cssVar, v);
+}
+const DEMO = params.get("demo");
+if (DEMO || params.has("preview")) document.body.classList.add("preview");
+if (params.has("background")) document.body.style.background = params.get("background").replace(/^([0-9a-f]{3,8})$/i, "#$1");
+document.getElementById("stage").style.transform = "scale(" + (SETTINGS.scale || 1) + ")";
+
+const $ = (id) => document.getElementById(id);
+const queue = [];
+let playing = false;
+
+const SIZE = 270, CX = 1280, CY = 720;
+const VICTIM = { x: CX, y: CY - SIZE / 2 - 40 }, HIT_X = CX - SIZE, CENTER_X = CX - SIZE / 2, START_X = -SIZE - 420, IMPACT = 1420, LAND = 2670;
+const clamp = (v) => Math.max(0, Math.min(1, v));
+const lerp = (a, b, p) => a + (b - a) * p;
+const ease = { out: (p) => 1 - Math.pow(1 - p, 3), in: (p) => p * p * p, inOut: (p) => p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2,
+  back: (p) => 1 + 2.7 * Math.pow(p - 1, 3) + 1.7 * Math.pow(p - 1, 2) };
+const part = (t, start, length) => clamp((t - start) / length);
+function keys(t, list) {
+  if (t <= list[0][0]) return list[0][1];
+  for (let i = 1; i < list.length; i++) if (t <= list[i][0]) {
+    const [t0, v0] = list[i - 1], [t1, v1, e] = list[i], p = (e || ease.inOut)((t - t0) / (t1 - t0));
+    return v0.map((v, k) => lerp(v, v1[k], p));
+  }
+  return list[list.length - 1][1];
+}
+function setFace(el, name, avatar) {
+  const face = el.querySelector(".face");
+  face.style.backgroundImage = avatar ? "url('" + avatar.replace(/'/g, "%27") + "')" : "";
+  face.textContent = avatar ? "" : (name || "?").charAt(0).toUpperCase();
+  el.querySelector(".name").textContent = name;
+}
+const place = (el, x, y, rot = 0, scale = 1, opacity = 1, scaleY = scale) => { el.style.transform = "translate(" + x + "px," + y + "px) rotate(" + rot + "deg) scale(" + scale + "," + scaleY + ")"; el.style.opacity = opacity; };
+const ANIMATIONS = ["knockout", "slam", "yoink", "rocket", "bowling"];
+let style = "knockout";
+function thiefPath(t) {
+  if (style === "slam") return keys(t, [[1100, [VICTIM.x, -SIZE - 300, 0]], [IMPACT, [VICTIM.x, VICTIM.y, 0], ease.in], [IMPACT + 250, [VICTIM.x, VICTIM.y - 50, 0], ease.out], [IMPACT + 1000, [CENTER_X, VICTIM.y, 0]]]);
+  if (style === "yoink") return keys(t, [[1100, [START_X, VICTIM.y, -8]], [IMPACT, [HIT_X - 30, VICTIM.y, 0], ease.out], [IMPACT + 1000, [CENTER_X, VICTIM.y, 0]]]);
+  if (style === "bowling") return keys(t, [[1100, [START_X, VICTIM.y, -720]], [IMPACT, [HIT_X, VICTIM.y, 0], ease.in], [IMPACT + 160, [HIT_X - 60, VICTIM.y, 20], ease.out], [IMPACT + 400, [HIT_X - 30, VICTIM.y, 0]], [IMPACT + 1000, [CENTER_X, VICTIM.y, 360]]]);
+  return keys(t, [[1100, [START_X, VICTIM.y, -8]], [IMPACT, [HIT_X, VICTIM.y, -8], ease.in], [IMPACT + 160, [HIT_X - 60, VICTIM.y, 4], ease.out], [IMPACT + 400, [HIT_X - 30, VICTIM.y, 0]], [IMPACT + 1000, [CENTER_X, VICTIM.y, 0]]]);
+}
+function victimPath(t) {
+  const V = [VICTIM.x, VICTIM.y, 0, 1, 1, 1];
+  if (style === "slam") return keys(t, [[IMPACT, V], [IMPACT + 140, [VICTIM.x, VICTIM.y + 90, 0, 1.35, .35, 1], ease.out], [IMPACT + 380, [VICTIM.x + 20, VICTIM.y + 40, 20, .9, 1.1, 1]], [IMPACT + 1100, [VICTIM.x + 120, 1440 + 200, 220, .8, .8, 1], ease.in]]);
+  if (style === "yoink") {
+    const away = VICTIM.x + 300 * ease.out(part(t, IMPACT, 900));
+    if (t < IMPACT + 900) return [away, VICTIM.y + Math.sin((t - IMPACT) / 140) * 10, Math.sin((t - IMPACT) / 90) * 14, 1, 1, 1];
+    return keys(t, [[IMPACT + 900, [VICTIM.x + 300, VICTIM.y, Math.sin(900 / 90) * 14, 1, 1, 1]], [IMPACT + 1500, [VICTIM.x + 330, VICTIM.y + 80, -10, .2, .2, 0], ease.in]]);
+  }
+  if (style === "rocket") return keys(t, [[IMPACT, V], [IMPACT + 200, [VICTIM.x + 30, VICTIM.y - 30, 8, 1, 1, 1], ease.out], [IMPACT + 1100, [VICTIM.x + 140, -SIZE - 600, 25, .9, 1.15, 1], ease.in]]);
+  if (style === "bowling") return keys(t, [[IMPACT, V], [IMPACT + 900, [2560 + 300, VICTIM.y + 260, 1080, 1, 1, 1], ease.out]]);
+  return keys(t, [[IMPACT, V], [IMPACT + 700, [2560 - 420, 120, 720, .75, .75, 1], ease.out], [IMPACT + 1150, [2560 + 260, -SIZE - 260, 1260, .55, .55, 1], ease.in]]);
+}
+function frame(t, hold) {
+  const end = LAND + hold;
+  const fadeOut = 1 - part(t, end, 500);
+  if (t < IMPACT) {
+    const pop = ease.back(part(t, 0, 450)), bob = t > 450 ? Math.sin((t - 450) / 700 * Math.PI * 2) * -10 : 0;
+    place($("victim"), VICTIM.x, VICTIM.y + bob, 0, pop, part(t, 0, 120));
+  } else {
+    const [x, y, r, sx, sy, op] = victimPath(t);
+    place($("victim"), x, y, r, sx, op, sy);
+  }
+  const tp = thiefPath(t);
+  const hop = t > LAND && t < LAND + 380 ? Math.sin(part(t, LAND, 380) * Math.PI) * -26 : 0;
+  const live = part(t, IMPACT + 900, 400), idle = Math.sin((t - IMPACT) / 380) * 12 * live, sway = Math.sin((t - IMPACT) / 640) * 4 * live;
+  const breathe = 1 + .03 * Math.sin((t - IMPACT) / 300) * live;
+  place($("thief"), tp[0], tp[1] + hop + idle, tp[2] + sway, breathe + (hop ? .08 * Math.sin(part(t, LAND, 380) * Math.PI) : 0), t < 1100 ? 0 : fadeOut);
+  const streaks = style === "slam" || t < 1100 ? 0 : t < IMPACT ? .9 * part(t, 1100, 200) : .9 * (1 - part(t, IMPACT, 200));
+  place($("streaks"), tp[0] - 400, VICTIM.y, 0, 1, SETTINGS.showStreaks ? streaks : 0);
+  const bx = (x) => x + SIZE - 70, by = (y) => y - 30;
+  let b;
+  if (t < IMPACT + 120) b = [bx(VICTIM.x), by(VICTIM.y), 0, ease.back(part(t, 300, 300))];
+  else if (t < IMPACT + 1220) b = keys(t, [[IMPACT + 120, [bx(VICTIM.x), by(VICTIM.y), 0, 1]], [IMPACT + 615, [CX - 60, VICTIM.y - 300, 200, 1.4]], [IMPACT + 1055, [bx(CENTER_X), by(VICTIM.y), 360, 1.15]], [IMPACT + 1220, [bx(CENTER_X), by(VICTIM.y), 360, 1]]]);
+  else b = [bx(tp[0]), by(tp[1]) + hop + idle, 360 + sway * 3, 1 + .08 * Math.sin((t - IMPACT) / 220)];
+  place($("badge"), b[0], b[1], b[2], b[3], t < 300 ? 0 : fadeOut);
+  $("badge").style.setProperty("--glow", (1 + .45 * Math.sin(t / 180)).toFixed(3));
+  $("flash").style.opacity = !SETTINGS.showFlash || style === "yoink" || t < IMPACT ? 0 : .7 * (1 - part(t, IMPACT, 220));
+  const sp = part(t, IMPACT, 320), shake = SETTINGS.showShake && style !== "yoink" && sp > 0 && sp < 1 ? Math.sin(sp * Math.PI * 6) * 12 * (1 - sp) : 0;
+  $("stage").style.translate = shake.toFixed(1) + "px " + (-shake / 2).toFixed(1) + "px";
+  const bp = ease.out(part(t, LAND, 350));
+  $("banner").style.opacity = SETTINGS.showBanner ? Math.min(bp, fadeOut) : 0;
+  const pulse = 1 + .015 * Math.sin((t - LAND) / 300) * part(t, LAND + 350, 300);
+  $("banner").style.transform = "translateX(-50%) translateY(" + (lerp(30, 0, bp) + Math.sin((t - LAND) / 500) * 4 * part(t, LAND + 350, 300)).toFixed(1) + "px) scale(" + (lerp(.9, 1, bp) * pulse).toFixed(4) + ")";
+  return t < end + 600;
+}
+function prepare(d) {
+  const wanted = String(SETTINGS.animation || "knockout").toLowerCase();
+  style = wanted === "random" ? ANIMATIONS[Math.floor(Math.random() * ANIMATIONS.length)] : ANIMATIONS.includes(wanted) ? wanted : "knockout";
+  setFace($("victim"), d.old, d.oldAvatar);
+  setFace($("thief"), d.new, d.newAvatar);
+  $("banner").querySelector(".big").textContent = String(SETTINGS.message).replace(/\{new\}/g, d.new).replace(/\{old\}/g, d.old).replace(/\{amount\}/g, d.what || "");
+  $("banner").querySelector(".small").textContent = SETTINGS.showAmount ? d.what || "" : "";
+  $("banner").querySelector(".small").style.display = SETTINGS.showAmount && d.what ? "" : "none";
+}
+let audio = null;
+function soundUrl(v) {
+  v = String(v || "").trim();
+  if (/^[a-z]:[\\/]/i.test(v)) return "file:///" + v.replace(/\\/g, "/");
+  return v;
+}
+function loadSound() {
+  const v = String(SETTINGS.sound || "").trim();
+  if (!v) return;
+  audio = new Audio(soundUrl(v));
+  audio.preload = "auto";
+}
+function playSound() {
+  const v = String(SETTINGS.sound || "").trim();
+  if (!v || params.has("mute")) return;
+  if (!audio) loadSound();
+  const a = audio.cloneNode();
+  a.volume = Math.max(0, Math.min(1, SETTINGS.volume / 100));
+  a.play().catch(() => status("Couldn't play the sound '" + v + "'. Check the file name and that it's in the same folder as the overlay."));
+}
+function play(d) {
+  playing = true;
+  prepare(d);
+  const start = performance.now(), hold = SETTINGS.holdSeconds * 1000;
+  const when = { start: 0, hit: IMPACT, land: LAND }[String(SETTINGS.soundAt).toLowerCase()] ?? IMPACT;
+  let played = false;
+  const step = () => {
+    const t = performance.now() - start;
+    if (!played && t >= when) { played = true; playSound(); }
+    if (frame(t, hold)) requestAnimationFrame(step); else { frame(1e9, hold); playing = false; next(); }
+  };
+  requestAnimationFrame(step);
+}
+function next() { if (!playing && queue.length) play(queue.shift()); }
+function handle(d) { if (d && d.autoVipSteal) { queue.push(d); next(); } }
+
+let socket = null, helloTimer = 0;
+function status(text) { const el = $("status"); el.textContent = text || ""; el.style.display = text && SETTINGS.showStatus ? "block" : "none"; }
+function send(m) { if (socket && socket.readyState === 1) socket.send(JSON.stringify(m)); }
+function ready() { send({ request: "Subscribe", id: "autovip-sub", events: { General: ["Custom"] } }); status(""); }
+async function sha256(text) { const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text)); return btoa(String.fromCharCode(...new Uint8Array(b))); }
+const HOSTS = [...new Set([SETTINGS.host, "127.0.0.1", "localhost"])];
+let tryHost = 0;
+function connect() {
+  const address = "ws://" + HOSTS[tryHost % HOSTS.length] + ":" + SETTINGS.port + (SETTINGS.endpoint || "/");
+  let opened = false;
+  try { socket = new WebSocket(address); } catch (e) { status("Can't connect to " + address); setTimeout(connect, 5000); return; }
+  socket.onopen = () => { opened = true; helloTimer = setTimeout(ready, 1500); };
+  socket.onmessage = async (e) => {
+    let m; try { m = JSON.parse(e.data); } catch { return; }
+    if (m.op !== undefined && m.d) { clearTimeout(helloTimer); status("Port " + SETTINGS.port + " is OBS's WebSocket, not Streamer.bot's. Use Streamer.bot's WebSocket Server port (usually 8080)."); socket.onclose = null; socket.close(); return; }
+    if (m.request === "Hello") {
+      clearTimeout(helloTimer);
+      if (m.authentication) {
+        if (!SETTINGS.password) { status("Streamer.bot wants a password. Add it in the overlay settings."); return; }
+        const secret = await sha256(SETTINGS.password + m.authentication.salt);
+        send({ request: "Authenticate", id: "autovip-auth", authentication: await sha256(secret + m.authentication.challenge) });
+        return;
+      }
+      ready(); return;
+    }
+    if (m.id === "autovip-auth") { if (m.status === "ok") ready(); else status("Streamer.bot said the password is wrong."); return; }
+    if (m.event && m.event.source === "General" && m.event.type === "Custom") {
+      let d = m.data;
+      if (typeof d === "string") { try { d = JSON.parse(d); } catch { return; } }
+      if (d && d.data && !d.autoVipSteal) d = d.data;
+      handle(d);
+    }
+  };
+  socket.onclose = () => {
+    clearTimeout(helloTimer);
+    if (!opened) { tryHost++; if (tryHost % HOSTS.length !== 0) { connect(); return; } }
+    status("Can't reach Streamer.bot on port " + SETTINGS.port + " (tried " + HOSTS.join(", ") + "). Is its WebSocket Server started? Open Streamer.bot Connection Test.html to check.");
+    setTimeout(connect, 5000);
+  };
+}
+
+loadSound();
+const AT = params.get("at");
+if (AT !== null) { document.body.classList.add("preview"); prepare({ new: "xan_the_bold", old: "eve", what: "2,500 bits cheered" }); frame(Number(AT), SETTINGS.holdSeconds * 1000); }
+else if (DEMO) {
+  const fake = () => handle({ autoVipSteal: true, new: "xan_the_bold", old: "eve", newAvatar: "", oldAvatar: "", category: "CheerBits", what: "2,500 bits cheered" });
+  fake(); setInterval(fake, SETTINGS.holdSeconds * 1000 + 4500);
+} else connect();
+</script>
+</body>
+</html>
