@@ -130,60 +130,121 @@ All settings are at the top of the **AUTOVIP** code. Click **Save and Compile** 
 
 ---
 
-## The OBS steal overlay
+## The OBS steal overlay (optional)
 
-An optional animation for steals: the winner's Twitch picture charges in, knocks the loser off the screen, takes their VIP badge and finishes in the middle with a banner, e.g. *"xan stole eve's VIP badge!"*.
+An animation for steals: the winner's Twitch picture charges in, knocks the loser off the screen, takes their VIP badge and finishes in the middle with a banner, e.g. *"xan stole eve's VIP badge!"*.
 
-The files are in the **Overlay** folder. Keep all of them in the same folder:
+You don't need the overlay for AutoVIP to work. The chat messages work without it.
 
-| File | What it is |
-|------|------------|
-| `AutoVIP Steal Overlay.html` | The overlay for OBS |
-| `AutoVIP Overlay Settings.html` | A settings page with a live preview, for colours, animation, wording and sound |
-| `Streamer.bot Connection Test.html` | Finds out why the overlay can't connect, if it can't |
+### The files
 
-### Setting it up
+They're in the **Overlay** folder. Keep all of them together in the same folder (and put your sound file in there too, if you use one):
 
-1. **Switch on Streamer.bot's WebSocket Server:** **Servers/Clients** tab → **WebSocket Server**. Use address `127.0.0.1` and port `8080`, tick **Auto Start**, then click **Start Server**. Don't use `4455`: that's OBS's own WebSocket.
-2. **Open `AutoVIP Overlay Settings.html`** in your web browser. Pick your animation, colours, wording and sound, and watch the preview.
-3. Click **Copy OBS link**.
-4. **In OBS:** add a **Browser** source, untick **Local file**, paste the link into **URL**, and set the size to **2560 x 1440**. Tick **Control audio via OBS** if you're using a sound.
-5. Type `!teststeal` in chat to see it work.
+| File | What it's for |
+|------|---------------|
+| `AutoVIP Steal Overlay.html` | The overlay itself. This is what OBS shows |
+| `AutoVIP Overlay Settings.html` | A settings page you open in your web browser to pick colours, animation, wording and sound, with a live preview |
+| `Streamer.bot Connection Test.html` | A helper that tells you why the overlay can't connect, if it can't |
 
-To change something later, open the settings page again, make the change, copy the new link and paste it into the Browser source.
+### How it works
 
-### What you can change on the settings page
+There are **two separate connections** between Streamer.bot and OBS, and they do different jobs:
 
-- **Animation:** Knockout (flies off the corner), Slam (squashed from above), Yoink (badge snatched, dizzy), Rocket (launched upwards), Bowling (rolled off the side), or Random. Speed lines, the flash and the screen shake can each be switched off.
-- **Colours:** one-click themes (Beardly Orange, Twitch purple, Ice blue, Toxic green, Hot pink, Gold, Black & white) or your own colour for every part.
-- **Banner:** your own wording with `{new}`, `{old}` and `{amount}`, whether the bits/subs line shows, how long it stays, and the overall size.
-- **Sound:** click **Browse...** to pick an mp3, wav or ogg, set the volume, and choose whether it plays on the hit, when the loser appears or when the badge lands. Keep the sound in the overlay's folder, or use **Put the sound inside the link** for short sounds.
-- **Connection:** the WebSocket address, port and password, if yours aren't the defaults.
+| Connection | Direction | What it does | Where it's set up |
+|------------|-----------|--------------|-------------------|
+| **OBS connection** | Streamer.bot → OBS | Lets Streamer.bot control OBS (scenes, sources and so on) | Streamer.bot: **Stream Apps** → **OBS Studio** |
+| **WebSocket Server** | Overlay → Streamer.bot | Lets the overlay hear about steals from AutoVIP | Streamer.bot: **Servers/Clients** → **WebSocket Server** |
 
-The settings page also gives a **Custom CSS** block for the colours, which you can paste into the Browser source's **Custom CSS** box instead if you'd rather keep **Local file** ticked.
+The overlay is a web page running inside OBS, so it uses the **WebSocket Server** to listen to Streamer.bot. Both need to be set up.
 
-### Connecting Streamer.bot to OBS
+---
 
-If you haven't already, connect Streamer.bot to OBS:
+### Step 1: Connect Streamer.bot to OBS
 
-1. **In OBS:** **Tools** → **WebSocket Server Settings**. Tick **Enable WebSocket server**, then click **Show Connect Info**. It shows the **Server IP**, **Server Port** and **Server Password**.
-2. **In Streamer.bot:** **Stream Apps** → **OBS Studio** → right-click → **Add**. Copy the Server IP, Server Port and Server Password from OBS into it, tick **Auto Connect**, and click **OK**.
+*Skip this if Streamer.bot is already connected to OBS.*
 
-This lets Streamer.bot control OBS. The overlay itself talks to Streamer.bot's **WebSocket Server** (step 1 above), which is a different connection, so make sure both are set up.
+1. **In OBS:** go to **Tools** → **WebSocket Server Settings**.
+2. Tick **Enable WebSocket server**, then click **Show Connect Info**. It shows your **Server IP**, **Server Port** and **Server Password**.
+3. **In Streamer.bot:** go to **Stream Apps** → **OBS Studio**, right-click the empty list and click **Add**.
+4. Copy the **Server IP**, **Server Port** and **Server Password** from OBS into it, tick **Auto Connect**, and click **OK**.
 
-### Dual-PC setups
+### Step 2: Switch on Streamer.bot's WebSocket Server
 
-If Streamer.bot runs on one PC and OBS on another (e.g. a gaming PC and a streaming PC):
+1. **In Streamer.bot:** go to the **Servers/Clients** tab → **WebSocket Server**.
+2. Set it up depending on your setup:
 
-1. **On the Streamer.bot PC:** in **Servers/Clients** → **WebSocket Server**, set the address to `0.0.0.0` so the other PC can connect, keep port `8080`, then click **Stop Server** and **Start Server**. If Windows asks about the firewall, click **Allow**.
-2. **Find the Streamer.bot PC's IP address:** open Command Prompt on it, type `ipconfig`, and look for **IPv4 Address**, e.g. `192.168.0.10`.
-3. **On the settings page:** under **Streamer.bot connection**, set the **Address** to that IP, then copy the OBS link again.
-4. **On the OBS PC:** use that link in the Browser source. Copy the overlay files (and your sound) to the OBS PC too.
-5. **Connect Streamer.bot to the OBS PC:** on the OBS PC, open OBS → **Tools** → **WebSocket Server Settings** → **Show Connect Info**, and copy its **Server IP**, **Server Port** and **Server Password** into Streamer.bot's **Stream Apps** → **OBS Studio** connection.
+| | **One PC** (Streamer.bot and OBS on the same PC) | **Two PCs** (e.g. Streamer.bot on a gaming PC, OBS on a streaming PC) |
+|---|---|---|
+| Address | `127.0.0.1` | `0.0.0.0` (this lets the other PC connect) |
+| Port | `8080` | `8080` |
+
+3. Tick **Auto Start**, then click **Start Server**. If you changed something, click **Stop Server** then **Start Server**.
+4. **Two PCs only:** if Windows asks about the firewall, click **Allow**.
+
+> Don't use port `4455` here: that's OBS's own port from Step 1.
+
+### Step 3: Pick your look on the settings page
+
+1. Open **`AutoVIP Overlay Settings.html`** in your web browser (double-click it).
+2. The **left-hand column** has all the options, in boxes from top to bottom:
+
+| Box | What's in it |
+|-----|--------------|
+| **Animation** | The style: Knockout, Slam, Yoink, Rocket, Bowling or Random. Plus speed lines, flash, screen shake and overall size |
+| **Banner** | The wording (`{new}` = who stole it, `{old}` = who lost it, `{amount}` = their bits, subs or streak), the bits/subs line, and how long it stays |
+| **Sound** | Click **Browse...** to pick an mp3, wav or ogg. Set the volume and when it plays (on the hit, when the loser appears, or when the badge lands). **Test sound** plays it |
+| **Colour themes** | One click: Beardly Orange, Twitch purple, Ice blue, Toxic green, Hot pink, Gold, Black & white |
+| **Colours** | Your own colour for every part |
+| **Streamer.bot connection** | At the **bottom** of the column. **Address**, **Port** and **Password** of Streamer.bot's WebSocket Server |
+
+3. The **preview** on the right updates as you change things.
+4. **Streamer.bot connection** (scroll to the bottom of the left column):
+   - **One PC:** leave the Address as `127.0.0.1` and the Port as `8080`.
+   - **Two PCs:** set the **Address** to the IP address of the PC running **Streamer.bot**. To find it, open **Command Prompt** on that PC, type `ipconfig`, and look for **IPv4 Address**, e.g. `192.168.0.10`.
+   - **Password:** only if you switched on **Authentication** in Step 2. Otherwise leave it empty.
+5. Click **Copy OBS link** (under the preview).
+
+> **Sound files:** keep the sound in the same folder as the overlay. If it isn't, the page tells you where to copy it, or you can click **Put the sound inside the link** (for short sounds).
+
+### Step 4: Add it to OBS
+
+1. **In OBS:** add a **Browser** source to your scene.
+2. **Untick** **Local file**.
+3. Paste the link from Step 3 into **URL**.
+4. Set **Width** to `2560` and **Height** to `1440`.
+5. Tick **Control audio via OBS** if you're using a sound, so it shows in your audio mixer.
+6. Click **OK**. The overlay is see-through when nothing is happening, so leave it covering the whole screen.
+
+**Two PCs:** do this in OBS on the **streaming PC**, and copy the overlay files (and your sound) onto that PC first.
+
+### Step 5: Test it
+
+Type `!teststeal` in chat. You should see the knockout on screen and the steal messages in chat. Nobody's VIP changes.
+
+### Changing it later
+
+Open the settings page again, change what you want, click **Copy OBS link**, then in OBS double-click the Browser source and paste the new link into **URL**.
+
+You can also change only the colours from inside OBS: copy the **Custom CSS** block from the bottom of the settings page into the Browser source's **Custom CSS** box.
+
+---
 
 ### If it won't connect
 
-Open `Streamer.bot Connection Test.html` in your web browser on the PC that runs OBS, with Streamer.bot open, and click **Test the connection**. It tells you what's wrong and what to put in the settings. The most common cause is the WebSocket Server not being started.
+If the overlay shows *"Can't reach Streamer.bot..."* in the top-left corner:
+
+1. Open **`Streamer.bot Connection Test.html`** in your web browser, on the PC that runs OBS, with Streamer.bot open.
+2. Click **Test the connection**. It tells you what's wrong and what to put on the settings page.
+
+Common causes:
+
+| Problem | Fix |
+|---------|-----|
+| WebSocket Server isn't started | Step 2: tick **Auto Start** and click **Start Server** |
+| Port set to `4455` | That's OBS's port. Use Streamer.bot's WebSocket Server port, usually `8080` |
+| Two PCs, still refusing | Step 2: the address must be `0.0.0.0`, and the firewall must allow it. Step 3: the Address must be the Streamer.bot PC's IP |
+| "Streamer.bot wants a password" | Put the WebSocket Server's password in the settings page's **Password** box, or switch Authentication off |
+| Connected, but nothing happens on a steal | Check `STEAL_OVERLAY = true;` in the AUTOVIP code, then type `!teststeal` |
 
 ---
 
@@ -210,6 +271,6 @@ Re-importing AutoVIP never touches this data.
 1. In Streamer.bot, click **Import** and import the **AutoVIP-Public** file.
 2. Open the **AUTOVIP** code, set `BROADCASTER_LOGIN` to your channel name, change the other settings to suit you, and click **Save and Compile**.
 3. Enable the **AutoVIP commands** and the **Auto VIP Refresh** timer.
-4. Optional: set up the OBS steal overlay (see above).
+4. Optional: set up the OBS steal overlay (see **The OBS steal overlay** above).
 
 **Updating from an older AutoVIP?** Streamer.bot may keep your old actions instead of replacing them. Delete the old **AutoVIP** actions and commands first, then import. Your viewers' stats are saved separately and aren't lost. Copy your settings and Manual VIPs list somewhere safe before deleting, so you can put them back.
