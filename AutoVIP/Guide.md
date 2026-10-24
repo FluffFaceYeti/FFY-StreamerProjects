@@ -48,8 +48,9 @@ When a leaderboard is full and someone new climbs into it, the person at the bot
 
 ```
 🎉 xan cheered 2,500 bits and stole a VIP badge from eve!
-💔 eve lost their VIP badge because xan stole it!
 ```
+
+That one message says who won and who lost, so chat only sees one line per steal.
 
 Every leaderboard has its own message:
 
@@ -136,7 +137,8 @@ All settings are at the top of the **AUTOVIP** code. Click **Save and Compile** 
 | `ANNOUNCE_STEALS`        | `true` posts a message when someone steals a VIP badge |
 | `STEAL_CHEER_BITS`, `STEAL_SUB_GIFTERS`, `STEAL_SUB_STREAK`, `STEAL_WATCH_STREAK` | The steal messages. `{new}` = who got VIP, `{old}` = who lost it, `{amount}` = their bits, subs or streak. `""` turns one off |
 | `ANNOUNCE_LOST_VIPS`     | `true` posts a message when someone loses their VIP badge |
-| `LOST_STOLEN`, `LOST_WATCH_STREAK`, `LOST_SUB_STREAK`, `LOST_OTHER` | The lost badge messages. `{old}` = who lost it, `{new}` = who stole it. `""` turns one off |
+| `LOST_WATCH_STREAK`, `LOST_SUB_STREAK`, `LOST_OTHER` | The lost badge messages. `{old}` = who lost it. `""` turns one off |
+| `LOST_STOLEN`            | An extra message for the person whose badge was stolen. `""` (off) by default, because the steal message already says it. To switch it on, e.g. `"💔 {old} lost their VIP badge because {new} stole it!"` |
 | `ENABLE_MYRANK`          | `true` turns on the `!myrank` command |
 | `STEAL_OVERLAY`          | `true` sends each steal to the OBS overlay. `false` turns it off |
 
