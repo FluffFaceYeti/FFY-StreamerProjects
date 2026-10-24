@@ -269,11 +269,10 @@ Re-importing AutoVIP never touches this data.
 
 ## Installation
 
-1. **Download** the **AutoVIP-Public** file from this page (click it, then the **Download raw file** button). Your browser may save it as `AutoVIP-Public.txt`, which is fine.
-2. **Open the downloaded file in Notepad**, press **Ctrl+A** to select everything, then **Ctrl+C** to copy it.
-3. In Streamer.bot, click **Import** in the bar at the top, click in the **Import String** box, press **Ctrl+V** to paste, then click **Import**.
-4. Open the **AUTOVIP** code, set `BROADCASTER_LOGIN` to your channel name, change the other settings to suit you, and click **Save and Compile**.
-5. Enable the **AutoVIP commands** and the **Auto VIP Refresh** timer.
-6. Optional: set up the OBS steal overlay (see **The OBS steal overlay** above).
+1. **Download** the **AutoVIP** file from this page.
+2. In Streamer.bot, click **Import** in the bar at the top, drag and drop the **AutoVIP** file into the box, and click **Import**.
+3. Open the **AUTOVIP** code, set `BROADCASTER_LOGIN` to your channel name, change the other settings to suit you, and click **Save and Compile**.
+4. Enable the **AutoVIP commands** and the **Auto VIP Refresh** timer.
+5. Optional: set up the OBS steal overlay (see **The OBS steal overlay** above).
 
 **Updating from an older AutoVIP?** Streamer.bot may keep your old actions instead of replacing them. Delete the old **AutoVIP** actions and commands first, then import. Your viewers' stats are saved separately and aren't lost. Copy your settings and Manual VIPs list somewhere safe before deleting, so you can put them back.
