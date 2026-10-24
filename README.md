@@ -22,7 +22,8 @@ Not able to donate? That's completely fine. You can still help by:
 
 Want it made just for you?
 
-Right now I'm raising money to replace my defective GPU:
+Right now I'm raising money to replace my defective GPU
+
 So for a small donation, I'll tailor the tools to fit your channel perfectly:
 
 - New commands built around your community's inside jokes
