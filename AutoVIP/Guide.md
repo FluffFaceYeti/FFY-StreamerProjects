@@ -162,6 +162,22 @@ To change something later, open the settings page again, make the change, copy t
 
 The settings page also gives a **Custom CSS** block for the colours, which you can paste into the Browser source's **Custom CSS** box instead if you'd rather keep **Local file** ticked.
 
+### Connecting Streamer.bot to OBS
+
+If you haven't already, connect Streamer.bot to OBS: **Stream Apps** → **OBS Studio** → right-click → **Add**. Enter the address of the PC running OBS (`127.0.0.1` if it's the same PC), port `4455`, and the password from OBS (**Tools** → **WebSocket Server Settings** → **Show Connect Info**). Tick **Auto Connect**.
+
+This lets Streamer.bot control OBS. The overlay itself talks to Streamer.bot's **WebSocket Server** (step 1 above), which is a different connection, so make sure both are set up.
+
+### Dual-PC setups
+
+If Streamer.bot runs on one PC and OBS on another (e.g. a gaming PC and a streaming PC):
+
+1. **On the Streamer.bot PC:** in **Servers/Clients** → **WebSocket Server**, set the address to `0.0.0.0` so the other PC can connect, keep port `8080`, then click **Stop Server** and **Start Server**. If Windows asks about the firewall, click **Allow**.
+2. **Find the Streamer.bot PC's IP address:** open Command Prompt on it, type `ipconfig`, and look for **IPv4 Address**, e.g. `192.168.0.10`.
+3. **On the settings page:** under **Streamer.bot connection**, set the **Address** to that IP, then copy the OBS link again.
+4. **On the OBS PC:** use that link in the Browser source. Copy the overlay files (and your sound) to the OBS PC too.
+5. **In Streamer.bot:** under **Stream Apps** → **OBS Studio**, the connection's address should be the **OBS PC's** IP address, with port `4455` and OBS's password.
+
 ### If it won't connect
 
 Open `Streamer.bot Connection Test.html` in your web browser on the PC that runs OBS, with Streamer.bot open, and click **Test the connection**. It tells you what's wrong and what to put in the settings. The most common cause is the WebSocket Server not being started.
