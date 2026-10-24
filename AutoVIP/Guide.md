@@ -181,7 +181,7 @@ The overlay is a web page running inside OBS, so it uses the **WebSocket Server*
 3. Tick **Auto Start**, then click **Start Server**. If you changed something, click **Stop Server** then **Start Server**.
 4. **Two PCs only:** if Windows asks about the firewall, click **Allow**.
 
-> Don't use port `4455` here: that's OBS's own port from Step 1.
+> **Leave the port as `8080`.** Don't change it to `4455`: that's OBS's own port from Step 1, and the overlay won't work with it.
 
 ### Step 3: Pick your look on the settings page
 
@@ -199,7 +199,8 @@ The overlay is a web page running inside OBS, so it uses the **WebSocket Server*
 
 3. The **preview** on the right updates as you change things.
 4. **Streamer.bot connection** (scroll to the bottom of the left column):
-   - **One PC:** leave the Address as `127.0.0.1` and the Port as `8080`.
+   - **Port: leave it as `8080`.** This is Streamer.bot's WebSocket Server port from Step 2, **not** OBS's `4455` from Step 1. Only change it if you changed the port in Step 2, and then make it match.
+   - **One PC:** leave the Address as `127.0.0.1`.
    - **Two PCs:** set the **Address** to the IP address of the PC running **Streamer.bot**. To find it, open **Command Prompt** on that PC, type `ipconfig`, and look for **IPv4 Address**, e.g. `192.168.0.10`.
    - **Password:** only if you switched on **Authentication** in Step 2. Otherwise leave it empty.
 5. Click **Copy OBS link** (under the preview).
