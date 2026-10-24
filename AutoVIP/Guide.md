@@ -164,7 +164,10 @@ The settings page also gives a **Custom CSS** block for the colours, which you c
 
 ### Connecting Streamer.bot to OBS
 
-If you haven't already, connect Streamer.bot to OBS: **Stream Apps** → **OBS Studio** → right-click → **Add**. Enter the address of the PC running OBS (`127.0.0.1` if it's the same PC), port `4455`, and the password from OBS (**Tools** → **WebSocket Server Settings** → **Show Connect Info**). Tick **Auto Connect**.
+If you haven't already, connect Streamer.bot to OBS:
+
+1. **In OBS:** **Tools** → **WebSocket Server Settings**. Tick **Enable WebSocket server**, then click **Show Connect Info**. It shows the **Server IP**, **Server Port** and **Server Password**.
+2. **In Streamer.bot:** **Stream Apps** → **OBS Studio** → right-click → **Add**. Copy the Server IP, Server Port and Server Password from OBS into it, tick **Auto Connect**, and click **OK**.
 
 This lets Streamer.bot control OBS. The overlay itself talks to Streamer.bot's **WebSocket Server** (step 1 above), which is a different connection, so make sure both are set up.
 
@@ -176,7 +179,7 @@ If Streamer.bot runs on one PC and OBS on another (e.g. a gaming PC and a stream
 2. **Find the Streamer.bot PC's IP address:** open Command Prompt on it, type `ipconfig`, and look for **IPv4 Address**, e.g. `192.168.0.10`.
 3. **On the settings page:** under **Streamer.bot connection**, set the **Address** to that IP, then copy the OBS link again.
 4. **On the OBS PC:** use that link in the Browser source. Copy the overlay files (and your sound) to the OBS PC too.
-5. **In Streamer.bot:** under **Stream Apps** → **OBS Studio**, the connection's address should be the **OBS PC's** IP address, with port `4455` and OBS's password.
+5. **Connect Streamer.bot to the OBS PC:** on the OBS PC, open OBS → **Tools** → **WebSocket Server Settings** → **Show Connect Info**, and copy its **Server IP**, **Server Port** and **Server Password** into Streamer.bot's **Stream Apps** → **OBS Studio** connection.
 
 ### If it won't connect
 
