@@ -23,7 +23,7 @@ The top viewers on each leaderboard get VIP, as long as they meet the minimum. B
 
 | Leaderboard | How it's counted |
 |-------------|------------------|
-| Watch streak | Viewers who **chat at least once** in a stream (or share their Twitch watch streak) keep their streak going. Miss a stream and it goes back to 0. Silent lurkers don't build a streak. If your stream crashes and you go live again within 30 minutes, it counts as the same stream |
+| Watch streak | Viewers who **chat at least once** in a stream (or share their Twitch watch streak) keep their streak going. Miss a stream and it goes back to 0. Silent lurkers don't build a streak, unless you set `WATCH_STREAK_COUNTS_LURKERS = true`. If your stream crashes and you go live again within 30 minutes, it counts as the same stream |
 | Sub streak | Updated when someone resubs. If someone stops subscribing, their streak ends (AutoVIP checks with Twitch when VIPs refresh) |
 | Gifted subs | Uses Twitch's lifetime gift total for your channel when the gifter shares it. If they hide it, AutoVIP counts their gifts itself. The number never goes down. Anonymous gifts aren't counted |
 | Bits cheered | Uses Twitch's lifetime bits for your channel, or AutoVIP's own count if that's higher |
@@ -126,6 +126,7 @@ All settings are at the top of the **AUTOVIP** code. Click **Save and Compile** 
 | `RESET_START_DATE`       | When reset periods start, e.g. `"2026-01-01"`. Use `""` to start from the first run |
 | `RESET_KEEPS_DATA`       | `true` ranks on the current period only and keeps all-time data. `false` wipes everything on reset |
 | `INCLUDE_LIFETIME_DATA`  | `true` uses Twitch's lifetime numbers. `false` counts only since the last reset |
+| `WATCH_STREAK_COUNTS_LURKERS` | `false` = viewers must chat (or share their Twitch watch streak) to count for a stream. `true` = anyone sitting in your chat counts, even if they never type. AutoVIP checks who's in chat every 5 minutes while you're live (needs the **Auto VIP Refresh** timer on) |
 | `STREAM_RESTART_MINUTES` | If you go live again within this many minutes of ending (e.g. after a crash), it counts as the same stream, so nobody loses their watch streak. Default `30`. `0` turns it off |
 | `GRACE_PERIOD_DAYS`      | Days someone keeps VIP after dropping off a leaderboard. `0` removes it straight away |
 
