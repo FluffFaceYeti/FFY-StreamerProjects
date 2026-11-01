@@ -24,6 +24,6 @@ AutoVIP is free. If you'd like to send a tip in support of it, you can do so on 
 
 Thank you!
 
-**[BehavingBeardly](https://www.twitch.tv/flufffaceyeti)**
+**[flufffaceyeti](https://www.twitch.tv/flufffaceyeti)**
 
 Sam - **Enabled Private Mode**
