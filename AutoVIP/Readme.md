@@ -4,9 +4,11 @@ The people who support you the most deserve the VIP badge, and AutoVIP makes sur
 
 ## A team effort
 
-AutoVIP has been a team effort with **[BehavingBeardly](https://www.twitch.tv/behavingbeardly)**. It started as an idea of his, and together we've built it up from the ground. We're very proud to share it.
+AutoVIP has been a team effort with **[BehavingBeardly](https://www.twitch.tv/behavingbeardly)**. It started as an idea of his, and together we've built it up from the ground. We're very proud to share it with streamers, and we hope it helps you show some love to your channel's top supporters!
 
 Here's an early clip of us getting it working for the first time: [watch it on Twitch](https://www.twitch.tv/behavingbeardly/clip/BlitheArtisticOilSoonerLater-MQWa7cLFzc4WW8ya?range=7d)
+
+**Got a clip of AutoVIP on your stream?** Tag **@FluffFaceYeti** on Twitter so we can see it!
 
 ## Getting started
 
@@ -21,4 +23,3 @@ Everything you need is in this folder:
 AutoVIP is free. If you'd like to send a tip in support of it, you can do so on my Ko-fi page: **[ko-fi.com/flufffaceyeti](https://ko-fi.com/flufffaceyeti)**
 
 Thank you!
-
