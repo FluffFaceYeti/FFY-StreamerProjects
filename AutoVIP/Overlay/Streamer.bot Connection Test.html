@@ -5,71 +5,146 @@
 <title>Streamer.bot Connection Test</title>
 <style>
   body { margin: 0; padding: 32px; background: #141414; color: #f2f2f2; font: 16px/1.5 "Segoe UI", Arial, sans-serif; }
+  main { max-width: 760px; }
   h1 { margin: 0 0 6px; font-size: 26px; color: #ff7a1a; }
   p { margin: 6px 0; }
-  #run { margin: 16px 0; padding: 10px 22px; border: 0; border-radius: 8px; background: #ff6b1a; color: #fff; font-size: 16px; font-weight: 700; cursor: pointer; }
+  .ip { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 16px 0 4px; }
+  .ip input { width: 200px; padding: 8px 10px; border: 1px solid #333; border-radius: 8px; background: #0e0e0e; color: #f2f2f2; font: inherit; }
+  .hint { color: #999; font-size: 14px; }
+  #run { margin: 14px 0; padding: 10px 22px; border: 0; border-radius: 8px; background: #ff6b1a; color: #fff; font-size: 16px; font-weight: 700; cursor: pointer; }
   #run:disabled { opacity: .5; cursor: default; }
-  #log { margin-top: 10px; padding: 14px; border-radius: 8px; background: #1f1f1f; font: 14px/1.6 Consolas, monospace; white-space: pre-wrap; min-height: 80px; }
-  #answer { margin-top: 18px; padding: 16px 18px; border-radius: 10px; font-size: 17px; display: none; }
-  #answer.good { display: block; background: #12361c; border: 2px solid #3ccf6a; }
-  #answer.bad { display: block; background: #3a1414; border: 2px solid #e8332a; }
+  #busy { display: none; color: #ffb37a; }
+  .card { display: none; margin-top: 12px; padding: 16px 18px; border-radius: 10px; }
+  .card.good { display: block; background: #12361c; border: 2px solid #3ccf6a; }
+  .card.bad { display: block; background: #3a1414; border: 2px solid #e8332a; }
+  .card.warn { display: block; background: #3a2a10; border: 2px solid #f0a020; }
+  .card h2 { margin: 0 0 8px; font-size: 18px; }
+  .card ol { margin: 6px 0 0; padding-left: 22px; }
+  .card li { margin: 4px 0; }
   code { background: #000; padding: 2px 6px; border-radius: 4px; color: #ffb37a; }
+  .setups { margin: 18px 0 6px; }
+  .setups h2 { margin: 0 0 8px; font-size: 18px; color: #ff7a1a; }
+  details { margin: 0 0 8px; border-radius: 10px; background: #1f1f1f; border-left: 4px solid #ff6b1a; }
+  summary { padding: 10px 14px; font-weight: 700; cursor: pointer; }
+  summary:hover { color: #ff7a1a; }
+  details ol, details p { margin: 0; padding: 0 16px 12px 36px; }
+  details p { padding-left: 16px; }
+  details li { margin: 4px 0; }
 </style>
 </head>
 <body>
+<main>
 <h1>Streamer.bot Connection Test</h1>
-<p>Open this on the PC that runs OBS, with Streamer.bot open, then click the button.</p>
-<p>It looks for Streamer.bot's WebSocket Server and tells you what to put in the overlay's settings.</p>
-<button id="run">Test the connection</button>
-<div id="log"></div>
-<div id="answer"></div>
+<p>Open this on the PC that runs <b>OBS</b>, with Streamer.bot and OBS both open, then click the button.</p>
+<p>It looks for Streamer.bot and OBS and tells you exactly what to put in the overlay settings.</p>
+<div class="setups">
+  <h2>Which setup do you have?</h2>
+  <p>The overlay lives in the OBS you <b>stream from</b>. Always run this test, and keep the overlay folder, on the PC whose OBS streams. Click your setup:</p>
+  <details><summary>Everything on one PC (Streamer.bot and OBS together)</summary><ol>
+    <li>In Streamer.bot: <b>Servers/Clients</b> &gt; <b>WebSocket Server</b>, Address <code>127.0.0.1</code>, Port <code>8080</code>, tick <b>Auto Start</b>, click <b>Start Server</b>.</li>
+    <li>Leave the box below empty and click <b>Test the connection</b>.</li>
+    <li>On the settings page's <b>General</b> tab: Address <code>127.0.0.1</code>, Port <code>8080</code>.</li>
+  </ol></details>
+  <details><summary>Streamer.bot on one PC, OBS (streaming) on the other</summary><ol>
+    <li>On the <b>Streamer.bot PC</b>: <b>Servers/Clients</b> &gt; <b>WebSocket Server</b>, Address <code>0.0.0.0</code>, Port <code>8080</code>, tick <b>Auto Start</b>, then <b>Stop Server</b> and <b>Start Server</b>. Click <b>Allow</b> if Windows asks about the firewall.</li>
+    <li>Find the Streamer.bot PC's IP (how: see the box below the setups).</li>
+    <li>Copy the whole overlay folder onto the <b>OBS PC</b>, and open this test there.</li>
+    <li>Type the Streamer.bot PC's IP in the box below and click <b>Test the connection</b>.</li>
+    <li>On the settings page's <b>General</b> tab (opened on the OBS PC): Address = the Streamer.bot PC's IP, Port <code>8080</code>.</li>
+  </ol></details>
+  <details><summary>OBS on both PCs, Streamer.bot on one of them</summary><ol>
+    <li>Decide which OBS you <b>stream from</b>. The overlay only goes in that one.</li>
+    <li>If the streaming OBS is on the <b>same PC as Streamer.bot</b>: follow <b>Everything on one PC</b>.</li>
+    <li>If the streaming OBS is on the <b>other PC</b>: follow <b>Streamer.bot on one PC, OBS on the other</b>.</li>
+    <li>The other OBS doesn't need anything from AutoVIP.</li>
+  </ol></details>
+  <details><summary>Streamer.bot on both PCs</summary><ol>
+    <li>Only run AutoVIP in <b>one</b> Streamer.bot. In the other one, switch the AutoVIP actions and the <b>Auto VIP Refresh</b> timer off (or don't import it there), or they'll fight over the same VIPs.</li>
+    <li>Point the overlay at the Streamer.bot that runs AutoVIP, using whichever setup above matches where it is.</li>
+  </ol></details>
+  <details><summary>What about the end of stream recap's OBS connection?</summary><p>The recap talks to the OBS it's shown in, which is the OBS on the PC you run this test on. So on the <b>Recap</b> tab it's always Address <code>127.0.0.1</code> plus the port this test finds (usually <code>4455</code>), even with two PCs. Streamer.bot doesn't need its own OBS connection for AutoVIP.</p></details>
+</div>
+<div class="ip">
+  <label for="sbip"><b>Streamer.bot on a different PC?</b></label>
+  <input id="sbip" type="text" placeholder="Streamer.bot PC's IP" autocomplete="off">
+</div>
+<p class="hint">Only if Streamer.bot runs on another PC: type that PC's IP address. Leave it empty if everything is on this PC.<br>
+<b>Easiest way to find it:</b> on the Streamer.bot PC, open OBS and go to <b>Tools</b> &gt; <b>WebSocket Server Settings</b> &gt; <b>Show Connect Info</b>. The <b>Server IP</b> is the one you want.<br>
+No OBS on that PC? Open <b>Command Prompt</b> there, type <code>ipconfig</code> and use the <b>IPv4 Address</b>.</p>
+<button id="run">Test the connection</button> <span id="busy">Checking, this takes a few seconds...</span>
+<div class="card" id="sb"></div>
+<div class="card" id="obs"></div>
+</main>
 <script>
-const HOSTS = ["127.0.0.1", "localhost"];
-const PORTS = [8080, 8081, 8082, 8083, 8084, 8085, 8090, 8000, 8888, 7474, 4455, 4456, 4444];
-const log = (t) => { document.getElementById("log").textContent += t + "\n"; };
+const SB_PORTS = [8080, 8081, 8082, 8083, 8084, 8085, 8090, 8000, 8888, 7474];
+const OBS_PORTS = [4455, 4456, 4444];
+const $ = (id) => document.getElementById(id);
 function probe(host, port) {
   return new Promise((resolve) => {
     let done = false, ws;
-    const finish = (r) => { if (done) return; done = true; try { ws.close(); } catch {} resolve(r); };
-    try { ws = new WebSocket("ws://" + host + ":" + port + "/"); } catch { return resolve({ kind: "none" }); }
-    const timer = setTimeout(() => finish({ kind: ws.readyState === 1 ? "silent" : "none" }), 2500);
+    const finish = (r) => { if (done) return; done = true; try { ws.close(); } catch {} resolve(Object.assign({ host, port }, r)); };
+    try { ws = new WebSocket("ws://" + host + ":" + port + "/"); } catch { return resolve({ host, port, kind: "none" }); }
+    const timer = setTimeout(() => finish({ kind: "none" }), 3000);
     ws.onmessage = (e) => {
       clearTimeout(timer);
       let m; try { m = JSON.parse(e.data); } catch { return finish({ kind: "other" }); }
       if (m.request === "Hello") finish({ kind: "streamerbot", version: m.info && m.info.version, auth: !!m.authentication });
-      else if (m.op !== undefined) finish({ kind: "obs" });
+      else if (m.op !== undefined) finish({ kind: "obs", auth: !!(m.d && m.d.authentication) });
       else finish({ kind: "other" });
     };
     ws.onerror = () => { clearTimeout(timer); finish({ kind: "none" }); };
   });
 }
-function answer(cls, html) { const a = document.getElementById("answer"); a.className = cls; a.innerHTML = html; }
-document.getElementById("run").onclick = async () => {
-  const btn = document.getElementById("run");
-  btn.disabled = true; document.getElementById("log").textContent = ""; document.getElementById("answer").className = "";
-  const found = [];
-  for (const port of PORTS) for (const host of HOSTS) {
-    const r = await probe(host, port);
-    const label = host + ":" + port;
-    if (r.kind === "streamerbot") log("FOUND  " + label + "  Streamer.bot " + (r.version || "") + (r.auth ? "  (password is switched on)" : ""));
-    else if (r.kind === "obs") log("OBS    " + label + "  this is OBS's WebSocket, not Streamer.bot's");
-    else if (r.kind === "silent") log("OPEN   " + label + "  something is here, but it isn't Streamer.bot");
-    else if (r.kind === "other") log("OTHER  " + label + "  something else answered");
-    else log("-      " + label + "  nothing here");
-    if (r.kind !== "none") found.push({ host, port, ...r });
-    if (r.kind === "streamerbot") break;
-  }
-  const sb = found.find((f) => f.kind === "streamerbot");
+function card(id, cls, html) { const c = $(id); c.className = "card " + cls; c.innerHTML = html; }
+const START_SB = "<ol><li>In Streamer.bot, open the <b>Servers/Clients</b> tab, then <b>WebSocket Server</b>.</li>";
+$("run").onclick = async () => {
+  const btn = $("run"), ip = $("sbip").value.trim().replace(/^wss?:\/\//i, "").replace(/[:/].*$/, "");
+  btn.disabled = true; $("busy").style.display = "inline"; $("sb").className = "card"; $("obs").className = "card";
+  const search = async (host, ports, kind) => {
+    const seen = [];
+    for (const p of ports) { const r = await probe(host, p); seen.push(r); if (r.kind === kind) break; }
+    return seen;
+  };
+  const obsResults = await search("127.0.0.1", OBS_PORTS, "obs");
+  const sbResults = await search(ip || "127.0.0.1", SB_PORTS, "streamerbot");
+  const sb = sbResults.find((r) => r.kind === "streamerbot");
+  const obsOnSbPorts = sbResults.find((r) => r.kind === "obs");
+  const obs = obsResults.find((r) => r.kind === "obs");
+
   if (sb) {
-    answer("good", "<b>Found Streamer.bot.</b> Put this at the top of the overlay file (SETTINGS):<br><br><code>host: \"" + sb.host + "\",</code><br><code>port: " + sb.port + ",</code>" +
-      (sb.auth ? "<br><br>Streamer.bot's WebSocket Server has <b>Authentication</b> switched on, so also put its password in <code>password: \"\"</code>, or switch Authentication off." : "") +
-      "<br><br>Then right-click the Browser source in OBS and click <b>Refresh</b>.");
-  } else if (found.some((f) => f.kind === "obs")) {
-    answer("bad", "<b>Only OBS answered, not Streamer.bot.</b><br>Streamer.bot's WebSocket Server isn't running on this PC.<br><br>In Streamer.bot: <b>Servers/Clients</b> tab, then <b>WebSocket Server</b>. Set the address to <code>127.0.0.1</code> and the port to <code>8080</code> (not 4455, that's OBS's), tick <b>Auto Start</b>, then click <b>Start Server</b>. Then run this test again.");
+    card("sb", "good", "<h2>&#10004; Found Streamer.bot" + (sb.version ? " " + sb.version : "") + "</h2>" +
+      "In the overlay settings page, on the <b>General</b> tab under <b>Streamer.bot connection</b>, set:<br>" +
+      "<b>Address</b> <code>" + sb.host + "</code> &nbsp; <b>Port</b> <code>" + sb.port + "</code>" +
+      (sb.auth ? "<br><br>Streamer.bot has <b>Authentication</b> switched on, so also put its WebSocket Server password in <b>Password</b>, or switch Authentication off." : "<br><br>Leave <b>Password</b> empty.") +
+      "<br><br>Then click <b>Copy link</b> again and paste it into the OBS browser source.");
+  } else if (ip) {
+    card("sb", "bad", "<h2>&#10008; Couldn't find Streamer.bot at " + ip + "</h2>" + START_SB +
+      "<li>Set the <b>Address</b> to <code>0.0.0.0</code> so other PCs can connect, and the <b>Port</b> to <code>8080</code>.</li>" +
+      "<li>Tick <b>Auto Start</b>, then click <b>Stop Server</b> and <b>Start Server</b>.</li>" +
+      "<li>If Windows asked about the firewall on that PC, it must be <b>allowed</b>.</li>" +
+      "<li>Check <code>" + ip + "</code> is the right IP: in OBS on that PC, <b>Tools</b> &gt; <b>WebSocket Server Settings</b> &gt; <b>Show Connect Info</b> shows it as <b>Server IP</b>. Then test again.</li></ol>");
   } else {
-    answer("bad", "<b>Streamer.bot's WebSocket Server isn't running on this PC.</b><br><br>In Streamer.bot: <b>Servers/Clients</b> tab, then <b>WebSocket Server</b>. Set the address to <code>127.0.0.1</code> and the port to <code>8080</code>, tick <b>Auto Start</b>, then click <b>Start Server</b>. Then run this test again.<br><br>If Streamer.bot is on a different PC, its WebSocket Server address must be <code>0.0.0.0</code>, and the overlay's <code>host</code> must be that PC's IP address.");
+    card("sb", "bad", "<h2>&#10008; Couldn't find Streamer.bot on this PC</h2>" +
+      (obsOnSbPorts ? "Something on port " + obsOnSbPorts.port + " is OBS, not Streamer.bot.<br>" : "") + START_SB +
+      "<li>Set the <b>Address</b> to <code>127.0.0.1</code> and the <b>Port</b> to <code>8080</code> (not 4455, that's OBS's).</li>" +
+      "<li>Tick <b>Auto Start</b>, then click <b>Start Server</b>.</li>" +
+      "<li>Test again.</li></ol>" +
+      "<br>Is Streamer.bot on a <b>different PC</b>? Type that PC's IP address in the box above and test again.");
   }
-  btn.disabled = false;
+
+  if (obs) {
+    card("obs", "good", "<h2>&#10004; Found OBS</h2>" +
+      "Only the end of stream recap uses this. On the <b>Recap</b> tab under <b>OBS connection</b>, set:<br>" +
+      "<b>Address</b> <code>127.0.0.1</code> &nbsp; <b>Port</b> <code>" + obs.port + "</code>" +
+      (obs.auth ? "<br><br>OBS has a password switched on. In OBS, <b>Tools</b> &gt; <b>WebSocket Server Settings</b> &gt; <b>Show Connect Info</b> shows it. Put it in <b>Password</b> on the Recap tab." : ""));
+  } else {
+    card("obs", "warn", "<h2>&#10008; Couldn't find OBS</h2>" +
+      "Only the end of stream recap needs this, so you can skip it if you don't use the recap.<ol>" +
+      "<li>Make sure OBS is open on this PC.</li>" +
+      "<li>In OBS, <b>Tools</b> &gt; <b>WebSocket Server Settings</b>, tick <b>Enable WebSocket server</b> and click <b>Apply</b>.</li>" +
+      "<li>Test again.</li></ol>");
+  }
+  $("busy").style.display = "none"; btn.disabled = false;
 };
 </script>
 </body>

@@ -4,275 +4,969 @@
 <meta charset="utf-8">
 <title>AutoVIP Overlay Settings</title>
 <style>
-  * { box-sizing: border-box; }
+  :root { --ui: #ff6b1a; --ui-ink: #ffffff; --ui-soft: color-mix(in srgb, var(--ui) 55%, #ffffff); }
+  * { box-sizing: border-box; scrollbar-width: thin; scrollbar-color: #3a3a3a #161616; }
+  html { color-scheme: dark; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: #161616; }
+  ::-webkit-scrollbar-thumb { background: #3a3a3a; border-radius: 6px; border: 2px solid #161616; }
+  ::-webkit-scrollbar-thumb:hover { background: #4d4d4d; }
+  ::-webkit-scrollbar-corner { background: #161616; }
   body { margin: 0; background: #121212; color: #eee; font: 15px/1.45 "Segoe UI", Arial, sans-serif; }
-  header { padding: 16px 24px; border-bottom: 1px solid #2a2a2a; }
-  h1 { margin: 0; font-size: 22px; color: #ff7a1a; }
-  header p { margin: 4px 0 0; color: #aaa; }
-  main { display: grid; grid-template-columns: 380px 1fr; gap: 20px; padding: 20px 24px; }
+  header { display: flex; align-items: center; gap: 16px; padding: 14px 24px; border-bottom: 1px solid #2a2a2a; }
+  header img { width: 54px; height: 54px; border-radius: 50%; object-fit: cover; border: 3px solid var(--ui); }
+  h1 { margin: 0; font-size: 22px; color: var(--ui); }
+  header p { margin: 2px 0 0; color: #aaa; }
+  main { display: grid; grid-template-columns: 440px 1fr; gap: 20px; padding: 18px 24px; }
   aside { max-height: calc(100vh - 110px); overflow: auto; padding-right: 8px; }
-  section { margin-bottom: 18px; padding: 14px; border-radius: 10px; background: #1c1c1c; }
-  h2 { margin: 0 0 10px; font-size: 15px; text-transform: uppercase; letter-spacing: 1px; color: #ffb37a; }
+  .tabs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 12px; }
+  .tabs button { padding: 8px 4px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tabs button.help-tab { background: color-mix(in srgb, var(--ui) 18%, #262626); color: var(--ui); box-shadow: inset 0 0 0 2px var(--ui); font-weight: 800; letter-spacing: .5px; }
+  .tabs button.help-tab.on { background: var(--ui); color: var(--ui-ink); }
+  .tabs button, .subtabs button { padding: 8px 12px; border: 0; border-radius: 8px; background: #262626; color: #ddd; font: 700 13px inherit; cursor: pointer; }
+  .tabs button.on, .subtabs button.on { background: var(--ui); color: var(--ui-ink); }
+  .subtabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 4px 0 12px; }
+  .tab { display: none; } .tab.on { display: block; }
+  .sub { display: none; } .sub.on { display: block; }
+  section { margin-bottom: 14px; padding: 14px; border-radius: 10px; background: #1c1c1c; }
+  h2 { margin: 0 0 10px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: var(--ui-soft); }
   label { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 8px 0; }
   label span { color: #ccc; }
-  input[type=text], input[type=number], input[type=password], select { width: 190px; padding: 6px 8px; border: 1px solid #333; border-radius: 6px; background: #111; color: #eee; font: inherit; }
+  input[type=text], input[type=number], input[type=password], select { width: 210px; padding: 6px 8px; border: 1px solid #333; border-radius: 6px; background: #111; color: #eee; font: inherit; }
   input[type=color] { width: 54px; height: 30px; padding: 0; border: 1px solid #333; border-radius: 6px; background: none; cursor: pointer; }
-  input[type=checkbox] { width: 18px; height: 18px; accent-color: #ff6b1a; }
-  .themes { display: flex; flex-wrap: wrap; gap: 6px; }
-  .themes button { padding: 6px 10px; border: 0; border-radius: 6px; color: #fff; font: 600 13px inherit; cursor: pointer; }
+  input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--ui); }
+  input[type=range] { width: 210px; accent-color: var(--ui); }
+  input[readonly] { color: var(--ui-soft); }
+  .row { display: flex; gap: 8px; margin-top: 8px; align-items: center; flex-wrap: wrap; }
+  .btn { padding: 7px 14px; border: 0; border-radius: 8px; background: var(--ui); color: var(--ui-ink); font-weight: 700; cursor: pointer; }
+  .btn.grey { background: #333; color: #fff; }
+  .btn.small { padding: 4px 9px; font-size: 12px; }
+  .note { color: #999; font-size: 13px; margin: 4px 0; }
+  .warn { color: var(--ui-soft); }
+  .themes { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+  .themes button { padding: 6px 10px; border: 0; border-radius: 6px; color: #fff; font: 600 13px inherit; cursor: pointer; text-shadow: 0 1px 2px rgba(0,0,0,.5); }
+  .order { list-style: none; padding: 0; margin: 0; }
+  .order li { display: flex; align-items: center; gap: 8px; padding: 6px 8px; margin-bottom: 6px; border-radius: 8px; background: #151515; }
+  .order li input[type=text] { flex: 1; width: auto; }
+  .own .fields { opacity: .35; pointer-events: none; }
+  .own.on .fields { opacity: 1; pointer-events: auto; }
+  .linkbar { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; padding: 10px 14px; border-radius: 10px; background: #1c1c1c; border-left: 4px solid var(--ui); }
+  .linkbar b { flex: 1; }
+  .ok { color: #3ccf6a; font-weight: 700; display: none; }
+  .feat ul { margin: 4px 0 0; padding-left: 18px; color: #ccc; }
+  .feat li { margin: 4px 0; }
+  .feat li b { color: #eee; }
+  select.enh { display: none; }
+  .csel { position: relative; width: 210px; padding: 6px 26px 6px 8px; border: 1px solid #333; border-radius: 6px; background: #111; color: #eee; font: inherit; text-align: left; cursor: pointer;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .csel::after { content: "›"; position: absolute; right: 10px; top: 50%; transform: translateY(-52%); color: #888; font-size: 18px; }
+  .csel:hover, .csel.open { border-color: var(--ui); }
+  .cpanel { position: fixed; z-index: 50; display: none; min-width: 210px; max-width: 320px; max-height: 176px; overflow-y: auto; padding: 4px; border: 1px solid #333; border-radius: 8px;
+    background: #1a1a1a; box-shadow: 0 12px 32px rgba(0,0,0,.6); }
+  .cpanel .og { padding: 6px 10px 2px; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--ui-soft); }
+  .cpanel .op { padding: 6px 10px; border-radius: 6px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cpanel .op:hover { background: #2a2a2a; }
+  .cpanel .op.sel { background: var(--ui); color: var(--ui-ink); }
   .previewbox { position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: 10px; overflow: hidden; background: #2b2d36; }
   .previewbox iframe { position: absolute; left: 0; top: 0; width: 2560px; height: 1440px; border: 0; transform-origin: top left; }
-  .out { margin-top: 16px; padding: 14px; border-radius: 10px; background: #1c1c1c; }
-  .out h2 { margin-bottom: 6px; }
-  textarea { width: 100%; min-height: 70px; padding: 8px; border: 1px solid #333; border-radius: 6px; background: #0b0b0b; color: #ffb37a; font: 13px Consolas, monospace; resize: vertical; }
-  .row { display: flex; gap: 8px; margin-top: 8px; align-items: center; }
-  .btn { padding: 8px 16px; border: 0; border-radius: 8px; background: #ff6b1a; color: #fff; font-weight: 700; cursor: pointer; }
-  .btn.grey { background: #333; }
-  .note { color: #999; font-size: 13px; }
-  #copied { color: #3ccf6a; font-weight: 700; display: none; }
+  .out { margin-top: 14px; padding: 14px; border-radius: 10px; background: #1c1c1c; }
+  .links { display: flex; flex-wrap: wrap; gap: 8px; }
+  .links div { flex: 1 1 auto; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 6px 12px; border-radius: 8px; background: #151515; }
+  .links b, .links .btn { white-space: nowrap; }
+  .links .ok { margin-left: -4px; }
+  .help { margin: 0 0 8px; border-radius: 10px; background: #1c1c1c; border-left: 4px solid var(--ui); }
+  .help summary { padding: 10px 14px; font-weight: 700; color: #eee; cursor: pointer; }
+  .help summary:hover { color: var(--ui); }
+  .help ol, .help p { margin: 0; padding: 0 14px 12px 34px; color: #ccc; }
+  .help p { padding-left: 14px; }
+  .help li { margin: 4px 0; }
+  .help b { color: #eee; }
+  .sep { border-top: 1px solid #2a2a2a; padding-top: 8px; margin-top: 8px; }
 </style>
 </head>
 <body>
 <header>
-  <h1>AutoVIP Overlay Settings</h1>
-  <p>Pick your colours and animation, watch the preview, then copy the OBS link. Keep this file in the same folder as the overlay.</p>
+  <img id="hdrImg" style="display:none" alt="" onerror="this.style.display='none'" onload="this.style.display=''">
+  <div><h1 id="hdrTitle">AutoVIP Overlay Settings</h1><p id="hdrText"></p></div>
 </header>
 <main>
   <aside>
-    <section>
-      <h2>Animation</h2>
-      <label><span>Style</span><select id="animation">
-        <option value="knockout">Knockout (flies off the corner)</option>
-        <option value="slam">Slam (squashed from above)</option>
-        <option value="yoink">Yoink (badge snatched, dizzy)</option>
-        <option value="rocket">Rocket (launched upwards)</option>
-        <option value="bowling">Bowling (rolled off the side)</option>
-        <option value="random">Random (different every time)</option>
-      </select></label>
-      <label><span>Speed lines</span><input type="checkbox" id="showStreaks"></label>
-      <label><span>Flash on hit</span><input type="checkbox" id="showFlash"></label>
-      <label><span>Screen shake</span><input type="checkbox" id="showShake"></label>
-      <label><span>Overall size</span><input type="number" id="scale" min="0.25" max="3" step="0.05"></label>
-    </section>
-    <section>
-      <h2>Banner</h2>
-      <label><span>Show banner</span><input type="checkbox" id="showBanner"></label>
-      <label><span>Message</span><input type="text" id="message"></label>
-      <p class="note">{new} = who stole it, {old} = who lost it, {amount} = their bits, subs or streak</p>
-      <label><span>Show bits/subs line</span><input type="checkbox" id="showAmount"></label>
-      <label><span>Seconds on screen</span><input type="number" id="holdSeconds" min="1" max="30" step="0.5"></label>
-    </section>
-    <section>
-      <h2>Sound</h2>
-      <label><span>Sound file</span><input type="text" id="soundFile" placeholder="No sound picked" readonly></label>
-      <div class="row"><button class="btn grey" id="browse" type="button">Browse...</button><button class="btn grey" id="clearSound" type="button">Remove</button><input type="file" id="picker" accept="audio/*,.mp3,.wav,.ogg" style="display:none"><button class="btn grey" id="embed" type="button" style="display:none">Put the sound inside the link</button></div>
-      <p class="note" id="pickNote">Click Browse to pick a sound (mp3, wav or ogg). It works best saved in the same folder as the overlay.</p>
-      <label><span>Volume</span><input type="range" id="volume" min="0" max="100"></label>
-      <label><span>Play it</span><select id="soundAt">
-        <option value="hit">On the hit</option>
-        <option value="start">When the loser appears</option>
-        <option value="land">When the badge lands</option>
-      </select></label>
-      <div class="row"><button class="btn grey" id="testSound" type="button">Test sound</button><span class="note" id="soundNote"></span></div>
-      <p class="note">In OBS, tick <b>Control audio via OBS</b> on the Browser source so the sound shows in your audio mixer.</p>
-    </section>
-    <section>
-      <h2>Colour themes</h2>
-      <div class="themes" id="themes"></div>
-    </section>
-    <section>
-      <h2>Colours</h2>
-      <div id="colours"></div>
-    </section>
-    <section>
-      <h2>Streamer.bot connection</h2>
-      <label><span>Address</span><input type="text" id="host"></label>
-      <label><span>Port</span><input type="number" id="port"></label>
-      <label><span>Password</span><input type="password" id="password" placeholder="only if switched on"></label>
-      <label><span>Overlay file name</span><input type="text" id="file"></label>
-    </section>
+    <p class="note warn"><b>Changed anything, or updated AutoVIP?</b> Copy the link again for every browser source and paste it into OBS. Old links keep the old settings and sounds.</p>
+    <div class="tabs">
+      <button data-tab="t-steals" class="on">Steals</button>
+      <button data-tab="t-stats">Per stat</button>
+      <button data-tab="t-boards" title="Leaderboards">Boards</button>
+      <button data-tab="t-champs">Champs</button>
+      <button data-tab="t-myrank">!myrank</button>
+      <button data-tab="t-recap">Recap</button>
+      <button data-tab="t-auto" title="Auto show">Auto</button>
+      <button data-tab="t-general">General</button>
+      <button data-tab="t-features">Features</button>
+      <button data-tab="t-help" class="help-tab">Help</button>
+    </div>
+
+    <div class="tab on" id="t-steals">
+      <div class="linkbar"><b>Steals browser source</b><button class="btn small" type="button" data-link="steals">Copy link</button><span class="ok">Copied!</span></div>
+      <section>
+        <h2>Animation</h2>
+        <label><span>Style</span><select data-k="steal.animation" class="sanim"></select></label>
+        <label><span>Speed lines</span><input type="checkbox" data-k="steal.streaks"></label>
+        <label><span>Flash on hit</span><input type="checkbox" data-k="steal.flash"></label>
+        <label><span>Screen shake</span><input type="checkbox" data-k="steal.shake"></label>
+      </section>
+      <section>
+        <h2>Banner</h2>
+        <label><span>Show banner</span><input type="checkbox" data-k="steal.showBanner"></label>
+        <label><span>Message</span><input type="text" data-k="steal.message"></label>
+        <p class="note">{new} = who stole it, {old} = who lost it, {amount} = their bits, subs or streak</p>
+        <label><span>Show bits/subs line</span><input type="checkbox" data-k="steal.showAmount"></label>
+        <label><span>Seconds on screen</span><input type="number" min="1" max="30" step="0.5" data-k="steal.holdSeconds"></label>
+      </section>
+      <section>
+        <h2>Sound</h2>
+        <div data-sound="steal"></div>
+        <label><span>Play it</span><select data-k="steal.soundAt"><option value="hit">On the hit</option><option value="start">When the loser appears</option><option value="land">When the badge lands</option></select></label>
+      </section>
+      <div data-look="steal"></div>
+    </div>
+
+    <div class="tab" id="t-stats">
+      <div class="linkbar"><b>Steals browser source</b><button class="btn small" type="button" data-link="steals">Copy link</button><span class="ok">Copied!</span></div>
+      <p class="note">Tick <b>Give it its own style</b> to change a stat. Anything you leave alone uses the Steals tab.</p>
+      <div class="subtabs" id="statTabs"></div>
+      <div id="statPanels"></div>
+    </div>
+
+    <div class="tab" id="t-boards">
+      <div class="linkbar"><b>Leaderboards browser source</b><button class="btn small" type="button" data-link="leaderboards">Copy link</button><span class="ok">Copied!</span></div>
+      <p class="note">For <b>!topvips</b> (every board, one after another), <b>!topwatchstreak</b>, <b>!topsubstreak</b>, <b>!topgifters</b> and <b>!topbits</b>.</p>
+      <section>
+        <h2>Leaderboards</h2>
+        <label><span>Show leaderboards</span><input type="checkbox" data-k="boards.show"></label>
+        <label><span>Names on each board</span><input type="number" min="5" max="60" step="1" data-k="boards.perPage"></label>
+        <p class="note">Up to 20 fit in two columns. More than 20 switch to three smaller columns (up to 60).</p>
+        <p class="note warn"><b>This must match the AutoVIP code:</b> set <code>LEADERBOARD_SIZE</code> to the same number.</p>
+      </section>
+      <section>
+        <h2>Order and titles</h2>
+        <p class="note">Top of the list shows first on <b>!topvips</b>. Untick a board to skip it on <b>!topvips</b>.</p>
+        <ul class="order" id="boardOrder"></ul>
+      </section>
+      <section>
+        <h2>How long they stay on screen</h2>
+        <label><span>!topvips: seconds per board</span><input type="number" min="3" max="120" step="1" data-k="boards.seconds"></label>
+        <label><span>Single board: seconds</span><input type="number" min="3" max="120" step="1" data-k="boards.singleSeconds"></label>
+        <label><span>Champions at the end of !topvips</span><input type="checkbox" data-k="boards.champions"></label>
+        <label><span>Their title</span><input type="text" data-k="boards.championsTitle"></label>
+        <label><span>Their seconds</span><input type="number" min="3" max="120" step="1" data-k="boards.championsSeconds"></label>
+        <p class="note" id="totalTime"></p>
+      </section>
+      <div data-look="boards"></div>
+    </div>
+
+    <div class="tab" id="t-champs">
+      <div class="linkbar"><b>Champs browser source</b><button class="btn small" type="button" data-link="champs">Copy link</button><span class="ok">Copied!</span></div>
+      <p class="note">For <b>!vipchamps</b>: the number one from every board, with their picture and a crown.</p>
+      <section>
+        <h2>Text and timing</h2>
+        <label><span>Title</span><input type="text" data-k="champs.title"></label>
+        <label><span>Text under the title</span><input type="text" data-k="champs.subtitle"></label>
+        <label><span>Seconds on screen</span><input type="number" min="3" max="120" step="1" data-k="champs.seconds"></label>
+      </section>
+      <div data-look="champs"></div>
+    </div>
+
+    <div class="tab" id="t-myrank">
+      <div class="linkbar"><b>!myrank browser source</b><button class="btn small" type="button" data-link="myrank">Copy link</button><span class="ok">Copied!</span></div>
+      <section>
+        <h2>!myrank card</h2>
+        <label><span>Show the !myrank card</span><input type="checkbox" data-k="myrank.show"></label>
+        <p class="note">When a viewer types <b>!myrank</b>, a card pops up with their picture, their rank on every board, and how far they are from a VIP spot.</p>
+        <p class="note warn"><b>This must match the AutoVIP code:</b> ticked here means <code>MYRANK_OVERLAY = true;</code>. Unticked means set it to <code>false</code> so <b>!myrank</b> answers in chat.</p>
+        <label><span>Seconds on screen</span><input type="number" min="2" max="60" step="1" data-k="myrank.seconds"></label>
+      </section>
+      <div data-look="myrank"></div>
+    </div>
+
+    <div class="tab" id="t-recap">
+      <div class="linkbar"><b>Recap browser source</b><button class="btn small" type="button" data-link="recap">Copy link</button><span class="ok">Copied!</span></div>
+      <p class="note" id="recapWarn"></p>
+      <section>
+        <h2>End of stream recap</h2>
+        <label><span>Show end of stream recap when on scene</span><input type="checkbox" data-k="recap.enabled"></label>
+        <p class="note">Put the recap browser source only in that scene. In its OBS properties, tick <b>Shutdown source when not visible</b> and <b>Refresh browser when scene becomes active</b>.</p>
+      </section>
+      <section>
+        <h2>OBS connection</h2>
+        <p class="note">Only needed to fill in the scene list. In OBS: <b>Tools</b> &gt; <b>WebSocket Server Settings</b> &gt; tick <b>Enable WebSocket server</b>, then <b>Show Connect Info</b>.</p>
+        <label><span>Address</span><input type="text" data-k="obs.host"></label>
+        <label><span>Port</span><input type="number" data-k="obs.port"></label>
+        <label><span>Password</span><input type="password" data-k="obs.password"></label>
+        <div class="row"><button class="btn" type="button" id="obsConnect">Connect and get scenes</button><span class="note" id="obsNote"></span></div>
+        <label><span>Scene</span><select data-k="recap.scene" id="sceneList"></select></label>
+      </section>
+      <section>
+        <h2>Style</h2>
+        <label><span>Recap style</span><select data-k="recap.style">
+          <option value="classic">Classic (uses the show and hide animations below)</option>
+          <option value="galactic">Podrace start</option>
+          <option value="starwars">Space crawl</option>
+          <option value="pirate">Treasure map</option>
+          <option value="gears">Heavy metal slam</option>
+          <option value="confetti">Confetti party</option>
+          <option value="fireworks">Fireworks</option>
+          <option value="glitch">Glitch</option>
+        </select></label>
+      </section>
+      <section>
+        <h2>Timing and text</h2>
+        <label><span>Wait before showing (seconds)</span><input type="number" min="0" max="60" step="0.5" data-k="recap.delaySeconds"></label>
+        <label><span>Stay on screen until you switch scene</span><input type="checkbox" data-k="recap.loop"></label>
+        <label><span>Seconds on screen</span><input type="number" min="5" max="120" step="1" data-k="recap.seconds"></label>
+        <label><span>Title</span><input type="text" data-k="recap.title"></label>
+        <label><span>Subtitle</span><input type="text" data-k="recap.subtitle"></label>
+        <label><span>Highlight under the title</span><select data-k="recap.highlight">
+          <option value="">Nothing</option>
+          <option value="WatchStreak">Longest watch streak</option>
+          <option value="SubStreak">Longest sub streak</option>
+          <option value="SubGifters">Top gifter (all time)</option>
+          <option value="CheerBits">Top cheerer (all time)</option>
+        </select></label>
+        <div id="hlWording"></div>
+        <p class="note">{name} = who, {amount} = how many</p>
+      </section>
+      <section>
+        <h2>What's shown</h2>
+        <label><span>How many names in each box</span><input type="number" min="1" max="20" step="1" data-k="recap.count"></label>
+        <p class="note">The text shrinks to fit when you ask for more. Top cheerers, gifters and streaks have up to 10 names; the others up to 20. Tick the boxes you want and use Up and Down to change the order.</p>
+        <div id="recapSections"></div>
+      </section>
+      <div data-look="recap"></div>
+    </div>
+
+    <div class="tab" id="t-auto">
+      <div class="linkbar"><b>All auto shows in one browser source</b><button class="btn small" type="button" data-link="auto">Copy link</button><span class="ok">Copied!</span></div>
+      <section>
+        <h2>Show leaderboards by themselves</h2>
+        <label><span>Turn on auto show</span><input type="checkbox" data-k="auto.enabled"></label>
+        <label><span>Only while live</span><input type="checkbox" data-k="auto.onlyLive"></label>
+        <p class="note">Each auto show below has its own timer, position and size. For example: the champions every 45 minutes at the top, and a small bits board every 20 minutes in a corner. !topvips, !vipchamps and the other commands keep the position and size set on their own tabs. Colours, fonts and animations come from the Boards and Champs tabs.</p>
+        <p class="note">Use the link at the top to run every auto show in one browser source. Or use each show's own <b>Copy link</b> to put it in a different scene. Don't add the same show both ways, or it'll pop up twice.</p>
+        <p class="note">Want a show to run only while its scene is on screen? In that browser source's properties in OBS, tick <b>Shutdown source when not visible</b>. Its timer then starts again each time you switch to that scene.</p>
+      </section>
+      <div id="autoShows"></div>
+      <div class="row"><button class="btn" type="button" data-addshow="1">+ Add another auto show</button></div>
+      <p class="note">Shows in the same link wait for each other if they come due within a minute. Shows in different links can't see each other, so Streamer.bot skips any auto show that comes within a minute of the last one.</p>
+      <p class="note">Auto show needs its own browser source in OBS, made with one of the links on this tab. Your Leaderboards and Champs browser sources don't run it. The auto show source runs the timer, asks Streamer.bot for the boards and shows them, so its connection to Streamer.bot must be working. Changed something here? Copy the link again and paste it into OBS.</p>
+    </div>
+
+    <div class="tab feat" id="t-features">
+      <p class="note">Everything this overlay can do. Every part has its own tab and its own OBS link.</p>
+      <section>
+        <h2>Steals</h2>
+        <ul>
+          <li><b>5 animations:</b> Knockout, Slam, Yoink, Rocket, Bowling, or Random</li>
+          <li><b>Effects:</b> speed lines, flash on hit and screen shake, each on or off</li>
+          <li><b>Banner:</b> show or hide, custom message with {new}, {old} and {amount}, optional bits/subs line, time on screen</li>
+          <li><b>Sound:</b> your own file, volume, test button, and when it plays</li>
+          <li><b>Look:</b> 6 colour themes plus 13 colour pickers, fonts, position and size</li>
+        </ul>
+      </section>
+      <section>
+        <h2>Per stat</h2>
+        <ul><li>Bits, Gifted subs, Sub streak and Watch streak can each have their own steal animation, message, timing, sound and colours</li></ul>
+      </section>
+      <section>
+        <h2>Leaderboards</h2>
+        <ul>
+          <li><b>Commands:</b> !topvips, !topwatchstreak, !topsubstreak, !topgifters, !topbits</li>
+          <li><b>Display:</b> on the overlay instead of chat, 5 to 60 names per board</li>
+          <li><b>Order:</b> reorder, rename or skip boards in !topvips</li>
+          <li><b>Timing:</b> seconds per board and for a single board</li>
+          <li><b>Champions:</b> optional board at the end of !topvips</li>
+          <li><b>Look:</b> header, photo, sound, colours, fonts, position, size, and 11 show and hide animations</li>
+        </ul>
+      </section>
+      <section>
+        <h2>Champs</h2>
+        <ul>
+          <li><b>!vipchamps:</b> the number one from every board, with their picture and a crown</li>
+          <li><b>Text and timing:</b> title, subtitle and seconds on screen</li>
+          <li><b>Look:</b> its own header, photo, sound, colours, fonts, position, size and animations</li>
+        </ul>
+      </section>
+      <section>
+        <h2>!myrank card</h2>
+        <ul>
+          <li>Shows the viewer's rank on every board and how far they are from a VIP spot</li>
+          <li><b>Look:</b> its own timing, colours, fonts, position, size, animations and sound</li>
+        </ul>
+      </section>
+      <section>
+        <h2>Stream recap</h2>
+        <ul>
+          <li><b>Automatic:</b> shows when you switch to a chosen OBS scene, picked from a list loaded from OBS</li>
+          <li><b>8 styles:</b> Classic, Podrace start, Space crawl, Treasure map, Heavy metal slam, Confetti party, Fireworks, Glitch</li>
+          <li><b>Timing:</b> wait before showing, seconds on screen, or stay until you switch scene</li>
+          <li><b>Text:</b> title, subtitle, and an optional highlight (longest watch streak, longest sub streak, top gifter or top cheerer)</li>
+          <li><b>7 boxes:</b> New VIPs, Badges stolen, Lost VIP badges, Top cheerers, Top gifters, Top watch streaks, Top sub streaks</li>
+          <li><b>Boxes:</b> switch each on or off, change their order, wording and headings, and choose how many names they show</li>
+          <li><b>Look:</b> header, photo, sound, colours, fonts, position, size and animations</li>
+        </ul>
+      </section>
+      <section>
+        <h2>Auto show</h2>
+        <ul><li>Shows the leaderboards by themselves on a timer: what to show, how often, when the first one appears, only while live, and its own browser source, separate from the commands</li><li><b>As many auto shows as you like,</b> each with its own board, timer, position and size, all in one link or each with its own link for different scenes</li></ul>
+      </section>
+      <section>
+        <h2>General</h2>
+        <ul>
+          <li><b>Overall look:</b> one click recolours everything, or use your own colour</li>
+          <li><b>Font for everything:</b> one font on every part at once</li>
+          <li><b>This page:</b> its own title, text and picture</li>
+          <li><b>Connection:</b> Streamer.bot address, port and password, overall size, reset everything</li>
+        </ul>
+      </section>
+      <section>
+        <h2>Everywhere</h2>
+        <ul>
+          <li><b>Live preview</b> of every steal, leaderboard, champs, !myrank and recap</li>
+          <li><b>Copy link</b> button at the top of each tab for that part's OBS browser source, plus one for each auto show</li>
+          <li><b>Saved automatically</b> between visits</li>
+          <li><b>Help</b> tab with quick fixes for common problems</li>
+        </ul>
+      </section>
+    </div>
+
+    <div class="tab" id="t-help">
+      <p class="note">Click a problem to open its mini guide. Most fixes end with <b>Copy link</b> and pasting the new link into OBS.</p>
+      <p class="note warn"><b>Still having issues?</b> Reach out to FluffFaceYeti for help!</p>
+      <p class="note warn"><b>Golden rule:</b> keep every sound, picture and overlay file together in the same folder as the overlay file.</p>
+      <p class="note warn"><b>Updated AutoVIP?</b> Copy every link again from this page and paste each one into its OBS browser source. Old links keep the old settings.</p>
+      <section>
+        <h2>Connecting</h2>
+      <details class="help"><summary>Not connecting? ("Can't reach Streamer.bot")</summary><ol><li>Open Streamer.bot and go to <b>Servers/Clients</b> &gt; <b>WebSocket Server</b>.</li><li>Tick <b>Auto Start</b> and click <b>Start Server</b>. If it was already running, click <b>Stop Server</b> then <b>Start Server</b>.</li><li>Check the <b>Port</b> there matches the Port on the <b>General</b> tab here (usually <b>8080</b>).</li><li>Click <b>Copy link</b> again and paste it into the OBS browser source.</li><li>Still stuck? Open <b>Streamer.bot Connection Test.html</b> on the PC that runs OBS and click <b>Test the connection</b>. It tells you what's wrong.</li></ol></details>
+      <details class="help"><summary>It says that port is OBS's, not Streamer.bot's</summary><ol><li>Port <b>4455</b> is OBS's own WebSocket. The overlay needs Streamer.bot's WebSocket Server port instead.</li><li>On the <b>General</b> tab, set the Port to the one shown in Streamer.bot under <b>Servers/Clients</b> &gt; <b>WebSocket Server</b> (usually <b>8080</b>), then copy the link again.</li></ol></details>
+      <details class="help"><summary>It asks for a password, or says the password is wrong</summary><ol><li>In Streamer.bot, <b>Servers/Clients</b> &gt; <b>WebSocket Server</b>: if <b>Authentication</b> is ticked, copy its password.</li><li>Paste it into <b>Password</b> on the <b>General</b> tab here, or untick Authentication in Streamer.bot and leave it empty.</li><li>Copy the link again and paste it into OBS.</li></ol></details>
+      <details class="help"><summary>Which PC does what? (one PC, two PCs, OBS on both)</summary><ol><li>The overlay goes in the OBS you <b>stream from</b>. Open this page and keep the overlay folder on that PC.</li><li><b>Everything on one PC:</b> Streamer.bot's WebSocket Server Address <b>127.0.0.1</b>, and the same on the <b>General</b> tab here.</li><li><b>Streamer.bot on one PC, streaming OBS on the other:</b> see the next guide.</li><li><b>OBS on both PCs:</b> only the streaming OBS needs the overlay. If it's on the Streamer.bot PC, treat it as one PC; if not, treat it as two PCs.</li><li><b>Streamer.bot on both PCs:</b> run AutoVIP in only one of them, and point the overlay at that one.</li><li>Not sure? Open <b>Streamer.bot Connection Test.html</b> on the streaming PC. It has a guide for every setup and finds the right settings for you.</li></ol></details>
+      <details class="help"><summary>Streamer.bot and OBS are on different PCs</summary><ol><li>On the Streamer.bot PC: set the WebSocket Server <b>Address</b> to <b>0.0.0.0</b>, then Stop and Start the server. Click <b>Allow</b> if Windows asks about the firewall.</li><li>Find that PC's IP: in OBS on that PC, go to <b>Tools</b> &gt; <b>WebSocket Server Settings</b> &gt; <b>Show Connect Info</b> and use the <b>Server IP</b>. No OBS on that PC? Open <b>Command Prompt</b>, type <b>ipconfig</b> and use the <b>IPv4 Address</b>.</li><li>On the <b>General</b> tab here, put that IP in <b>Address</b>.</li><li>Copy the <b>whole folder</b> (overlay, this page, sounds and pictures) onto the OBS PC, open this page there, and copy the link from there.</li></ol></details>
+      </section>
+      <section>
+        <h2>Settings and OBS</h2>
+      <details class="help"><summary>Where do my sounds and pictures go?</summary><ol><li>Put every sound (mp3, wav or ogg) and every picture in the <b>same folder as the overlay file</b>, next to this settings page.</li><li>Keep the overlay, this settings page and the Connection Test page together in that folder too. Don't move or rename them afterwards.</li><li>Pick sounds and pictures with <b>Browse...</b> from inside that folder. Only the file name is saved, so a file anywhere else won't be found.</li><li>Moving to another PC? Copy the <b>whole folder</b> across, then copy the link again from this page on that PC.</li></ol></details>
+      <details class="help"><summary>My picture doesn't show</summary><ol><li>Check the picture is in the same folder as the overlay file, and the file name matches exactly, including the ending (.png, .jpg or .gif).</li><li>Check <b>Show photo</b> is ticked for that part.</li><li>Copy the link again and paste it into OBS.</li></ol></details>
+      <details class="help"><summary>I changed something but OBS still shows the old look</summary><ol><li>Your settings live inside the link, so OBS only sees changes after you copy it again.</li><li>Click <b>Copy link</b> on that part's tab.</li><li>In OBS, double-click the browser source, <b>clear the URL box completely</b>, paste, and click OK.</li></ol></details>
+      <details class="help"><summary>It says the link is broken</summary><p>Two links were pasted on top of each other. In OBS, clear the URL box completely, then paste the link from this page once.</p></details>
+      <details class="help"><summary>My settings have disappeared</summary><ol><li>This page saves your settings in the web browser you opened it in, on that PC only.</li><li>Open it in the same browser on the same PC to get them back. On another PC or browser you'll need to set them up again.</li><li>Your OBS link still has your settings in it, so the overlay keeps working either way.</li></ol></details>
+      <details class="help"><summary>It's too big, too small or cut off</summary><ol><li>In OBS, set the browser source <b>Width</b> to <b>2560</b> and <b>Height</b> to <b>1440</b>, then right-click it &gt; <b>Transform</b> &gt; <b>Fit to screen</b>.</li><li>Leave <b>Overall size</b> on the <b>General</b> tab at <b>1</b>.</li><li>To make one part smaller, use its <b>Size</b> slider (30% to 100%) under <b>Position and size</b>, then copy the link again.</li></ol></details>
+      <details class="help"><summary>No sound</summary><ol><li><b>Test sound</b> works but OBS is silent? You picked the sound after copying the link. Copy the link again, clear the URL box in OBS and paste it in.</li><li>The preview stays quiet while you change settings. Click a <b>Preview</b> button to hear the sound.</li><li>Keep the sound file in the <b>same folder as the overlay file</b> (see <b>Where do my sounds and pictures go?</b>). Use <b>Test sound</b> here to check it plays.</li><li>In OBS, open the browser source and tick <b>Control audio via OBS</b>, then check it isn't muted in the audio mixer.</li><li>Check the <b>Volume</b> slider for that part isn't at 0, then copy the link again.</li></ol></details>
+      </section>
+      <section>
+        <h2>Commands and leaderboards</h2>
+      <details class="help"><summary>Nothing happens when someone types !topvips (or another command)</summary><ol><li>Check the browser source for leaderboards is in the scene you're on in OBS.</li><li>In Streamer.bot, check the command is ticked on the <b>Commands</b> tab and the AutoVIP actions are switched on.</li><li>Open the <b>AUTOVIP</b> action, double-click <b>Execute C# Code</b> and click <b>Compile</b>. It should say it compiled successfully.</li><li>Check the overlay is connected (see <b>Not connecting?</b> above).</li></ol></details>
+      <details class="help"><summary>It says Streamer.bot couldn't run an action</summary><p>Re-import AutoVIP into Streamer.bot so the action exists, and make sure the action is switched on.</p></details>
+      <details class="help"><summary>Someone is missing from a leaderboard</summary><ol><li>Mods, editors, bots, the broadcaster and VIPs you gave by hand never appear on the boards.</li><li>Watch streaks go up when the stream ends, and only for people who chatted while you were live.</li><li>Sub streaks only update when the viewer shares their resub in chat with the streak option turned on.</li></ol></details>
+      <details class="help"><summary>How do I test without waiting for a real steal?</summary><ol><li>Type <b>!teststeal</b> in chat (mods and the broadcaster only). It plays a steal on screen and nobody's VIP changes.</li><li>The preview on this page also shows each part as you change it.</li></ol></details>
+      </section>
+      <section>
+        <h2>Recap and auto show</h2>
+      <details class="help"><summary>The end of stream recap doesn't show</summary><ol><li>On the <b>Recap</b> tab, tick <b>Show end of stream recap when on scene</b>.</li><li>In OBS: <b>Tools</b> &gt; <b>WebSocket Server Settings</b> &gt; tick <b>Enable WebSocket server</b>. Put its details under <b>OBS connection</b> and click <b>Connect and get scenes</b>.</li><li>Pick your end screen in <b>Scene</b> and copy the link again.</li><li>Put the recap browser source only in that scene, and in its properties tick <b>Shutdown source when not visible</b> and <b>Refresh browser when scene becomes active</b>.</li></ol></details>
+      <details class="help"><summary>Auto show isn't showing anything</summary><ol><li>On the <b>Auto</b> tab, check <b>Turn on auto show</b> is ticked, and <b>Turn this one on</b> for that show.</li><li>Auto show needs its own browser source. Copy the link at the top of the <b>Auto</b> tab (or that show's own link), clear the URL box in OBS and paste it in. Your Leaderboards and Champs browser sources don't run it.</li><li>If <b>Only while live</b> is ticked, it waits until you're live. It also waits for <b>First one after (minutes)</b>, and that countdown starts again whenever the browser source reloads (or, with <b>Shutdown source when not visible</b>, each time you switch to its scene).</li><li>Shows in different links can't see each other: if two come due within a minute, Streamer.bot skips the second. Move one of them a few minutes, or put them in the same link.</li><li>The auto show browser source must be connected to Streamer.bot (see <b>Not connecting?</b> above).</li><li>To test it quickly, set <b>First one after</b> to 1, copy the link again, and set it back afterwards.</li></ol></details>
+      <details class="help"><summary>An auto show pops up twice</summary><ol><li>The same show is in two browser sources: the link at the top of the <b>Auto</b> tab runs every show, so don't also add that show's own link.</li><li>Either keep the one link for all shows, or use only each show's own link.</li></ol></details>
+      <details class="help"><summary>Auto show also pops up in my !topvips or !vipchamps browser source</summary><ol><li>Your AutoVIP code in Streamer.bot is older than this overlay, so it doesn't mark which shows are automatic.</li><li>Import the <b>AutoVIP</b> file from this folder again, then put your settings back at the top of the code.</li></ol></details>
+      </section>
+    </div>
+
+    <div class="tab" id="t-general">
+      <section>
+        <h2>Overall look</h2>
+        <p class="note">Pick a theme to recolour this page <b>and</b> every part of the overlay in one go. You can still fine-tune each part on its own tab afterwards.</p>
+        <div class="themes" id="vibeThemes"></div>
+        <label><span>This page's colour</span><input type="color" data-k="page.ui"></label>
+        <div class="row"><button class="btn grey small" type="button" id="vibeApply">Use this colour on everything</button></div>
+      </section>
+      <section>
+        <h2>Font for everything</h2>
+        <label><span>Headings</span><select id="allHead"></select></label>
+        <label><span>Heading size (%)</span><input type="number" id="allSize" min="30" max="200" step="5" value="100"></label>
+        <label><span>Text</span><select id="allText"></select></label>
+        <div class="row"><button class="btn grey small" type="button" id="fontApply">Use on every part</button></div>
+      </section>
+      <section>
+        <h2>This page</h2>
+        <label><span>Title</span><input type="text" data-k="page.title"></label>
+        <label><span>Text under the title</span><input type="text" data-k="page.text"></label>
+        <label><span>Picture file</span><input type="text" data-k="page.photo"></label>
+        <div class="row"><button class="btn grey small" type="button" data-pick="page.photo">Browse...</button><span class="note" data-pnote="page.photo"></span></div>
+      </section>
+      <section>
+        <h2>Streamer.bot connection</h2>
+        <label><span>Address</span><input type="text" data-k="host"></label>
+        <label><span>Port</span><input type="number" data-k="port"></label>
+        <p class="note">Leave the port as 8080. It's Streamer.bot's WebSocket Server port, not OBS's 4455.</p>
+        <label><span>Password</span><input type="password" data-k="password" placeholder="only if switched on"></label>
+      </section>
+      <section>
+        <h2>Overlay</h2>
+        <label><span>Overall size</span><input type="number" min="0.25" max="3" step="0.05" data-k="scale"></label>
+        <label><span>Overlay file name</span><input type="text" id="file" value="AutoVIP Overlay.html"></label>
+        <div class="row"><button class="btn grey" type="button" id="reset">Reset everything</button></div>
+      </section>
+    </div>
   </aside>
+
   <div>
-    <div class="previewbox" id="previewbox"><iframe id="preview" title="Preview"></iframe></div>
-    <div class="out">
-      <h2>OBS link</h2>
-      <p class="note">In OBS: Browser source, untick <b>Local file</b>, paste this into <b>URL</b>, size <b>2560 x 1440</b>.</p>
-      <textarea id="url" readonly></textarea>
-      <div class="row"><button class="btn" id="copyUrl">Copy OBS link</button><button class="btn grey" id="reset">Reset everything</button><span id="copied">Copied!</span></div>
+    <div class="row" style="margin: 0 0 10px">
+      <span class="note">Preview:</span>
+      <button class="btn small" type="button" data-preview="CheerBits">Bits steal</button>
+      <button class="btn small" type="button" data-preview="SubGifters">Gifted subs steal</button>
+      <button class="btn small" type="button" data-preview="SubStreak">Sub streak steal</button>
+      <button class="btn small" type="button" data-preview="WatchStreak">Watch streak steal</button>
+      <button class="btn small" type="button" data-preview="boards">!topvips</button>
+      <button class="btn small" type="button" data-preview="board:WatchStreak">!topwatchstreak</button>
+      <button class="btn small" type="button" data-preview="board:SubStreak">!topsubstreak</button>
+      <button class="btn small" type="button" data-preview="board:SubGifters">!topgifters</button>
+      <button class="btn small" type="button" data-preview="board:CheerBits">!topbits</button>
+      <button class="btn small" type="button" data-preview="champs">!vipchamps</button>
+      <button class="btn small" type="button" data-preview="myrank">!myrank</button>
+      <button class="btn small" type="button" data-preview="recap">Recap</button>
     </div>
-    <div class="out">
-      <h2>Or: OBS Custom CSS (colours only)</h2>
-      <p class="note">If you'd rather keep <b>Local file</b> ticked, paste this into the Browser source's <b>Custom CSS</b> box instead.</p>
-      <textarea id="css" readonly></textarea>
-      <div class="row"><button class="btn grey" id="copyCss">Copy Custom CSS</button></div>
-    </div>
+    <div class="previewbox" id="previewbox"><iframe id="preview" title="Preview" allow="autoplay"></iframe></div>
   </div>
 </main>
 <script>
-const DEFAULTS = {
-  animation: "knockout", showStreaks: true, showFlash: true, showShake: true, scale: 1,
-  showBanner: true, message: "{new} stole {old}'s VIP badge!", showAmount: true, holdSeconds: 4,
-  host: "127.0.0.1", port: 8080, password: "", file: "AutoVIP Steal Overlay.html",
-  soundFile: "", volume: 80, soundAt: "hit",
-};
-const EMBED_LIMIT = 500 * 1024;
-const NOT_IN_LINK = ["file", "soundFile"];
-const COLOURS = [
-  ["loserRing", "--loser-ring", "Loser's ring", "#ff6b1a"],
-  ["thiefRing", "--thief-ring", "Thief's ring", "#ffffff"],
-  ["nameTag", "--name-tag", "Name tag", "#141414"],
-  ["nameTagBorder", "--name-tag-border", "Name tag edge", "#ff6b1a"],
-  ["nameText", "--name-text", "Name text", "#ffffff"],
-  ["badge", "--badge", "VIP badge", "#ff6b1a"],
-  ["badgeShine", "--badge-shine", "VIP badge shine", "#ffa055"],
-  ["bannerFrom", "--banner-from", "Banner left", "#ff7a1a"],
-  ["bannerTo", "--banner-to", "Banner right", "#e8332a"],
-  ["bannerBorder", "--banner-border", "Banner edge", "#141414"],
-  ["bannerWords", "--banner-words", "Banner text", "#ffffff"],
-  ["streaks", "--streaks", "Speed lines", "#ff9646"],
-  ["flash", "--flash", "Hit flash", "#ffd6aa"],
-];
-const THEMES = {
-  "Beardly Orange": {},
-  "Twitch purple": { loserRing: "#9147ff", nameTagBorder: "#9147ff", badge: "#e005b9", badgeShine: "#ff4fd8", bannerFrom: "#9147ff", bannerTo: "#e005b9", bannerBorder: "#18181b", nameTag: "#18181b", streaks: "#bf94ff", flash: "#e9d9ff" },
-  "Ice blue": { loserRing: "#3cb4ff", nameTagBorder: "#3cb4ff", badge: "#3cb4ff", badgeShine: "#a8e0ff", bannerFrom: "#3cb4ff", bannerTo: "#2563eb", bannerBorder: "#0b1a2e", nameTag: "#0b1a2e", streaks: "#9fd8ff", flash: "#dff3ff" },
-  "Toxic green": { loserRing: "#39ff6a", nameTagBorder: "#39ff6a", badge: "#39ff6a", badgeShine: "#b6ffc8", bannerFrom: "#39ff6a", bannerTo: "#0f9d3a", bannerBorder: "#0a1a0e", nameTag: "#0a1a0e", bannerWords: "#ffffff", streaks: "#8dffab", flash: "#e2ffe9" },
-  "Hot pink": { loserRing: "#ff3ea5", nameTagBorder: "#ff3ea5", badge: "#ff3ea5", badgeShine: "#ffa6d6", bannerFrom: "#ff6ec7", bannerTo: "#ff2d6f", bannerBorder: "#1d0a14", nameTag: "#1d0a14", streaks: "#ff9fd2", flash: "#ffe0f1" },
-  "Gold": { loserRing: "#ffc83d", nameTagBorder: "#ffc83d", badge: "#ffc83d", badgeShine: "#fff0b3", bannerFrom: "#ffd65c", bannerTo: "#e09a00", bannerBorder: "#1f1600", nameTag: "#1f1600", bannerWords: "#ffffff", streaks: "#ffe08a", flash: "#fff4d1" },
-  "Black & white": { loserRing: "#ffffff", thiefRing: "#ffffff", nameTagBorder: "#ffffff", badge: "#ffffff", badgeShine: "#cccccc", bannerFrom: "#2a2a2a", bannerTo: "#000000", bannerBorder: "#ffffff", nameTag: "#000000", streaks: "#ffffff", flash: "#ffffff" },
-};
-const $ = (id) => document.getElementById(id);
-let state = load();
+const STATS = [["CheerBits", "Bits"], ["SubGifters", "Gifted subs"], ["SubStreak", "Sub streak"], ["WatchStreak", "Watch streak"]];
+const ANIMS = [["knockout", "Knockout (flies off the corner)"], ["slam", "Slam (squashed from above)"], ["yoink", "Yoink (badge snatched, dizzy)"], ["rocket", "Rocket (launched upwards)"], ["bowling", "Bowling (rolled off the side)"], ["random", "Random (different every time)"]];
+const BOARD_ANIMS = [["slide-right", "Slide (right side)"], ["slide-left", "Slide (left side)"], ["slide-up", "Slide (bottom)"], ["slide-down", "Slide (top)"], ["fade", "Fade"], ["zoom", "Zoom"], ["pop", "Pop"], ["flip", "Flip"], ["spin", "Spin"], ["drop", "Drop and bounce"], ["none", "None (instant)"]];
+const STEAL_COLOURS = [["loserRing", "Loser's ring"], ["thiefRing", "Thief's ring"], ["nameTag", "Name tag"], ["nameTagBorder", "Name tag edge"], ["nameText", "Name text"],
+  ["badge", "VIP badge"], ["badgeShine", "VIP badge shine"], ["bannerFrom", "Banner left"], ["bannerTo", "Banner right"], ["bannerBorder", "Banner edge"],
+  ["bannerWords", "Banner text"], ["streaks", "Speed lines"], ["flash", "Hit flash"]];
+const STAT_COLOURS = ["bannerFrom", "bannerTo", "loserRing", "badge", "badgeShine", "nameTagBorder"];
+const BOARD_COLOURS = [["panelFrom", "Panel top"], ["panelTo", "Panel bottom"], ["panelBorder", "Panel edge"], ["accent", "Highlight"], ["panelText", "Text"], ["gold", "1st place"], ["silver", "2nd place"], ["bronze", "3rd place"]];
+const PANEL_ASPECTS = ["boards", "champs", "myrank", "recap"];
+const ALL_ASPECTS = ["steal"].concat(PANEL_ASPECTS);
+const LOOK_KEYS = ["showAnimation", "showSeconds", "hideAnimation", "hideSeconds", "posX", "posY", "size", "header", "showPhoto", "photo", "sound", "volume", "colours", "font"];
+const HEAD_FIT = { "Bangers": 1, "Luckiest Guy": .82, "Bebas Neue": 1.05, "Anton": .9, "Permanent Marker": .82, "Russo One": .78, "Lilita One": .9, "Black Ops One": .8, "Bungee": .72, "Righteous": .85, "Creepster": 1, "Press Start 2P": .5 };
+const HEAD_FONTS = Object.keys(HEAD_FIT);
+const TEXT_FONTS = ["Nunito", "Poppins", "Montserrat", "Rubik", "Fredoka", "Baloo 2", "Oswald", "Roboto", "Comfortaa"];
+const ALL_FONTS = HEAD_FONTS.concat(TEXT_FONTS);
+(() => { const l = document.createElement("link"); l.rel = "stylesheet"; l.href = "https://fonts.googleapis.com/css2?" + HEAD_FONTS.concat(TEXT_FONTS).map((n) => "family=" + n.replace(/ /g, "+")).join("&") + "&display=swap"; document.head.appendChild(l); })();
 
+const BOARD_DEFAULT_COLOURS = { panelFrom: "#1d1d1f", panelTo: "#0b0b0c", panelBorder: "#ff6b1a", accent: "#ff6b1a", panelText: "#ffffff", gold: "#ffc83d", silver: "#d7dde5", bronze: "#d08a4a" };
+const FONT_DEFAULT = { heading: "Bangers", text: "Nunito", headingSize: 100 };
+const panelLook = (extra) => Object.assign({ showAnimation: "slide-right", showSeconds: 0.65, hideAnimation: "fade", hideSeconds: 0.45, posX: "centre", posY: "middle", size: 100,
+  header: "Top VIPs", showPhoto: true, photo: "", sound: "", volume: 70, colours: Object.assign({}, BOARD_DEFAULT_COLOURS), font: Object.assign({}, FONT_DEFAULT) }, extra || {});
+const DEFAULTS = {
+  page: { title: "AutoVIP Overlay Settings", text: "Pick a part, change anything you like, watch the preview, then copy its OBS link.", photo: "", ui: "#ff6b1a" },
+  host: "127.0.0.1", port: 8080, password: "", scale: 1,
+  steal: { animation: "knockout", sound: "", volume: 80, soundAt: "hit", message: "{new} stole {old}'s VIP badge!", showBanner: true, showAmount: true, holdSeconds: 4, streaks: true, flash: true, shake: true,
+    posX: "centre", posY: "middle", size: 100, font: Object.assign({}, FONT_DEFAULT),
+    colours: { loserRing: "#ff6b1a", thiefRing: "#ffffff", nameTag: "#141414", nameTagBorder: "#ff6b1a", nameText: "#ffffff", badge: "#ff6b1a", badgeShine: "#ffa055",
+      bannerFrom: "#ff7a1a", bannerTo: "#e8332a", bannerBorder: "#141414", bannerWords: "#ffffff", streaks: "#ff9646", flash: "#ffd6aa" } },
+  stats: { CheerBits: { own: false }, SubGifters: { own: false }, SubStreak: { own: false }, WatchStreak: { own: false } },
+  boards: panelLook({ show: true, order: ["WatchStreak", "SubStreak", "SubGifters", "CheerBits"], hidden: [], seconds: 8, singleSeconds: 12, perPage: 10, champions: true, championsTitle: "The Champions", championsSeconds: 10,
+    titles: { WatchStreak: "Top Watch Streaks", SubStreak: "Top Sub Streaks", SubGifters: "Top Sub Gifters", CheerBits: "Top Cheerers" } }),
+  champs: panelLook({ title: "The Champions", subtitle: "Number one on every board", seconds: 10, showAnimation: "pop", showSeconds: 0.6 }),
+  myrank: panelLook({ show: true, posX: "right", posY: "top", seconds: 8, showSeconds: 0.5, hideSeconds: 0.4 }),
+  recap: panelLook({ enabled: false, scene: "", delaySeconds: 2, seconds: 20, loop: false, style: "classic", title: "Tonight's Recap", subtitle: "Thanks for hanging out!",
+    order: ["newVips", "steals", "lost", "cheers", "gifts", "watchTop", "subTop"], count: 5,
+    highlight: "WatchStreak",
+    highlightLines: { WatchStreak: "Longest watch streak: {name} ({amount} streams)", SubStreak: "Longest sub streak: {name} ({amount} months)", SubGifters: "Top gifter of all time: {name} ({amount} subs)", CheerBits: "Top cheerer of all time: {name} ({amount} bits)" },
+    sections: {
+      newVips: { show: true, title: "New VIPs", line: "{name}", empty: "No new VIPs tonight", showStat: true, count: 6 },
+      steals: { show: true, title: "Badges stolen", line: "{new} stole {old}'s VIP badge", empty: "No steals tonight", showStat: false, showLost: true, lost: "{count} other VIP badge{s} lost", count: 5 },
+      lost: { show: false, title: "Lost VIP badges", line: "{name}", empty: "No badges lost tonight", count: 6 },
+      cheers: { show: true, title: "Top cheerers tonight", line: "{rank}. {name}", value: "{amount} bits", empty: "No bits tonight", count: 5 },
+      gifts: { show: true, title: "Top gifters tonight", line: "{rank}. {name}", value: "{amount} subs", empty: "No gifted subs tonight", count: 5 },
+      watchTop: { show: false, title: "Top watch streaks", line: "{rank}. {name}", value: "{amount} streams", empty: "No watch streaks yet", count: 5 },
+      subTop: { show: false, title: "Top sub streaks", line: "{rank}. {name}", value: "{amount} months", empty: "No sub streaks yet", count: 5 },
+    } }),
+  auto: { enabled: false, onlyLive: true, shows: {} },
+  obs: { host: "127.0.0.1", port: 4455, password: "" },
+};
+const THEMES = {
+  "Classic Orange": { ui: "#ff6b1a", steal: {}, board: {} },
+  "Twitch purple": { ui: "#9147ff", steal: { loserRing: "#9147ff", nameTagBorder: "#9147ff", badge: "#e005b9", badgeShine: "#ff4fd8", bannerFrom: "#9147ff", bannerTo: "#e005b9", bannerBorder: "#18181b", nameTag: "#18181b", streaks: "#bf94ff", flash: "#e9d9ff" },
+    board: { panelFrom: "#1c1230", panelTo: "#0b0716", panelBorder: "#9147ff", accent: "#bf94ff" } },
+  "Ice blue": { ui: "#3cb4ff", steal: { loserRing: "#3cb4ff", nameTagBorder: "#3cb4ff", badge: "#3cb4ff", badgeShine: "#a8e0ff", bannerFrom: "#3cb4ff", bannerTo: "#2563eb", bannerBorder: "#0b1a2e", nameTag: "#0b1a2e", streaks: "#9fd8ff", flash: "#dff3ff" },
+    board: { panelFrom: "#0f1d2e", panelTo: "#060d16", panelBorder: "#3cb4ff", accent: "#3cb4ff" } },
+  "Toxic green": { ui: "#39ff6a", steal: { loserRing: "#39ff6a", nameTagBorder: "#39ff6a", badge: "#39ff6a", badgeShine: "#b6ffc8", bannerFrom: "#39ff6a", bannerTo: "#0f9d3a", bannerBorder: "#0a1a0e", nameTag: "#0a1a0e", streaks: "#8dffab", flash: "#e2ffe9" },
+    board: { panelFrom: "#0f2014", panelTo: "#060f09", panelBorder: "#39ff6a", accent: "#39ff6a" } },
+  "Gold": { ui: "#ffc83d", steal: { loserRing: "#ffc83d", nameTagBorder: "#ffc83d", badge: "#ffc83d", badgeShine: "#fff0b3", bannerFrom: "#ffd65c", bannerTo: "#e09a00", bannerBorder: "#1f1600", nameTag: "#1f1600", streaks: "#ffe08a", flash: "#fff4d1" },
+    board: { panelFrom: "#221a08", panelTo: "#0e0a02", panelBorder: "#ffc83d", accent: "#ffc83d" } },
+  "Fire red": { ui: "#e8332a", steal: { loserRing: "#e8332a", nameTagBorder: "#e8332a", badge: "#e8332a", badgeShine: "#ff8a80", bannerFrom: "#ff4b2b", bannerTo: "#a3120c", bannerBorder: "#1a0605", nameTag: "#1a0605", streaks: "#ff7a66", flash: "#ffd0c8" },
+    board: { panelFrom: "#2a0f0c", panelTo: "#120605", panelBorder: "#e8332a", accent: "#ff6b1a" } },
+};
+const RECAP_SECTIONS = [
+  ["newVips", "New VIPs", "{name} = the new VIP, {stat} = what got them in", { stat: true }],
+  ["steals", "Badges stolen", "{new} = who stole it, {old} = who lost it, {stat} = which board", { stat: true, lost: true }],
+  ["lost", "Lost VIP badges", "{name} = who lost their badge (not stolen)", {}],
+  ["cheers", "Top cheerers tonight", "{rank} = 1, 2, 3, {name} = who, {amount} = bits", { value: true }],
+  ["gifts", "Top gifters tonight", "{rank} = 1, 2, 3, {name} = who, {amount} = subs", { value: true }],
+  ["watchTop", "Top watch streaks", "{rank} = 1, 2, 3, {name} = who, {amount} = streams", { value: true }],
+  ["subTop", "Top sub streaks", "{rank} = 1, 2, 3, {name} = who, {amount} = months", { value: true }],
+];
+
+const $ = (id) => document.getElementById(id);
+const clone = (o) => JSON.parse(JSON.stringify(o));
+const isObj = (v) => v && typeof v === "object" && !Array.isArray(v);
+function merge(base, extra) { const out = Array.isArray(base) ? base.slice() : Object.assign({}, base); for (const [k, v] of Object.entries(extra || {})) out[k] = isObj(v) && isObj(base[k]) ? merge(base[k], v) : v; return out; }
+const getPath = (o, p) => p.split(".").reduce((a, k) => (a == null ? a : a[k]), o);
+const setPath = (o, p, v) => { const ks = p.split("."); let a = o; for (let i = 0; i < ks.length - 1; i++) { if (!isObj(a[ks[i]])) a[ks[i]] = {}; a = a[ks[i]]; } a[ks[ks.length - 1]] = v; };
+const opts = (list) => list.map(([v, l]) => '<option value="' + v + '">' + l + "</option>").join("");
+const fontOpts = () => '<optgroup label="Display fonts">' + HEAD_FONTS.map((n) => '<option value="' + n + '">' + n + "</option>").join("") + "</optgroup>" +
+  '<optgroup label="Everyday fonts">' + TEXT_FONTS.map((n) => '<option value="' + n + '">' + n + "</option>").join("") + "</optgroup>";
+
+const AUTO_SHOW = { on: true, what: "topvips", minutes: 30, firstMinutes: 10, posX: "centre", posY: "middle", size: 100 };
+const AUTO_WHAT = [["topvips", "Every board (like !topvips)"], ["vipchamps", "The champions (like !vipchamps)"], ["rotate", "Take turns: one board each time, then the champions"],
+  ["WatchStreak", "Only watch streaks"], ["SubStreak", "Only sub streaks"], ["SubGifters", "Only gifted subs"], ["CheerBits", "Only bits"]];
+function renderAutoShows() {
+  const ids = Object.keys(state.auto.shows);
+  $("autoShows").innerHTML = ids.map((id, i) => {
+    const p = "auto.shows." + id;
+    return '<section data-show="' + id + '"><h2>Auto show ' + (i + 1) + "</h2>" +
+      '<label><span>Turn this one on</span><input type="checkbox" data-k="' + p + '.on"></label>' +
+      '<label><span>What to show</span><select data-k="' + p + '.what">' + opts(AUTO_WHAT) + "</select></label>" +
+      '<label><span>Every (minutes)</span><input type="number" min="1" max="240" step="1" data-k="' + p + '.minutes"></label>' +
+      '<label><span>First one after (minutes)</span><input type="number" min="1" max="240" step="1" data-k="' + p + '.firstMinutes"></label>' +
+      '<label><span>Across</span><select data-k="' + p + '.posX">' + opts([["left", "Left"], ["centre", "Centre"], ["right", "Right"]]) + "</select></label>" +
+      '<label><span>Up and down</span><select data-k="' + p + '.posY">' + opts([["top", "Top"], ["middle", "Middle"], ["bottom", "Bottom"]]) + "</select></label>" +
+      '<label><span>Size: <b data-out="' + p + '.size"></b>%</span><input type="range" min="30" max="100" step="5" data-k="' + p + '.size"></label>' +
+      '<div class="row"><button class="btn small" type="button" data-preview="auto:' + id + '">Preview</button> ' +
+      '<button class="btn small" type="button" data-showlink="' + id + '">Copy link for only this show</button><span class="ok">Copied!</span>' +
+      (ids.length > 1 ? ' <button class="btn small grey" type="button" data-delshow="' + id + '">Remove</button>' : "") + "</div></section>";
+  }).join("");
+}
+let state = load();
 function load() {
   let saved = {};
-  try { saved = JSON.parse(localStorage.getItem("autovip-overlay-settings") || "{}"); } catch {}
-  const s = Object.assign({}, DEFAULTS, saved);
-  for (const [key, , , def] of COLOURS) if (!s[key]) s[key] = def;
+  try { saved = JSON.parse(localStorage.getItem("autovip-overlay-settings") || "{}"); } catch (e) {}
+  const s = merge(clone(DEFAULTS), saved);
+  if (saved.fonts) for (const a of ALL_ASPECTS) if (!saved[a] || !saved[a].font) s[a].font = merge(FONT_DEFAULT, saved.fonts);
+  if (saved.boards) for (const a of ["champs", "myrank", "recap"]) {
+    const had = saved[a] || {};
+    if (!had.colours && saved.boards.colours) s[a].colours = merge(BOARD_DEFAULT_COLOURS, saved.boards.colours);
+    if (a !== "myrank") for (const k of ["showAnimation", "showSeconds", "hideAnimation", "hideSeconds", "posX", "posY", "size", "header", "showPhoto", "photo", "sound", "volume"])
+      if (had[k] === undefined && saved.boards[k] !== undefined) s[a][k] = saved.boards[k];
+  }
+  if (saved.boards && saved.boards.championsTitle && !(saved.champs && saved.champs.title)) s.champs.title = saved.boards.championsTitle;
+  delete s.fonts; delete s.split; delete s.splitRecap;
+  const old = saved.auto || {};
+  if (!Object.keys(s.auto.shows || {}).length) {
+    const from = {};
+    for (const k of ["what", "minutes", "firstMinutes", "posX", "posY", "size"]) if (old[k] !== undefined) from[k] = old[k];
+    s.auto.shows = { s1: Object.assign({}, AUTO_SHOW, from) };
+  }
+  for (const k of ["what", "minutes", "firstMinutes", "posX", "posY", "size", "ownSize"]) delete s.auto[k];
   return s;
 }
-function save() { try { localStorage.setItem("autovip-overlay-settings", JSON.stringify(state)); } catch {} }
+function save() { try { localStorage.setItem("autovip-overlay-settings", JSON.stringify(state)); } catch (e) {} }
 
-function buildColours() {
-  $("colours").innerHTML = COLOURS.map(([key, , label]) => '<label><span>' + label + '</span><input type="color" id="' + key + '"></label>').join("");
-  $("themes").innerHTML = Object.keys(THEMES).map((name) => {
-    const t = Object.assign({}, Object.fromEntries(COLOURS.map(([k, , , d]) => [k, d])), THEMES[name]);
-    return '<button data-theme="' + name + '" style="background: linear-gradient(135deg, ' + t.bannerFrom + ', ' + t.bannerTo + ')">' + name + '</button>';
+function soundBlock(prefix) {
+  return '<label><span>Sound file</span><input type="text" readonly placeholder="No sound picked" data-k="' + prefix + '.sound"></label>' +
+    '<div class="row"><button class="btn grey small" type="button" data-browse="' + prefix + '">Browse...</button><button class="btn grey small" type="button" data-clear="' + prefix + '">Remove</button>' +
+    '<button class="btn grey small" type="button" data-test="' + prefix + '">Test sound</button><span class="note" data-snote="' + prefix + '"></span></div>' +
+    '<label><span>Volume</span><input type="range" min="0" max="100" data-k="' + prefix + '.volume"></label>' +
+    '<p class="note warn"><b>Copy the link AFTER you pick a sound.</b> The sound is saved inside the link, so OBS won\'t play it until you paste the new link in.</p>';
+}
+const colourRows = (prefix, list) => list.map(([k, label]) => '<label><span>' + label + '</span><input type="color" data-k="' + prefix + '.' + k + '"></label>').join("");
+const themeButtons = (aspect) => '<div class="themes">' + Object.keys(THEMES).map((n) => '<button type="button" data-theme="' + aspect + "|" + n + '" style="background:' + THEMES[n].ui + '">' + n + "</button>").join("") + "</div>";
+function lookHtml(a) {
+  const panel = a !== "steal", photo = a === "boards" || a === "champs" || a === "recap";
+  let h = "";
+  if (photo) h += '<section><h2>Header and photo</h2><label><span>Header</span><input type="text" data-k="' + a + '.header"></label>' +
+    '<label><span>Show photo</span><input type="checkbox" data-k="' + a + '.showPhoto"></label><label><span>Photo file</span><input type="text" data-k="' + a + '.photo"></label>' +
+    '<div class="row"><button class="btn grey small" type="button" data-pick="' + a + '.photo">Browse...</button><span class="note" data-pnote="' + a + '.photo"></span></div></section>';
+  if (panel) h += '<section><h2>Sound</h2>' + soundBlock(a) + "</section>";
+  h += '<section><h2>Colours</h2>' + themeButtons(a) + colourRows(a + ".colours", panel ? BOARD_COLOURS : STEAL_COLOURS) + "</section>";
+  h += '<section><h2>Font</h2><label><span>Headings</span><select data-k="' + a + '.font.heading">' + fontOpts(ALL_FONTS) + '</select></label>' +
+    '<label><span>Heading size (%)</span><input type="number" min="30" max="200" step="5" data-k="' + a + '.font.headingSize"></label>' +
+    '<label><span>Text</span><select data-k="' + a + '.font.text">' + fontOpts(ALL_FONTS) + '</select></label><p class="note" data-sample="' + a + '"></p></section>';
+  h += '<section><h2>Position and size</h2><label><span>Across</span><select data-k="' + a + '.posX"><option value="left">Left</option><option value="centre">Centre</option><option value="right">Right</option></select></label>' +
+    '<label><span>Up and down</span><select data-k="' + a + '.posY"><option value="top">Top</option><option value="middle">Middle</option><option value="bottom">Bottom</option></select></label>' +
+    '<label><span>Size: <b data-out="' + a + '.size"></b>%</span><input type="range" min="30" max="100" step="5" data-k="' + a + '.size"></label></section>';
+  if (panel) h += '<section><h2>How it appears and vanishes</h2><label><span>Show animation</span><select data-k="' + a + '.showAnimation">' + opts(BOARD_ANIMS) + '</select></label>' +
+    '<label><span>Show animation seconds</span><input type="number" min="0.1" max="5" step="0.05" data-k="' + a + '.showSeconds"></label>' +
+    '<label><span>Hide animation</span><select data-k="' + a + '.hideAnimation">' + opts(BOARD_ANIMS) + '</select></label>' +
+    '<label><span>Hide animation seconds</span><input type="number" min="0.1" max="5" step="0.05" data-k="' + a + '.hideSeconds"></label>' +
+    (a === "recap" ? '<p class="note">Used by the Classic style. The other styles have their own entrance and exit.</p>' : "") + "</section>";
+  return h;
+}
+function recapOrder() {
+  const all = RECAP_SECTIONS.map(([k]) => k), wanted = (state.recap.order || []).filter((k) => all.includes(k));
+  return wanted.concat(all.filter((k) => !wanted.includes(k)));
+}
+function recapSectionsHtml() {
+  const order = recapOrder();
+  return order.map((key, i) => RECAP_SECTIONS.find(([k]) => k === key)).map(([k, label, help, o], i) => {
+    const p = "recap.sections." + k;
+    return '<div class="sep"><div class="row" style="justify-content:space-between;margin:0"><span class="note"><b style="color:#eee">' + (i + 1) + ". " + label + '</b></span><span>' +
+      '<button class="btn grey small" type="button" data-rup="' + i + '"' + (i ? "" : " disabled") + '>Up</button> <button class="btn grey small" type="button" data-rdown="' + i + '"' + (i < order.length - 1 ? "" : " disabled") + '>Down</button></span></div>' +
+      '<label><span>Show it</span><input type="checkbox" data-k="' + p + '.show"></label>' +
+      '<label><span>Heading</span><input type="text" data-k="' + p + '.title"></label>' +
+      '<label><span>Each line</span><input type="text" data-k="' + p + '.line"></label>' +
+      (o.value ? '<label><span>Amount</span><input type="text" data-k="' + p + '.value"></label>' : "") +
+      '<p class="note">' + help + "</p>" +
+      (o.stat ? '<label><span>Show the board name after it</span><input type="checkbox" data-k="' + p + '.showStat"></label>' : "") +
+      (o.lost ? '<label><span>Count other lost badges</span><input type="checkbox" data-k="' + p + '.showLost"></label><label><span>Lost badges wording</span><input type="text" data-k="' + p + '.lost"></label><p class="note">{count} = how many, {s} = adds an s when it is more than one</p>' : "") +
+      '<label><span>When there are none</span><input type="text" data-k="' + p + '.empty"></label></div>';
   }).join("");
-  $("themes").querySelectorAll("button").forEach((b) => b.onclick = () => {
-    for (const [key, , , def] of COLOURS) state[key] = THEMES[b.dataset.theme][key] || def;
-    fill(); update();
+}
+function build() {
+  document.querySelectorAll("[data-look]").forEach((el) => el.innerHTML = lookHtml(el.dataset.look));
+  document.querySelector(".sanim").innerHTML = opts(ANIMS);
+  document.querySelector('[data-sound="steal"]').innerHTML = soundBlock("steal");
+  $("recapSections").innerHTML = recapSectionsHtml();
+  renderAutoShows();
+  $("vibeThemes").innerHTML = Object.keys(THEMES).map((n) => '<button type="button" data-vibe="' + n + '" style="background:' + THEMES[n].ui + '">' + n + "</button>").join("");
+  $("allHead").innerHTML = fontOpts(ALL_FONTS);
+  $("allText").innerHTML = fontOpts(ALL_FONTS);
+  $("statTabs").innerHTML = STATS.map(([k, l], i) => '<button type="button" data-stat="' + k + '"' + (i ? "" : ' class="on"') + ">" + l + "</button>").join("");
+  $("statPanels").innerHTML = STATS.map(([k, l], i) => '<div class="sub own' + (i ? "" : " on") + '" id="stat-' + k + '">' +
+    '<section><label><span><b>Give ' + l + ' its own style</b></span><input type="checkbox" data-k="stats.' + k + '.own"></label></section><div class="fields">' +
+    '<section><h2>' + l + ': animation and banner</h2><label><span>Style</span><select data-k="stats.' + k + '.animation">' + opts(ANIMS) + "</select></label>" +
+    '<label><span>Message</span><input type="text" data-k="stats.' + k + '.message"></label>' +
+    '<label><span>Seconds on screen</span><input type="number" min="1" max="30" step="0.5" data-k="stats.' + k + '.holdSeconds"></label></section>' +
+    '<section><h2>' + l + ': sound</h2>' + soundBlock("stats." + k) + '<label><span>Play it</span><select data-k="stats.' + k + '.soundAt"><option value="hit">On the hit</option><option value="start">When the loser appears</option><option value="land">When the badge lands</option></select></label></section>' +
+    '<section><h2>' + l + ': colours</h2>' + colourRows("stats." + k + ".colours", STEAL_COLOURS.filter(([c]) => STAT_COLOURS.includes(c))) + "</section></div>" +
+    '<div class="row"><button class="btn small" type="button" data-preview="' + k + '">Preview ' + l + ' steal</button></div></div>').join("");
+  document.querySelectorAll("#statPanels .sub").forEach((p, i) => p.style.display = i ? "none" : "block");
+}
+function statFill(k) {
+  const s = state.stats[k];
+  for (const f of ["animation", "message", "holdSeconds", "sound", "volume", "soundAt"]) if (s[f] === undefined) s[f] = state.steal[f];
+  if (!s.colours) s.colours = {};
+  for (const c of STAT_COLOURS) if (!s.colours[c]) s.colours[c] = state.steal.colours[c];
+}
+function renderOrder() {
+  const B = state.boards;
+  $("boardOrder").innerHTML = B.order.map((k, i) => '<li><input type="checkbox" data-hide="' + k + '"' + (B.hidden.includes(k) ? "" : " checked") + '>' +
+    '<input type="text" data-k="boards.titles.' + k + '">' +
+    '<button class="btn grey small" type="button" data-up="' + i + '">Up</button><button class="btn grey small" type="button" data-down="' + i + '">Down</button></li>').join("");
+}
+function renderHighlight() {
+  const k = state.recap.highlight;
+  $("hlWording").innerHTML = k ? '<label><span>Wording</span><input type="text" data-k="recap.highlightLines.' + k + '"></label>' : "";
+}
+function renderScenes() {
+  const list = (state.sceneList || []).slice(), cur = state.recap.scene;
+  if (cur && !list.includes(cur)) list.unshift(cur);
+  $("sceneList").innerHTML = '<option value="">' + (list.length ? "Pick a scene" : "Click Connect to load your scenes") + "</option>" + list.map((n) => '<option value="' + n.replace(/"/g, "&quot;") + '">' + n.replace(/</g, "&lt;") + "</option>").join("");
+  $("sceneList").value = cur || "";
+  syncSelects();
+}
+function renderSamples() {
+  document.querySelectorAll("[data-sample]").forEach((el) => {
+    const F = state[el.dataset.sample].font || FONT_DEFAULT, hs = (HEAD_FIT[F.heading] || 1) * (Number(F.headingSize) || 100) / 100;
+    el.innerHTML = '<span style="white-space:nowrap;font:' + Math.round(30 * hs) + 'px \'' + F.heading + '\'">VIPCHAMPS</span><br><span style="font:700 17px \'' + F.text + '\'">xan_the_bold stole eve\'s VIP badge! 48 streams</span>';
   });
 }
-function fill() {
-  for (const key of Object.keys(DEFAULTS)) {
-    const el = $(key);
-    if (el.type === "checkbox") el.checked = !!state[key]; else el.value = state[key];
-  }
-  for (const [key] of COLOURS) $(key).value = state[key];
+function inkFor(hex) {
+  const m = String(hex || "").match(/^#?([0-9a-f]{6})$/i); if (!m) return "#fff";
+  const n = parseInt(m[1], 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255;
+  return (r * 299 + g * 587 + b * 114) / 1000 > 160 ? "#111" : "#fff";
 }
-function read() {
-  for (const key of Object.keys(DEFAULTS)) {
-    const el = $(key);
-    state[key] = el.type === "checkbox" ? el.checked : el.type === "number" || el.type === "range" ? Number(el.value) : el.value;
+function renderPage() {
+  const P = state.page || {};
+  $("hdrTitle").textContent = P.title || "";
+  $("hdrText").textContent = P.text || "";
+  document.title = P.title || "Overlay Settings";
+  const img = $("hdrImg");
+  if (P.photo) { if (img.getAttribute("src") !== P.photo) img.setAttribute("src", P.photo); } else img.style.display = "none";
+  document.documentElement.style.setProperty("--ui", P.ui || "#ff6b1a");
+  document.documentElement.style.setProperty("--ui-ink", inkFor(P.ui));
+  const R = state.recap;
+  $("recapWarn").innerHTML = R.enabled && !R.scene ? '<b style="color:#ff6b6b">No scene picked yet, so the recap won\'t show by itself.</b> Pick one under OBS connection.' : "";
+}
+function fill() {
+  renderPage();
+  renderHighlight();
+  STATS.forEach(([k]) => statFill(k));
+  renderOrder();
+  renderScenes();
+  document.querySelectorAll("[data-k]").forEach((el) => {
+    const v = getPath(state, el.dataset.k);
+    if (el.type === "checkbox") el.checked = !!v; else el.value = v == null ? "" : v;
+    if (el.type === "range" && v != null && Number(el.value) !== Number(v)) read(el);
+  });
+  showOuts();
+  STATS.forEach(([k]) => $("stat-" + k).classList.toggle("on", !!state.stats[k].own));
+  renderSamples();
+  syncSelects();
+}
+function showOuts() {
+  document.querySelectorAll("[data-out]").forEach((el) => { el.textContent = getPath(state, el.dataset.out); });
+}
+function read(el) {
+  const v = el.type === "checkbox" ? el.checked : el.type === "number" || el.type === "range" ? Number(el.value) : el.value;
+  setPath(state, el.dataset.k, v);
+}
+
+function diff(value, base) {
+  if (isObj(value)) {
+    const out = {};
+    for (const [k, v] of Object.entries(value)) { const d = diff(v, isObj(base) ? base[k] : undefined); if (d !== undefined) out[k] = d; }
+    return Object.keys(out).length ? out : undefined;
   }
-  for (const [key] of COLOURS) state[key] = $(key).value;
+  return JSON.stringify(value) === JSON.stringify(base) ? undefined : value;
+}
+function overlayConfig() {
+  const keys = ["host", "port", "password", "scale", "steal", "boards", "champs", "myrank", "recap", "auto", "obs"];
+  const c = {}, base = {};
+  for (const k of keys) { c[k] = state[k]; base[k] = DEFAULTS[k]; }
+  c.stats = {}; base.stats = {};
+  for (const [k] of STATS) if (state.stats[k].own) { const s = clone(state.stats[k]); delete s.own; c.stats[k] = s; }
+  const out = diff(c, base) || {};
+  for (const a of ALL_ASPECTS) {
+    out[a] = out[a] || {};
+    out[a].font = state[a].font;
+    if (a === "champs" || a === "myrank" || a === "recap") for (const k of LOOK_KEYS) if (state[a][k] !== undefined) out[a][k] = state[a][k];
+  }
+  return out;
 }
 function overlayUrl(extra) {
-  const url = new URL(state.file || DEFAULTS.file, location.href);
-  const p = url.searchParams;
-  for (const key of Object.keys(DEFAULTS)) {
-    if (NOT_IN_LINK.includes(key) || state[key] === DEFAULTS[key] || state[key] === "") continue;
-    p.set(key, typeof state[key] === "boolean" ? (state[key] ? "1" : "0") : state[key]);
-  }
-  const sound = soundValue();
-  if (sound) p.set("sound", sound); else { p.delete("volume"); p.delete("soundAt"); }
-  for (const [key, , , def] of COLOURS) if (state[key].toLowerCase() !== def) p.set(key, state[key]);
-  for (const [k, v] of Object.entries(extra || {})) p.set(k, v);
+  const url = new URL($("file").value || "AutoVIP Overlay.html", location.href);
+  url.searchParams.set("config", JSON.stringify(overlayConfig()));
+  for (const [k, v] of Object.entries(extra || {})) url.searchParams.set(k, v);
   return url.toString();
 }
-let timer = 0;
+let previewKind = "CheerBits", timer = 0, previewSound = false;
+const TAB_PREVIEW = { "t-auto": "auto", "t-boards": "boards", "t-champs": "champs", "t-myrank": "myrank", "t-recap": "recap" };
+function followTab(el) {
+  const tab = el && el.closest && el.closest(".tab");
+  if (!tab) return;
+  if (tab.id === "t-boards") { if (!(previewKind === "boards" || /^board:/.test(previewKind))) previewKind = "boards"; }
+  else if (TAB_PREVIEW[tab.id]) previewKind = TAB_PREVIEW[tab.id];
+  else if (tab.id === "t-stats") { const p = el.closest(".sub"); if (p) previewKind = p.id.replace("stat-", ""); }
+  else if (tab.id === "t-steals") { if (!STATS.some(([k]) => k === previewKind)) previewKind = "CheerBits"; }
+}
+function totalTime() {
+  const B = state.boards, shown = B.order.filter((k) => !B.hidden.includes(k)).length;
+  const extra = (B.showAnimation === "none" ? 0 : Number(B.showSeconds) || 0) + (B.hideAnimation === "none" ? 0 : Number(B.hideSeconds) || 0);
+  const all = Math.round(shown * Math.max(3, B.seconds || 8) + (B.champions && shown > 1 ? Math.max(3, B.championsSeconds || 10) : 0) + extra);
+  $("totalTime").textContent = "!topvips stays up for about " + all + " seconds (" + shown + " board" + (shown === 1 ? "" : "s") + (B.champions && shown > 1 ? " + champions" : "") + "). A single board stays up for about " + Math.round(Math.max(3, B.singleSeconds || 12) + extra) + " seconds.";
+}
 function update() {
-  read(); save();
-  $("url").value = overlayUrl();
-  $("css").value = ":root {\n" + COLOURS.map(([key, cssVar]) => "  " + cssVar + ": " + state[key] + ";").join("\n") + "\n}";
+  save();
+  totalTime();
+  renderPage();
   clearTimeout(timer);
-  timer = setTimeout(() => { $("preview").src = overlayUrl({ demo: "1", mute: "1" }); }, 300);
+  const sound = previewSound;
+  previewSound = false;
+  timer = setTimeout(() => { $("preview").src = overlayUrl(sound ? { demo: previewKind } : { demo: previewKind, mute: "1" }); }, 300);
 }
-function soundValue() {
-  const name = state.soundFile.trim();
-  if (name.startsWith("Inside the link: ") && state.soundData) return state.soundData;
-  return name;
+function fit() { $("preview").style.transform = "scale(" + $("previewbox").clientWidth / 2560 + ")"; }
+function applyTheme(aspect, name) {
+  const T = THEMES[name];
+  if (aspect === "steal") state.steal.colours = merge(clone(DEFAULTS.steal.colours), T.steal);
+  else state[aspect].colours = merge(clone(BOARD_DEFAULT_COLOURS), T.board);
 }
-function overlayFolder() {
-  return decodeURIComponent(location.pathname).replace(/^\/([a-z]:)/i, "$1").replace(/\/[^/]*$/, "").replace(/\//g, "\\");
-}
-let picked = null;
-function checkPicked(file) {
-  picked = file;
-  $("embed").style.display = "none";
-  $("pickNote").textContent = "Looking for " + file.name + " next to the overlay...";
-  const probe = new Audio();
-  probe.oncanplaythrough = () => { probe.oncanplaythrough = null; $("pickNote").textContent = "Found " + file.name + " in the overlay's folder. All set!"; };
-  probe.onerror = () => {
-    $("pickNote").textContent = file.name + " isn't in the overlay's folder. Copy it into " + overlayFolder() + (file.size <= EMBED_LIMIT ? ", or put the sound inside the link instead:" : ". (It's too big to put inside the link, so it needs copying.)");
-    if (file.size <= EMBED_LIMIT) $("embed").style.display = "";
-  };
-  probe.src = new URL(file.name, location.href).toString();
-  probe.load();
-}
-function embedPicked() {
-  if (!picked) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    state.soundData = reader.result;
-    $("soundFile").value = "Inside the link: " + picked.name;
-    $("embed").style.display = "none";
-    $("pickNote").textContent = picked.name + " is now inside the OBS link, so it works from any folder. Copy the OBS link again.";
-    update();
-  };
-  reader.readAsDataURL(picked);
-}
-let ctx = null;
-function testSound() {
-  const v = soundValue(), vol = Math.max(0, Math.min(1, state.volume / 100));
-  $("soundNote").textContent = "";
-  if (!v) { $("soundNote").textContent = "Click Browse to pick a sound first."; return; }
-  const src = /^[a-z]:[\\/]/i.test(v) ? "file:///" + v.replace(/\\/g, "/") : new URL(v, location.href).toString();
-  const a = new Audio(src);
-  a.volume = vol;
-  a.play().then(() => { $("soundNote").textContent = "Playing!"; }, () => { $("soundNote").textContent = "Couldn't find or play that file. Check the name and that it's in this folder."; });
-}
-function fit() { const box = $("previewbox"); $("preview").style.transform = "scale(" + box.clientWidth / 2560 + ")"; }
-function copy(text) {
-  const done = () => { $("copied").style.display = "inline"; setTimeout(() => $("copied").style.display = "none", 1500); };
-  if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, () => { fallbackCopy(text); done(); });
-  else { fallbackCopy(text); done(); }
-}
-function fallbackCopy(text) { const t = document.createElement("textarea"); t.value = text; document.body.appendChild(t); t.select(); try { document.execCommand("copy"); } catch {} t.remove(); }
 
-buildColours();
-fill();
-document.querySelectorAll("input, select").forEach((el) => el.addEventListener("input", update));
-$("copyUrl").onclick = () => copy($("url").value);
-$("copyCss").onclick = () => copy($("css").value);
-$("testSound").onclick = testSound;
-$("browse").onclick = () => $("picker").click();
-$("picker").onchange = () => {
-  const file = $("picker").files[0];
-  if (!file) return;
-  $("soundFile").value = file.name;
-  state.soundData = "";
-  update();
-  checkPicked(file);
-  $("picker").value = "";
+const filePick = document.createElement("input");
+filePick.type = "file"; filePick.style.display = "none";
+document.body.appendChild(filePick);
+let pickFor = null, pickKind = "";
+filePick.onchange = () => {
+  const file = filePick.files[0];
+  if (!file || !pickFor) return;
+  setPath(state, pickFor, file.name);
+  fill(); update();
+  const note = document.querySelector(pickKind === "sound" ? '[data-snote="' + pickFor.replace(/\.sound$/, "") + '"]' : '[data-pnote="' + pickFor + '"]');
+  const url = new URL(file.name, location.href).toString();
+  if (pickKind === "sound") {
+    const probe = new Audio();
+    probe.oncanplaythrough = () => { probe.oncanplaythrough = null; note.textContent = "Found it next to the overlay."; };
+    probe.onerror = () => { note.textContent = file.name + " isn't in the overlay's folder. Copy it into the same folder as this page."; };
+    probe.src = url; probe.load();
+  } else {
+    const img = new Image();
+    img.onload = () => note.textContent = "Found it next to the overlay.";
+    img.onerror = () => note.textContent = file.name + " isn't in the overlay's folder. Copy it in.";
+    img.src = url;
+  }
+  filePick.value = "";
 };
-$("embed").onclick = embedPicked;
-$("clearSound").onclick = () => { $("soundFile").value = ""; state.soundData = ""; picked = null; $("embed").style.display = "none"; $("soundNote").textContent = ""; $("pickNote").textContent = "No sound will play."; update(); };
-$("reset").onclick = () => { state = Object.assign({}, DEFAULTS); for (const [key, , , def] of COLOURS) state[key] = def; fill(); update(); };
+function testSound(prefix) {
+  const f = getPath(state, prefix + ".sound"), note = document.querySelector('[data-snote="' + prefix + '"]');
+  if (!f) { note.textContent = "Click Browse to pick a sound first."; return; }
+  const a = new Audio(/^[a-z]:[\\/]/i.test(f) ? "file:///" + f.replace(/\\/g, "/") : new URL(f, location.href).toString());
+  a.volume = Math.max(0, Math.min(1, (getPath(state, prefix + ".volume") || 80) / 100));
+  a.play().then(() => note.textContent = "Playing!", () => note.textContent = "Couldn't find or play that file. Check it's in this folder.");
+}
+async function sha(t) { const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(t)); return btoa(String.fromCharCode(...new Uint8Array(b))); }
+function loadScenes() {
+  const O = state.obs, note = $("obsNote");
+  note.textContent = "Connecting to OBS...";
+  let ws, done = false;
+  const fail = (msg) => { if (done) return; done = true; note.textContent = msg; try { ws.close(); } catch (e) {} };
+  try { ws = new WebSocket("ws://" + (O.host || "127.0.0.1") + ":" + (O.port || 4455)); } catch (e) { fail("Couldn't connect: " + e.message); return; }
+  const timeout = setTimeout(() => fail("OBS didn't answer. Check OBS is open, the WebSocket server is switched on, and the port is right."), 6000);
+  ws.onmessage = async (e) => {
+    let m; try { m = JSON.parse(e.data); } catch (err) { return; }
+    if (m.op === 0) {
+      const d = { rpcVersion: 1, eventSubscriptions: 0 }, a = m.d && m.d.authentication;
+      if (a) d.authentication = await sha((await sha((O.password || "") + a.salt)) + a.challenge);
+      ws.send(JSON.stringify({ op: 1, d }));
+    } else if (m.op === 2) ws.send(JSON.stringify({ op: 6, d: { requestType: "GetSceneList", requestId: "scenes" } }));
+    else if (m.op === 7 && m.d && m.d.requestId === "scenes") {
+      clearTimeout(timeout); done = true;
+      state.sceneList = ((m.d.responseData && m.d.responseData.scenes) || []).map((x) => x.sceneName).reverse();
+      renderScenes(); save();
+      note.textContent = "Found " + state.sceneList.length + " scenes. Pick one below.";
+      ws.close();
+    }
+  };
+  ws.onclose = (e) => { clearTimeout(timeout); if (e.code === 4009) fail("OBS said the password is wrong."); else fail("Couldn't connect to OBS on port " + (O.port || 4455) + "."); };
+}
+function copyText(t, okEl) {
+  const done = () => { if (okEl) { okEl.style.display = "inline"; setTimeout(() => okEl.style.display = "none", 1500); } };
+  if (navigator.clipboard) navigator.clipboard.writeText(t).then(done, () => { fallbackCopy(t); done(); }); else { fallbackCopy(t); done(); }
+}
+function fallbackCopy(t) { const ta = document.createElement("textarea"); ta.value = t; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); ta.remove(); }
+
+const cpanel = document.createElement("div");
+cpanel.className = "cpanel";
+document.body.appendChild(cpanel);
+let openSel = null;
+const escHtml = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
+function enhanceSelects() {
+  document.querySelectorAll("aside select:not(.enh)").forEach((sel) => {
+    sel.classList.add("enh");
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "csel";
+    sel.after(b);
+    sel._btn = b;
+    b.addEventListener("click", (e) => { e.stopPropagation(); if (openSel === sel) closePanel(); else openPanel(sel); });
+  });
+  syncSelects();
+}
+function syncSelects() {
+  document.querySelectorAll("select.enh").forEach((sel) => { if (sel._btn) { const o = sel.selectedOptions[0]; sel._btn.textContent = o ? o.textContent : ""; } });
+}
+function openPanel(sel) {
+  closePanel();
+  openSel = sel;
+  sel._btn.classList.add("open");
+  const op = (o) => '<div class="op' + (o.value === sel.value ? " sel" : "") + '" data-v="' + escHtml(o.value) + '">' + escHtml(o.textContent) + "</div>";
+  cpanel.innerHTML = [...sel.children].map((n) => n.tagName === "OPTGROUP" ? '<div class="og">' + escHtml(n.label) + "</div>" + [...n.children].map(op).join("") : op(n)).join("");
+  cpanel.style.display = "block";
+  const r = sel._btn.getBoundingClientRect(), w = cpanel.offsetWidth, h = cpanel.offsetHeight;
+  let left = r.right + 8;
+  if (left + w > innerWidth - 8) left = Math.max(8, r.left - w - 8);
+  let top = r.top;
+  if (top + h > innerHeight - 8) top = Math.max(8, innerHeight - h - 8);
+  cpanel.style.left = left + "px"; cpanel.style.top = top + "px";
+  const cur = cpanel.querySelector(".op.sel");
+  if (cur) cpanel.scrollTop = cur.offsetTop - 4;
+}
+function closePanel() {
+  if (openSel && openSel._btn) openSel._btn.classList.remove("open");
+  cpanel.style.display = "none";
+  openSel = null;
+}
+cpanel.addEventListener("click", (e) => {
+  const op = e.target.closest(".op");
+  if (!op || !openSel) return;
+  const sel = openSel;
+  sel.value = op.dataset.v;
+  closePanel();
+  syncSelects();
+  sel.dispatchEvent(new Event("input", { bubbles: true }));
+  sel.dispatchEvent(new Event("change", { bubbles: true }));
+});
+document.addEventListener("click", (e) => { if (openSel && !cpanel.contains(e.target)) closePanel(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closePanel(); });
+document.querySelector("aside").addEventListener("scroll", closePanel);
+window.addEventListener("resize", closePanel);
+
+build(); fill();
+document.addEventListener("input", (e) => {
+  const k = e.target.dataset && e.target.dataset.k;
+  if (!k) return;
+  if (!/^(obs|auto|page|host|port|password|scale)\b/.test(k)) followTab(e.target);
+  const showId = (k.match(/^auto\.shows\.(\w+)\./) || [])[1];
+  if (showId) previewKind = "auto:" + showId;
+  read(e.target);
+  showOuts();
+  if (k.endsWith(".own") || k === "recap.highlight") fill();
+  if (/\.font\./.test(k)) renderSamples();
+  update();
+});
+document.addEventListener("change", (e) => {
+  if (e.target.dataset && e.target.dataset.hide) {
+    const k = e.target.dataset.hide, H = state.boards.hidden;
+    if (e.target.checked) state.boards.hidden = H.filter((x) => x !== k); else if (!H.includes(k)) H.push(k);
+    followTab(e.target);
+    update();
+  }
+});
+document.addEventListener("click", (e) => {
+  const d = e.target.dataset || {};
+  if (d.tab) {
+    const tabBtn = document.querySelector('.tabs button[data-tab="' + d.tab + '"]');
+    document.querySelectorAll(".tabs button").forEach((b) => b.classList.toggle("on", b === tabBtn));
+    document.querySelectorAll(".tab").forEach((t) => t.classList.toggle("on", t.id === d.tab));
+    const before = previewKind;
+    if (TAB_PREVIEW[d.tab] && d.tab !== "t-boards") previewKind = TAB_PREVIEW[d.tab];
+    else if (d.tab === "t-boards" && !(previewKind === "boards" || /^board:/.test(previewKind))) previewKind = "boards";
+    else if (d.tab === "t-steals" && !STATS.some(([k]) => k === previewKind)) previewKind = "CheerBits";
+    else if (d.tab === "t-stats") { const open = [...document.querySelectorAll("#statPanels .sub")].find((p) => p.style.display !== "none"); if (open) previewKind = open.id.replace("stat-", ""); }
+    if (previewKind !== before) update();
+  }
+  if (d.stat) { document.querySelectorAll("#statTabs button").forEach((b) => b.classList.toggle("on", b === e.target)); document.querySelectorAll("#statPanels .sub").forEach((p) => p.style.display = p.id === "stat-" + d.stat ? "block" : "none"); previewKind = d.stat; update(); }
+  if (d.preview) { previewKind = d.preview; previewSound = true; update(); }
+  if (d.addshow) {
+    let n = 1;
+    while (state.auto.shows["s" + n]) n++;
+    state.auto.shows["s" + n] = Object.assign({}, AUTO_SHOW);
+    renderAutoShows(); enhanceSelects(); fill();
+    previewKind = "auto:s" + n; update();
+  }
+  if (d.delshow && Object.keys(state.auto.shows).length > 1) {
+    delete state.auto.shows[d.delshow];
+    renderAutoShows(); enhanceSelects(); fill();
+    previewKind = "auto"; update();
+  }
+  if (d.browse) { pickFor = d.browse + ".sound"; pickKind = "sound"; filePick.accept = "audio/*,.mp3,.wav,.ogg"; filePick.click(); }
+  if (d.pick) { pickFor = d.pick; pickKind = "image"; filePick.accept = "image/*"; filePick.click(); }
+  if (d.clear) { setPath(state, d.clear + ".sound", ""); fill(); update(); }
+  if (d.test) testSound(d.test);
+  if (d.theme) { const [aspect, name] = d.theme.split("|"); applyTheme(aspect, name); followTab(e.target); fill(); update(); }
+  if (d.vibe) { for (const a of ALL_ASPECTS) applyTheme(a, d.vibe); state.page.ui = THEMES[d.vibe].ui; fill(); update(); }
+  if (d.link) copyText(overlayUrl({ part: d.link }), e.target.nextElementSibling);
+  if (d.showlink) copyText(overlayUrl({ part: "auto", show: d.showlink }), e.target.nextElementSibling);
+  if (d.rup !== undefined || d.rdown !== undefined) {
+    const o = recapOrder(), i = Number(d.rup !== undefined ? d.rup : d.rdown), j = d.rup !== undefined ? i - 1 : i + 1;
+    if (j >= 0 && j < o.length) {
+      [o[i], o[j]] = [o[j], o[i]];
+      state.recap.order = o;
+      $("recapSections").innerHTML = recapSectionsHtml();
+      previewKind = "recap"; fill(); update();
+    }
+  }
+  if (d.up !== undefined || d.down !== undefined) {
+    const o = state.boards.order, i = Number(d.up !== undefined ? d.up : d.down), j = d.up !== undefined ? i - 1 : i + 1;
+    if (j >= 0 && j < o.length) { [o[i], o[j]] = [o[j], o[i]]; fill(); update(); }
+  }
+});
+$("vibeApply").onclick = () => {
+  const c = state.page.ui || "#ff6b1a";
+  state.steal.colours = merge(state.steal.colours, { loserRing: c, nameTagBorder: c, badge: c, bannerFrom: c, streaks: c });
+  for (const a of PANEL_ASPECTS) state[a].colours = merge(state[a].colours, { panelBorder: c, accent: c });
+  fill(); update();
+};
+$("fontApply").onclick = () => {
+  const F = { heading: $("allHead").value, text: $("allText").value, headingSize: Number($("allSize").value) || 100 };
+  for (const a of ALL_ASPECTS) state[a].font = Object.assign({}, F);
+  fill(); update();
+};
+$("allHead").value = state.boards.font.heading; $("allText").value = state.boards.font.text; $("allSize").value = state.boards.font.headingSize || 100;
+$("file").addEventListener("input", update);
+$("obsConnect").onclick = loadScenes;
+$("reset").onclick = () => { if (!confirm("Reset every setting on this page back to the defaults?")) return; state = clone(DEFAULTS); fill(); update(); };
 window.addEventListener("resize", fit);
-fit();
-update();
+enhanceSelects();
+fit(); update();
 </script>
 </body>
 </html>
