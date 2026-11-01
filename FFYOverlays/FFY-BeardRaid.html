@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Beard Battle – Raid Overlay</title>
+<script>
+const CONFIG = {
+  channel: "yourchannelname",
+  myEmotePrefix: "",
+  battleSeconds: 120,
+  introSeconds: 1,
+  resultSeconds: 10,
+  minRaidViewers: 1,
+  maxEmotesPerMessage: 8,
+  includeThirdParty: true,
+  allowModCommands: true,
+
+  myBeardColor: "#6b3f1f",
+  raiderBeardColor: "#d2601a",
+  me:    { hat: "#2f7de1" },
+  raider:{ hat: "#e0383e" },
+};
+
+(() => {
+  const p = new URLSearchParams(location.search);
+  for (const [k, v] of p) {
+    if (k in CONFIG && typeof CONFIG[k] !== "object") {
+      CONFIG[k] = typeof CONFIG[k] === "number" ? Number(v)
+               : typeof CONFIG[k] === "boolean" ? (v === "1" || v === "true") : v;
+    }
+  }
+  const hex = c => /^#?[0-9a-f]{6}$/i.test(String(c).trim()) ? "#" + String(c).trim().replace("#", "") : null;
+  CONFIG.me.beard = hex(CONFIG.myBeardColor) || "#6b3f1f";
+  CONFIG.raider.beard = hex(CONFIG.raiderBeardColor) || "#d2601a";
+  CONFIG.test = p.has("test");
+  CONFIG.setup = !window.obsstudio && !p.has("channel") && !p.has("test") && !p.has("overlay");
+  CONFIG.debug = p.has("debug");
+  CONFIG.channel = String(CONFIG.channel).toLowerCase().replace(/^#/, "").trim();
+})();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; padding: 0; background: transparent; overflow: hidden; width: 100%; height: 100%; }
+  canvas { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+</style>
+</head>
+<body>
+<canvas id="c" width="1920" height="1080"></canvas>
+<script>
+"use strict";
+const W = 1920, H = 1080;
+const cv = document.getElementById("c");
+const ctx = cv.getContext("2d");
+const FONT = "'Lilita One', Impact, 'Arial Black', sans-serif";
+
+function fit() {
+  const s = Math.min(innerWidth / W, innerHeight / H);
+  cv.style.transform = `scale(${s})`;
+  cv.style.left = ((innerWidth - W * s) / 2) + "px";
+  cv.style.top = ((innerHeight - H * s) / 2) + "px";
+}
+addEventListener("resize", fit); fit();
+
+function emptyTeam() {
+  return { login: "", display: "", userId: "", avatar: "", names: new Map(), ids: new Set(), prefix: "", samples: [] };
+}
+const team = { me: emptyTeam(), raid: emptyTeam() };
+team.me.login = CONFIG.channel;
+team.me.display = CONFIG.channel;
+team.me.prefix = CONFIG.myEmotePrefix || "";
+
+const twitchImg = id => `https://static-cdn.jtvnw.net/emoticons/v2/${id}/static/dark/2.0`;
+
+function withTimeout(promise, ms) {
+  return Promise.race([promise, new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), ms))]);
+}
+async function getJSON(url) {
+  const r = await withTimeout(fetch(url), 7000);
+  if (!r.ok) throw new Error(r.status);
+  return r.json();
+}
+function collectEmotes(node, out, depth = 0) {
+  if (!node || depth > 8) return;
+  if (Array.isArray(node)) { node.forEach(n => collectEmotes(n, out, depth + 1)); return; }
+  if (typeof node === "object") {
+    const code = node.code || node.token || node.emoteCode;
+    const id = node.id || node.emoteID || node.emoteId;
+    if (typeof code === "string" && id != null) out.push({ id: String(id), code });
+    for (const k in node) if (node[k] && typeof node[k] === "object") collectEmotes(node[k], out, depth + 1);
+  }
+}
+function derivePrefix(codes) {
+  const tally = {};
+  for (const c of codes) {
+    const m = /^([a-z][a-z0-9]{1,11})(?=[A-Z0-9_])/.exec(c);
+    if (m) tally[m[1]] = (tally[m[1]] || 0) + 1;
+  }
+  let best = "", n = 0;
+  for (const k in tally) if (tally[k] > n) { best = k; n = tally[k]; }
+  return n >= 2 || codes.length === 1 ? best : "";
+}
+
+async function resolveUser(t) {
+  try {
+    const d = await getJSON(`https://api.ivr.fi/v2/twitch/user?login=${encodeURIComponent(t.login)}`);
+    const u = Array.isArray(d) ? d[0] : d;
+    if (u) {
+      if (u.id && !t.userId) t.userId = String(u.id);
+      if (u.logo) t.avatar = u.logo;
+      if (u.displayName && (!t.display || t.display.toLowerCase() === t.login)) t.display = u.displayName;
+    }
+  } catch {}
+  if (!t.avatar) {
+    try {
+      const r = await withTimeout(fetch(`https://decapi.me/twitch/avatar/${encodeURIComponent(t.login)}`), 6000);
+      const url = (await r.text()).trim();
+      if (/^https:\/\//.test(url)) t.avatar = url;
+    } catch {}
+  }
+  if (t.avatar) getImg(t.avatar);
+}
+
+async function loadTeamEmotes(t) {
+  const twitchCodes = [];
+  const jobs = [];
+  jobs.push(getJSON(`https://api.ivr.fi/v2/twitch/emotes/channel/${encodeURIComponent(t.login)}`).then(d => {
+    const list = []; collectEmotes(d, list);
+    for (const e of list) {
+      t.names.set(e.code, twitchImg(e.id)); t.ids.add(e.id); twitchCodes.push(e.code);
+    }
+  }));
+  if (CONFIG.includeThirdParty && t.userId) {
+    jobs.push(getJSON(`https://7tv.io/v3/users/twitch/${t.userId}`).then(d => {
+      const emotes = (d && d.emote_set && d.emote_set.emotes) || [];
+      for (const e of emotes) if (e.name && !t.names.has(e.name)) t.names.set(e.name, `https://cdn.7tv.app/emote/${e.id}/2x.webp`);
+    }));
+    jobs.push(getJSON(`https://api.betterttv.net/3/cached/users/twitch/${t.userId}`).then(d => {
+      for (const e of [...(d.channelEmotes || []), ...(d.sharedEmotes || [])])
+        if (e.code && !t.names.has(e.code)) t.names.set(e.code, `https://cdn.betterttv.net/emote/${e.id}/2x`);
+    }));
+  }
+  const res = await Promise.allSettled(jobs);
+  if (!t.prefix) t.prefix = derivePrefix(twitchCodes);
+  const tw = [...t.names.entries()].filter(([, u]) => u.includes("jtvnw"));
+  const pool = tw.length ? tw : [...t.names.entries()];
+  t.samples = pool.slice(0, 4).map(([name, url]) => ({ name, url }));
+  log(`${t.login}: ${t.names.size} emotes, prefix "${t.prefix}"`, res.map(r => r.status).join(","));
+}
+
+const ownerCache = new Map();
+const pendingCredit = new Map();
+let ivrDown = false;
+const looksPrefixed = name => /^[a-z][a-z0-9]{1,11}[A-Z0-9_]/.test(name);
+
+function lookupOwner(id, name, count) {
+  const p = pendingCredit.get(id) || { count: 0, name };
+  p.count += count; pendingCredit.set(id, p);
+  if (ownerCache.has(id)) return;
+  ownerCache.set(id, "?");
+  getJSON(`https://api.ivr.fi/v2/twitch/emotes/${encodeURIComponent(id)}?id=true`).then(d => {
+    const owner = String(d.channelLogin || d.channelName || (d.channel && d.channel.login) || "").toLowerCase();
+    ownerCache.set(id, owner);
+    settle(id, owner);
+  }).catch(() => {
+    ivrDown = true; ownerCache.set(id, "");
+    settle(id, "");
+  });
+}
+function settle(id, owner) {
+  const p = pendingCredit.get(id); pendingCredit.delete(id);
+  let side = null;
+  if (owner && owner === team.me.login) side = "me";
+  else if (owner && owner === team.raid.login) side = "raid";
+  else if (!owner && ivrDown && p && looksPrefixed(p.name) && !prefixMatch(p.name, team.me.prefix)) side = "raid";
+  if (!side) return;
+  const t = team[side];
+  t.ids.add(id);
+  if (p) {
+    t.names.set(p.name, twitchImg(id));
+    if (!t.prefix && looksPrefixed(p.name)) t.prefix = derivePrefix([p.name]);
+    if (game.phase === "battle") credit(side, p.count, twitchImg(id), p.name);
+  }
+}
+
+function prefixMatch(name, p) {
+  if (!p) return false;
+  return String(p).split(",").some(x => {
+    x = x.trim();
+    return x && name.length > x.length && name.startsWith(x) && /[A-Z0-9_]/.test(name[x.length]);
+  });
+}
+
+function classify(name, twitchId) {
+  const inMe = team.me.names.has(name) || (twitchId && team.me.ids.has(twitchId)) || prefixMatch(name, team.me.prefix);
+  const inRaid = team.raid.names.has(name) || (twitchId && team.raid.ids.has(twitchId)) || prefixMatch(name, team.raid.prefix);
+  if (inMe && !inRaid) return "me";
+  if (inRaid && !inMe) return "raid";
+  if (inMe && inRaid) return null;
+  if (twitchId) {
+    const owner = ownerCache.get(twitchId);
+    if (owner === undefined || owner === "?") return { lookup: true };
+    if (!owner && ivrDown && looksPrefixed(name)) return "raid";
+  }
+  return null;
+}
+
+const game = {
+  phase: "idle",
+  t0: 0, raidViewers: 0,
+  score: { me: 0, raid: 0 },
+  winner: null,
+};
+const sides = {
+  me:   { key: "me",   x: 270,  y: 290, dir: 1,  len: 40, bump: 0, pop: 0, phase: 0, col: CONFIG.me },
+  raid: { key: "raid", x: 1650, y: 290, dir: -1, len: 40, bump: 0, pop: 0, phase: 1.7, col: CONFIG.raider },
+};
+const MIN_LEN = 40, MAX_LEN = 680;
+const AV_R = 100;
+const BEARD_TOP = AV_R * 0.49;
+
+function now() { return performance.now() / 1000; }
+
+async function startBattle(login, display, viewers, userId) {
+  if (game.phase !== "idle" && game.phase !== "outro") { log("battle already running"); return; }
+  login = String(login).toLowerCase().replace(/^@/, "");
+  if (!login || login === team.me.login) return;
+  team.raid = emptyTeam();
+  team.raid.login = login; team.raid.display = display || login; team.raid.userId = userId || "";
+  ownerCache.clear(); pendingCredit.clear();
+  game.raidViewers = viewers || 0;
+  game.score = { me: 0, raid: 0 }; game.winner = null;
+  sides.me.len = sides.raid.len = MIN_LEN;
+  particles.length = 0;
+  game.phase = "loading"; game.t0 = now();
+  await resolveUser(team.raid);
+  await loadTeamEmotes(team.raid).catch(() => {});
+  beginIntro();
+}
+function beginIntro() { game.phase = "intro"; game.t0 = now(); }
+function endBattle() {
+  if (game.phase !== "battle" && game.phase !== "intro") return;
+  const { me, raid } = game.score;
+  game.winner = me > raid ? "me" : raid > me ? "raid" : "tie";
+  game.phase = "result"; game.t0 = now();
+}
+function stopAll() { game.phase = "outro"; game.t0 = now(); }
+
+function credit(side, n, img, name) {
+  if (game.phase !== "battle" || n <= 0) return;
+  game.score[side] += n;
+  for (let i = 0; i < n; i++) spawnParticle(side, img, name, i * 0.06);
+}
+
+function handleChat(tags, user, text) {
+  if (text.startsWith("\u0001ACTION ")) text = text.slice(8, -1);
+  const badges = tags.badges || "";
+  const isBroadcaster = badges.includes("broadcaster/") || user === team.me.login;
+  const isMod = tags.mod === "1" || badges.includes("moderator/");
+  if (text[0] === "!" && (isBroadcaster || (CONFIG.allowModCommands && isMod))) {
+    const [cmd, arg] = text.trim().split(/\s+/);
+    if (cmd === "!beardtest") { startTest(); return; }
+    if (cmd === "!beardbattle" && arg) { startBattle(arg, arg.replace(/^@/, ""), 0); return; }
+    if (cmd === "!beardstop") { game.phase === "battle" ? endBattle() : stopAll(); return; }
+  }
+  if (game.phase !== "battle") return;
+  scoreMessage(text, parseEmoteTag(tags.emotes, text));
+}
+
+function parseEmoteTag(tag, text) {
+  const map = new Map();
+  if (!tag) return map;
+  const chars = Array.from(text);
+  for (const part of tag.split("/")) {
+    const [id, ranges] = part.split(":");
+    if (!ranges) continue;
+    const [s, e] = ranges.split(",")[0].split("-").map(Number);
+    map.set(chars.slice(s, e + 1).join(""), id);
+  }
+  return map;
+}
+
+function scoreMessage(text, idMap) {
+  const tally = { me: 0, raid: 0 }, img = { me: null, raid: null }, nm = { me: "", raid: "" };
+  let used = 0;
+  for (const tok of text.split(/\s+/)) {
+    if (!tok || used >= CONFIG.maxEmotesPerMessage) continue;
+    const id = idMap.get(tok);
+    const side = classify(tok, id);
+    if (side && side.lookup) { lookupOwner(id, tok, 1); used++; continue; }
+    if (!side) continue;
+    used++;
+    tally[side]++;
+    if (!img[side]) { img[side] = team[side].names.get(tok) || (id ? twitchImg(id) : null); nm[side] = tok; }
+  }
+  for (const s of ["me", "raid"]) credit(s, tally[s], img[s], nm[s]);
+}
+
+let ws, backoff = 1000;
+function connect() {
+  if (CONFIG.test && CONFIG.channel === "yourchannelname") return;
+  ws = new WebSocket("wss://irc-ws.chat.twitch.tv:443");
+  ws.onopen = () => {
+    backoff = 1000;
+    ws.send("CAP REQ :twitch.tv/tags twitch.tv/commands");
+    ws.send("PASS SCHMOOPIIE");
+    ws.send("NICK justinfan" + Math.floor(10000 + Math.random() * 80000));
+    ws.send("JOIN #" + CONFIG.channel);
+    status = "connected to #" + CONFIG.channel;
+  };
+  ws.onmessage = ev => ev.data.split("\r\n").forEach(l => l && onLine(l));
+  ws.onclose = () => { status = "disconnected – retrying"; setTimeout(connect, backoff); backoff = Math.min(backoff * 2, 30000); };
+  ws.onerror = () => ws.close();
+}
+function unescapeTag(v) {
+  return v.replace(/\\(.)/g, (_, c) => ({ s: " ", ":": ";", "\\": "\\", r: "\r", n: "\n" }[c] || c));
+}
+function parseIRC(line) {
+  const msg = { tags: {}, prefix: "", command: "", params: [] };
+  if (line[0] === "@") {
+    const sp = line.indexOf(" ");
+    for (const kv of line.slice(1, sp).split(";")) {
+      const eq = kv.indexOf("=");
+      msg.tags[eq < 0 ? kv : kv.slice(0, eq)] = eq < 0 ? "" : unescapeTag(kv.slice(eq + 1));
+    }
+    line = line.slice(sp + 1);
+  }
+  if (line[0] === ":") { const sp = line.indexOf(" "); msg.prefix = line.slice(1, sp); line = line.slice(sp + 1); }
+  const ti = line.indexOf(" :");
+  let trailing = null;
+  if (ti >= 0) { trailing = line.slice(ti + 2); line = line.slice(0, ti); }
+  const parts = line.split(" ").filter(Boolean);
+  msg.command = parts.shift() || "";
+  msg.params = parts; if (trailing !== null) msg.params.push(trailing);
+  return msg;
+}
+let myIdLoaded = false;
+function onLine(line) {
+  const m = parseIRC(line);
+  switch (m.command) {
+    case "PING": ws.send("PONG :" + (m.params[0] || "tmi.twitch.tv")); break;
+    case "ROOMSTATE":
+      if (!myIdLoaded && m.tags["room-id"]) {
+        myIdLoaded = true; team.me.userId = m.tags["room-id"];
+        loadTeamEmotes(team.me).catch(() => {});
+      }
+      break;
+    case "PRIVMSG": {
+      const user = m.prefix.split("!")[0];
+      handleChat(m.tags, user, m.params[1] || "");
+      break;
+    }
+    case "USERNOTICE":
+      if (m.tags["msg-id"] === "raid") {
+        const viewers = Number(m.tags["msg-param-viewerCount"] || 0);
+        log("RAID from", m.tags["msg-param-login"], viewers);
+        if (viewers >= CONFIG.minRaidViewers)
+          startBattle(m.tags["msg-param-login"], m.tags["msg-param-displayName"], viewers, m.tags["user-id"]);
+      }
+      break;
+  }
+}
+
+let simTimer = null;
+function startTest() {
+  if (game.phase !== "idle" && game.phase !== "outro") return;
+  const fakeMe = [["Kappa", "25"], ["SeemsGood", "64138"], ["VoHiYo", "81274"]];
+  const fakeRaid = [["LUL", "425618"], ["BibleThump", "86"], ["4Head", "354"]];
+  team.raid = emptyTeam();
+  team.raid.login = "testraider"; team.raid.display = "TestRaider";
+  const meBackup = team.me;
+  team.me = emptyTeam(); team.me.login = meBackup.login; team.me.display = meBackup.display; team.me.avatar = meBackup.avatar;
+  for (const [n, id] of fakeMe) { team.me.names.set(n, twitchImg(id)); team.me.ids.add(id); }
+  for (const [n, id] of fakeRaid) { team.raid.names.set(n, twitchImg(id)); team.raid.ids.add(id); }
+  team.me.samples = fakeMe.map(([name, id]) => ({ name, url: twitchImg(id) }));
+  team.raid.samples = fakeRaid.map(([name, id]) => ({ name, url: twitchImg(id) }));
+  game.raidViewers = 42; game.score = { me: 0, raid: 0 }; game.winner = null;
+  sides.me.len = sides.raid.len = MIN_LEN; particles.length = 0;
+  beginIntro();
+  clearInterval(simTimer);
+  let bias = 0.5;
+  simTimer = setInterval(() => {
+    if (game.phase === "result" || game.phase === "idle") {
+      clearInterval(simTimer);
+      setTimeout(() => { team.me = meBackup; }, (CONFIG.resultSeconds + 2) * 1000);
+      return;
+    }
+    if (game.phase !== "battle") return;
+    bias = Math.min(0.8, Math.max(0.2, bias + (Math.random() - 0.5) * 0.08));
+    const list = Math.random() < bias ? fakeMe : fakeRaid;
+    const [name, id] = list[Math.floor(Math.random() * 3)];
+    const n = 1 + Math.floor(Math.random() * 4);
+    const text = Array(n).fill(name).join(" ");
+    let tag = [], pos = 0;
+    for (let i = 0; i < n; i++) { tag.push(`${pos}-${pos + name.length - 1}`); pos += name.length + 1; }
+    handleChat({ emotes: `${id}:${tag.join(",")}` }, "sim", text);
+  }, 140);
+}
+
+const particles = [];
+const imgCache = new Map();
+function getImg(url) {
+  if (!url) return null;
+  let im = imgCache.get(url);
+  if (!im) { im = new Image(); im.src = url; imgCache.set(url, im); }
+  return im.complete && im.naturalWidth ? im : null;
+}
+function spawnParticle(side, img, name, delay) {
+  if (particles.length > 140) return;
+  const s = sides[side];
+  particles.push({
+    side, img, name,
+    x0: s.x + s.dir * (250 + Math.random() * 520),
+    y0: H + 60,
+    t: -delay, dur: 0.9 + Math.random() * 0.4,
+    spin: (Math.random() - 0.5) * 6,
+  });
+  if (img) getImg(img);
+}
+function beardTip(s, t) {
+  const sway = Math.sin(t * 1.6 + s.phase) * Math.min(s.len * 0.05, 26);
+  return { x: s.x + sway, y: s.y + BEARD_TOP + s.len };
+}
+
+function shade(hex, amt) {
+  const n = parseInt(hex.slice(1), 16);
+  let r = (n >> 16) + amt, g = ((n >> 8) & 255) + amt, b = (n & 255) + amt;
+  r = Math.max(0, Math.min(255, r)); g = Math.max(0, Math.min(255, g)); b = Math.max(0, Math.min(255, b));
+  return `rgb(${r},${g},${b})`;
+}
+function circle(x, y, r, fill, stroke, lw) {
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
+  if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+  if (stroke) { ctx.lineWidth = lw || 4; ctx.strokeStyle = stroke; ctx.stroke(); }
+}
+function roundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+}
+function text(str, x, y, size, fill, align = "center", stroke = "#1a1020", lw = 8) {
+  ctx.font = `${size}px ${FONT}`; ctx.textAlign = align; ctx.textBaseline = "middle";
+  ctx.lineJoin = "round";
+  if (stroke) { ctx.lineWidth = lw; ctx.strokeStyle = stroke; ctx.strokeText(str, x, y); }
+  ctx.fillStyle = fill; ctx.fillText(str, x, y);
+}
+function fitText(str, maxW, size) {
+  ctx.font = `${size}px ${FONT}`;
+  while (size > 18 && ctx.measureText(str).width > maxW) { size -= 2; ctx.font = `${size}px ${FONT}`; }
+  return size;
+}
+function drawEmote(url, name, x, y, size, alpha = 1) {
+  const im = getImg(url);
+  ctx.globalAlpha = alpha;
+  if (im) ctx.drawImage(im, x - size / 2, y - size / 2, size, size);
+  else {
+    roundRect(x - size / 2, y - size / 2, size, size, 10);
+    ctx.fillStyle = "#ffffffdd"; ctx.fill();
+    text((name || "?").slice(0, 6), x, y, size * 0.28, "#222", "center", null);
+  }
+  ctx.globalAlpha = 1;
+}
+
+const OUTLINE = "#1a1020";
+
+function drawBeard(x, y, R, len, color, t, bump, phase) {
+  const sway = Math.sin(t * 1.6 + phase) * Math.min(len * 0.05, 26);
+  const top = y + R * 0.05;
+  const bottom = top + len;
+  const wob = 1 + bump * 0.1;
+  const halfB = R * (0.45 + Math.min(len / 900, 0.45)) * wob;
+  const sideW = R * 1.02 * wob;
+  const tuft = Math.min(16 + len * 0.04, 34);
+
+  const grad = ctx.createLinearGradient(0, top - R * 0.3, 0, bottom);
+  grad.addColorStop(0, shade(color, 18)); grad.addColorStop(1, shade(color, -30));
+
+  ctx.beginPath();
+  ctx.moveTo(x - sideW * 0.96, top - R * 0.35);
+  ctx.bezierCurveTo(x - sideW * 1.18, top + len * 0.3,
+                    x - halfB * 1.25 + sway * 0.5, top + len * 0.75,
+                    x - halfB + sway, bottom - tuft);
+  const n = 7;
+  for (let i = 0; i < n; i++) {
+    const a = x - halfB + sway + (2 * halfB) * (i / n);
+    const b = x - halfB + sway + (2 * halfB) * ((i + 1) / n);
+    const mid = (a + b) / 2;
+    const dip = tuft * (i === 3 ? 1.6 : (i === 2 || i === 4) ? 1.25 : 0.9);
+    ctx.quadraticCurveTo(mid, bottom - tuft + dip * 1.4, b, bottom - tuft);
+  }
+  ctx.bezierCurveTo(x + halfB * 1.25 + sway * 0.5, top + len * 0.75,
+                    x + sideW * 1.18, top + len * 0.3,
+                    x + sideW * 0.96, top - R * 0.35);
+  ctx.lineTo(x + R * 0.78, top - R * 0.3);
+  ctx.quadraticCurveTo(x + R * 0.6, top + R * 0.18, x, top + R * 0.12);
+  ctx.quadraticCurveTo(x - R * 0.6, top + R * 0.18, x - R * 0.78, top - R * 0.3);
+  ctx.closePath();
+  ctx.fillStyle = grad; ctx.fill();
+  ctx.lineWidth = 5; ctx.strokeStyle = OUTLINE; ctx.lineJoin = "round"; ctx.stroke();
+
+  ctx.save(); ctx.clip();
+  ctx.lineCap = "round";
+  for (let k = -7; k <= 7; k++) {
+    const sx = x + k * R * 0.12;
+    const ex = x + k * (halfB / 7) * 0.95 + sway;
+    const ey = bottom - tuft * 0.6;
+    const cx = (sx + ex) / 2 + Math.sin(t * 2 + k + phase) * 10 + k * 6;
+    ctx.beginPath(); ctx.moveTo(sx, top + R * 0.2);
+    ctx.quadraticCurveTo(cx, top + len * 0.55, ex, ey);
+    ctx.lineWidth = 3; ctx.strokeStyle = k % 2 ? shade(color, -45) + "" : shade(color, 40);
+    ctx.globalAlpha = k % 2 ? 0.45 : 0.3; ctx.stroke();
+  }
+  ctx.globalAlpha = 1; ctx.restore();
+}
+
+function drawCharacter(s, t, tm, score, isWinner, isLoser) {
+  const R = AV_R;
+  const x = s.x;
+  const y = s.y + Math.sin(t * 2.2 + s.phase) * 4 - s.bump * 6;
+  const col = s.col;
+
+  drawBeard(x, y + R * 0.45, R * 0.85, s.len, col.beard, t, s.bump, s.phase);
+
+  circle(x, y, R + 10, col.hat, OUTLINE, 6);
+  const im = getImg(tm.avatar);
+  ctx.save(); ctx.beginPath(); ctx.arc(x, y, R, 0, Math.PI * 2); ctx.clip();
+  if (im) ctx.drawImage(im, x - R, y - R, R * 2, R * 2);
+  else {
+    ctx.fillStyle = shade(col.hat, -50); ctx.fillRect(x - R, y - R, R * 2, R * 2);
+    text((tm.display || "?")[0].toUpperCase(), x, y + 4, R * 1.1, "#fff", "center", null);
+  }
+  if (isLoser) { ctx.fillStyle = "rgba(0,0,0,0.35)"; ctx.fillRect(x - R, y - R, R * 2, R * 2); }
+  ctx.restore();
+  circle(x, y, R, null, OUTLINE, 5);
+
+  const mw = R * 0.5, my = y + R * 0.78;
+  for (const d of [-1, 1]) {
+    ctx.beginPath();
+    ctx.moveTo(x, my - 6);
+    ctx.bezierCurveTo(x + d * mw * 0.4, my - 24, x + d * mw * 0.9, my - 12, x + d * mw * 1.1, my + 10 + Math.sin(t * 3 + d) * 3);
+    ctx.bezierCurveTo(x + d * mw * 0.8, my + 6, x + d * mw * 0.35, my + 14, x, my + 6);
+    ctx.closePath();
+    ctx.fillStyle = shade(col.beard, -15); ctx.fill();
+    ctx.lineWidth = 4; ctx.strokeStyle = OUTLINE; ctx.stroke();
+  }
+
+  if (isWinner) drawCrown(x, y - R * 1.12, t);
+
+}
+
+function drawCrown(x, y, t) {
+  const w = 120, h = 70, yy = y + Math.sin(t * 4) * 5;
+  ctx.beginPath();
+  ctx.moveTo(x - w / 2, yy + h / 2);
+  ctx.lineTo(x - w / 2, yy - h / 2 + 10);
+  ctx.lineTo(x - w / 4, yy);
+  ctx.lineTo(x, yy - h / 2 - 8);
+  ctx.lineTo(x + w / 4, yy);
+  ctx.lineTo(x + w / 2, yy - h / 2 + 10);
+  ctx.lineTo(x + w / 2, yy + h / 2);
+  ctx.closePath();
+  ctx.fillStyle = "#ffcc22"; ctx.fill(); ctx.lineWidth = 6; ctx.strokeStyle = OUTLINE; ctx.stroke();
+  circle(x, yy + 12, 9, "#e0383e", OUTLINE, 3);
+  circle(x - w / 3, yy + 16, 7, "#2f7de1", OUTLINE, 3);
+  circle(x + w / 3, yy + 16, 7, "#2fbf5a", OUTLINE, 3);
+}
+
+function drawParticles(dt, t) {
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.t += dt;
+    if (p.t < 0) continue;
+    const k = Math.min(1, p.t / p.dur);
+    const tip = beardTip(sides[p.side], t);
+    const cx = (p.x0 + tip.x) / 2, cy = Math.min(p.y0, tip.y) - 260;
+    const e = 1 - Math.pow(1 - k, 2);
+    const x = (1 - e) * (1 - e) * p.x0 + 2 * (1 - e) * e * cx + e * e * tip.x;
+    const y = (1 - e) * (1 - e) * p.y0 + 2 * (1 - e) * e * cy + e * e * tip.y;
+    const size = 60 * (1 - k * 0.5);
+    ctx.save(); ctx.translate(x, y); ctx.rotate(p.spin * k);
+    drawEmote(p.img, p.name, 0, 0, size, k > 0.85 ? (1 - k) / 0.15 : 1);
+    ctx.restore();
+    if (k >= 1) {
+      const s = sides[p.side];
+      s.bump = Math.min(1, s.bump + 0.35); s.pop = 1;
+      sparkles.push({ x: tip.x, y: tip.y, t: 0, col: s.col.hat });
+      particles.splice(i, 1);
+    }
+  }
+}
+const sparkles = [];
+function drawSparkles(dt) {
+  for (let i = sparkles.length - 1; i >= 0; i--) {
+    const s = sparkles[i]; s.t += dt;
+    const k = s.t / 0.45;
+    if (k >= 1) { sparkles.splice(i, 1); continue; }
+    ctx.globalAlpha = 1 - k;
+    for (let j = 0; j < 6; j++) {
+      const a = j / 6 * Math.PI * 2;
+      circle(s.x + Math.cos(a) * 40 * k, s.y + Math.sin(a) * 40 * k, 6 * (1 - k), j % 2 ? "#fff" : s.col);
+    }
+    ctx.globalAlpha = 1;
+  }
+}
+
+function targetLen(side) {
+  const a = game.score.me, b = game.score.raid;
+  const lead = Math.max(a, b);
+  if (!lead) return MIN_LEN;
+  const leaderLen = MIN_LEN + (MAX_LEN - MIN_LEN) * (1 - Math.exp(-lead / 120));
+  return MIN_LEN + (leaderLen - MIN_LEN) * (game.score[side] / lead);
+}
+
+let status = CONFIG.test ? "preview mode" : "connecting…";
+let last = now();
+function frame() {
+  const t = now(), dt = Math.min(0.05, t - last); last = t;
+  ctx.clearRect(0, 0, W, H);
+
+  const el = t - game.t0;
+  if (game.phase === "intro" && el >= CONFIG.introSeconds) { game.phase = "battle"; game.t0 = t; }
+  else if (game.phase === "battle" && el >= CONFIG.battleSeconds) endBattle();
+  else if (game.phase === "result" && el >= CONFIG.resultSeconds) { game.phase = "outro"; game.t0 = t; }
+  else if (game.phase === "outro" && el >= 1) game.phase = "idle";
+
+  if (game.phase === "idle" || game.phase === "loading") {
+    if (CONFIG.debug) text(`Beard Battle: ${status}${game.phase === "loading" ? " – loading raider emotes…" : ""}`, 20, 30, 24, "#fff", "left");
+    requestAnimationFrame(frame); return;
+  }
+
+  let enter = 1;
+  if (game.phase === "intro") enter = Math.min(1, el / 0.7);
+  if (game.phase === "outro") enter = 1 - Math.min(1, el / 1);
+  const ease = 1 - Math.pow(1 - enter, 3);
+  const off = (1 - ease) * 600;
+
+  for (const k of ["me", "raid"]) {
+    const s = sides[k];
+    s.len += (targetLen(k) - s.len) * Math.min(1, dt * 4);
+    s.bump = Math.max(0, s.bump - dt * 3);
+    s.pop = Math.max(0, s.pop - dt * 4);
+  }
+
+  const res = game.phase === "result" || game.phase === "outro";
+  ctx.save(); ctx.translate(-off, 0);
+  drawCharacter(sides.me, t, team.me, game.score.me, res && game.winner === "me", res && game.winner === "raid");
+  ctx.restore();
+  ctx.save(); ctx.translate(off, 0);
+  drawCharacter(sides.raid, t, team.raid, game.score.raid, res && game.winner === "raid", res && game.winner === "me");
+  ctx.restore();
+
+  drawParticles(dt, t);
+  drawSparkles(dt);
+
+  requestAnimationFrame(frame);
+}
+
+function log(...a) { console.log("[BeardBattle]", ...a); }
+
+requestAnimationFrame(frame);
+if (!CONFIG.setup) {
+  if (!(CONFIG.test && CONFIG.channel === "yourchannelname")) resolveUser(team.me);
+  connect();
+  if (CONFIG.test) setTimeout(startTest, 600);
+} else addEventListener("DOMContentLoaded", () => showSetup());
+addEventListener("keydown", e => {
+  if (e.key === "t" || e.key === "T") startTest();
+  if (e.key === "s" || e.key === "S") (game.phase === "battle" ? endBattle() : stopAll());
+});
+window.beard = { startBattle, startTest, endBattle, game, team };
+</script>
+<style>
+  #setup { position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
+           background: #15162b; font-family: system-ui, sans-serif; color: #eee; z-index: 10; }
+  #setup .card { background: #22233f; border-radius: 18px; padding: 32px 36px; width: 560px; box-shadow: 0 10px 40px #0008; }
+  #setup h1 { margin: 0 0 6px; font: 32px 'Lilita One', Impact, sans-serif; color: #ffcc22; letter-spacing: .5px; }
+  #setup p.sub { margin: 0 0 22px; color: #aab; font-size: 14px; }
+  #setup label { display: block; font-weight: 600; margin: 16px 0 6px; font-size: 14px; }
+  #setup small { display: block; color: #99a; font-weight: 400; margin-top: 4px; font-size: 12.5px; }
+  #setup input { width: 100%; box-sizing: border-box; padding: 11px 13px; border-radius: 10px; border: 1px solid #3a3b60;
+                 background: #15162b; color: #fff; font-size: 15px; }
+  #setup input:focus { outline: 2px solid #2f7de1; border-color: transparent; }
+  #setup .colors { display: flex; gap: 14px; }
+  #setup .colors label { flex: 1; }
+  #setup .pick { display: flex; align-items: center; gap: 10px; background: #15162b; border: 1px solid #3a3b60;
+                 border-radius: 10px; padding: 6px 10px; }
+  #setup input[type=color] { width: 44px; height: 32px; padding: 0; border: 0; background: none; cursor: pointer; }
+  #setup .sw-name { font-family: monospace; color: #ccd; font-size: 13px; }
+  #setup .presets { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; align-items: center; font-size: 12.5px; color: #99a; }
+  #setup .presets button { flex: 0 0 auto; width: 26px; height: 26px; padding: 0; border-radius: 50%; border: 2px solid #15162b; }
+  #setup .row { display: flex; gap: 10px; margin-top: 24px; }
+  #setup button { flex: 1; padding: 12px; border: 0; border-radius: 10px; font-weight: 700; font-size: 15px; cursor: pointer; }
+  #setup .primary { background: #2f7de1; color: #fff; } #setup .ghost { background: #34355a; color: #fff; }
+  #setup .out { margin-top: 18px; display: none; }
+  #setup .out code { display: block; background: #15162b; border: 1px solid #3a3b60; border-radius: 10px; padding: 10px 12px;
+                     word-break: break-all; font-size: 12.5px; color: #9fd0ff; }
+  #setup ol { margin: 10px 0 0; padding-left: 20px; color: #ccd; font-size: 13.5px; line-height: 1.6; }
+</style>
+<div id="setup"><div class="card">
+  <h1>Beard Battle setup</h1>
+  <p class="sub">When someone raids you, each side spams their streamer's emotes. The bigger beard after the timer wins.</p>
+  <label>Your Twitch channel
+    <input id="s-channel" placeholder="e.g. yourchannel" autocomplete="off">
+  </label>
+  <label>Your emote prefix
+    <input id="s-prefix" placeholder="e.g. abc" autocomplete="off">
+    <small>The start of your emote names (abc<b>Hype</b>, abc<b>Love</b>). Separate several with commas.
+      Optional: it's detected automatically. The raider's emotes are always detected automatically.</small>
+  </label>
+  <label>Battle length (seconds)
+    <input id="s-secs" type="number" min="15" max="600" value="120">
+  </label>
+  <div class="colors">
+    <label>Your beard colour
+      <span class="pick"><input id="s-mybeard" type="color"><span class="sw-name" id="s-mybeard-v"></span></span>
+    </label>
+    <label>Raider's beard colour
+      <span class="pick"><input id="s-raidbeard" type="color"><span class="sw-name" id="s-raidbeard-v"></span></span>
+    </label>
+  </div>
+  <div class="presets" id="s-presets"></div>
+  <div class="row">
+    <button class="ghost" id="s-preview">Preview</button>
+    <button class="primary" id="s-link">Get OBS link</button>
+  </div>
+  <div class="out" id="s-out">
+    <code id="s-url"></code>
+    <ol>
+      <li>In OBS add a <b>Browser</b> source, size <b>1920 × 1080</b>.</li>
+      <li>Leave "Local file" <b>unticked</b> and paste this link into the URL box.</li>
+      <li>Put it at the top of your scene. It stays invisible until a raid comes in.</li>
+    </ol>
+  </div>
+</div></div>
+<script>
+function showSetup() {
+  const el = id => document.getElementById(id);
+  el("setup").style.display = "flex";
+  if (CONFIG.channel !== "yourchannelname") el("s-channel").value = CONFIG.channel;
+  el("s-prefix").value = CONFIG.myEmotePrefix || "";
+  el("s-secs").value = CONFIG.battleSeconds;
+  el("s-mybeard").value = CONFIG.me.beard; el("s-raidbeard").value = CONFIG.raider.beard;
+  const showVals = () => { el("s-mybeard-v").textContent = el("s-mybeard").value; el("s-raidbeard-v").textContent = el("s-raidbeard").value; };
+  el("s-mybeard").oninput = el("s-raidbeard").oninput = showVals; showVals();
+  const presets = { Brown: "#6b3f1f", Ginger: "#d2601a", Blonde: "#d9b25f", Black: "#2a2420", Grey: "#9a9a9a",
+                    White: "#f2f2f2", Pink: "#ff6fb5", Purple: "#8e5cf0", Blue: "#3fa9f5", Green: "#3fbf6a" };
+  el("s-presets").innerHTML = "Quick colours (click = yours, right-click = raider's):";
+  for (const [n, c] of Object.entries(presets)) {
+    const b = document.createElement("button"); b.title = n; b.style.background = c;
+    b.onclick = e => { el(e.shiftKey ? "s-raidbeard" : "s-mybeard").value = c; showVals(); };
+    b.oncontextmenu = e => { e.preventDefault(); el("s-raidbeard").value = c; showVals(); };
+    el("s-presets").appendChild(b);
+  }
+  const build = extra => {
+    const ch = el("s-channel").value.trim().toLowerCase().replace(/^.*twitch\.tv\//, "").replace(/[^a-z0-9_]/g, "");
+    if (!ch) { el("s-channel").focus(); return null; }
+    const q = new URLSearchParams({ channel: ch });
+    const pre = el("s-prefix").value.replace(/\s+/g, "");
+    if (pre) q.set("myEmotePrefix", pre);
+    q.set("battleSeconds", Math.max(15, Number(el("s-secs").value) || 120));
+    q.set("myBeardColor", el("s-mybeard").value.replace("#", ""));
+    q.set("raiderBeardColor", el("s-raidbeard").value.replace("#", ""));
+    if (extra) q.set(extra, "1");
+    return location.href.split(/[?#]/)[0] + "?" + q.toString();
+  };
+  el("s-link").onclick = () => {
+    const url = build(); if (!url) return;
+    el("s-url").textContent = url; el("s-out").style.display = "block";
+    navigator.clipboard && navigator.clipboard.writeText(url).then(() => { el("s-link").textContent = "Copied!"; setTimeout(() => el("s-link").textContent = "Get OBS link", 1500); }, () => {});
+  };
+  el("s-preview").onclick = () => { const url = build("test"); if (url) location.href = url; };
+}
+</script>
+</body>
+</html>
