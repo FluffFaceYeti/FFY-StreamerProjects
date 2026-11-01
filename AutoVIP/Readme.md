@@ -23,3 +23,6 @@ Everything you need is in this folder:
 AutoVIP is free. If you'd like to send a tip in support of it, you can do so on my Ko-fi page: **[ko-fi.com/flufffaceyeti](https://ko-fi.com/flufffaceyeti)**
 
 Thank you!
+
+**[BehavingBeardly](https://www.twitch.tv/flufffaceyeti)**
+Sam - (Wants to remain private) 
