@@ -26,4 +26,4 @@ Thank you!
 
 **[BehavingBeardly](https://www.twitch.tv/flufffaceyeti)**
 
-Sam - (Requests to remain private) 
+Sam - **Enabled Private Mode**
