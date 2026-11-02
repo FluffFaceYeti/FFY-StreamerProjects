@@ -1,24 +1,18 @@
 # FFY Skills
 
-Aim, stealth, cooking, flirting and more. A pack for **FFY Commands**.
+Rate everyone's aim, stealth, cooking, flirting and more.
 
-> **You need FFY Commands installed first.** Install FFY Commands, then this pack.
-
----
+This is a pack for **FFY Commands**. Install that first if you haven't already.
 
 ## Installing
 
-1. Make sure **FFY Commands** is already installed.
-2. Download the **`FFY-Skills`** file from this page.
-3. In Streamer.bot, click **Import** in the bar at the top, drag and drop the file into the box, and click **Import**.
+Download **`FFY-Skills`** from this page. Over in Streamer.bot, click **Import** at the top, drag it into the box and click **Import**.
 
-Done. The commands are switched on for you. Type `!precision` in chat to test.
+Everything's switched on already. Give `!precision` a go in chat.
 
-**Only want some of them?** In the **Commands** tab, open the **FFY Skills** folder and untick **Enabled** on the ones you don't want.
+Don't want all of them? Open the **FFY Skills** folder in the **Commands** tab and untick **Enabled** on any you'd rather not have.
 
----
-
-## The commands (15)
+## What's in it (15 commands)
 
 | Command | What it is | Example reply |
 |---|---|---|
@@ -38,11 +32,9 @@ Done. The commands are switched on for you. Type `!precision` in chat to test.
 | `!aim` | 0–100 % | @Bob, your aim is 50% on point today! |
 | `!gamer` | 0–100 % | @Bob, your gamer skills are at 50% today! |
 
----
+## Tweaking it
 
-## Changing things
-
-Everything is in the **Actions** tab, in the **FFY Skills** group. Open an action, double-click **Execute C# Code**, change the lines between `EDIT BELOW` and `EDIT ABOVE`, and click **Save and Compile**.
+Everything's in the **FFY Skills** group in the **Actions** tab. To change something, open the action, double-click **Execute C# Code**, edit the lines between `EDIT BELOW` and `EDIT ABOVE` and hit **Save and Compile**.
 
 | Action | What's in it |
 |---|---|
@@ -50,12 +42,10 @@ Everything is in the **Actions** tab, in the **FFY Skills** group. Open an actio
 | **FFY Skills Triggers** | Connects the commands to FFY Commands. Don't edit its code |
 | **FFY Skills Setup** | Runs once on import |
 
-> **Updating this pack replaces these actions.** To keep a change safe, put it in **FFY My Number Commands** (in FFY Commands) instead. See [Keeping your changes safe from updates](../../QuickGuide.md#21-keeping-your-changes-safe-from-updates).
+> Updating the pack replaces these actions, so if you want a change to stick, put it in **FFY My Number Commands** (in FFY Commands) instead. See [Keeping your changes safe from updates](../../QuickGuide.md#21-keeping-your-changes-safe-from-updates).
 
----
+## Not working?
 
-## Troubleshooting
+If nothing replies at all, check **FFY Commands** is installed and look in the **Logs** tab for `[FFY Skills]`. If it's just one command that's quiet, make sure it's switched on in the **FFY Skills** folder in the **Commands** tab.
 
-- **No reply at all:** is **FFY Commands** installed? Check the **Logs** tab for `[FFY Skills]`.
-- **One command doesn't reply:** is it switched on in the **Commands** tab (the **FFY Skills** folder)?
-- **Anything else:** see the [troubleshooting section](../../QuickGuide.md#28-troubleshooting) in the FFY Commands guide.
+If it's something else, have a look at the [troubleshooting section](../../QuickGuide.md#28-troubleshooting) in the FFY Commands guide.

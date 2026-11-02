@@ -1,22 +1,16 @@
 # FFY Games
 
-Duels, dice, rock-paper-scissors, tug of war and more. A pack for **FFY Commands**.
+Little games for chat to play against each other. Duels, dice, rock-paper-scissors, tug of war and more.
 
-> **You need FFY Commands installed first.** Install FFY Commands, then this pack.
-
----
+It's a pack for **FFY Commands**, so install that first.
 
 ## Installing
 
-1. Make sure **FFY Commands** is already installed.
-2. Download the **`FFY-Games`** file from this page.
-3. In Streamer.bot, click **Import** in the bar at the top, drag and drop the file into the box, and click **Import**.
+Download the **`FFY-Games`** file from this page. In Streamer.bot, click **Import** at the top, drag the file into the box and click **Import**.
 
-Done. The commands are switched on for you. Type `!bootybattle` in chat to test.
+That's it, the commands are already switched on. Try `!bootybattle` in chat.
 
-**Only want some of them?** In the **Commands** tab, open the **FFY Games** folder and untick **Enabled** on the ones you don't want.
-
----
+If there are a few you don't want, go to the **Commands** tab, open the **FFY Games** folder and untick **Enabled** on those.
 
 ## The commands (16)
 
@@ -39,11 +33,9 @@ Done. The commands are switched on for you. Type `!bootybattle` in chat to test.
 | `!highorlow @Sam` | Guess higher or lower | @Bob guessed higher — correct! The number was 74. |
 | `!compat @Sam` | Compatibility test | Sparks fly! @Bob & @Sam are 67% in sync. |
 
----
-
 ## Changing things
 
-Everything is in the **Actions** tab, in the **FFY Games** group. Open an action, double-click **Execute C# Code**, change the lines between `EDIT BELOW` and `EDIT ABOVE`, and click **Save and Compile**.
+Head to the **Actions** tab and open the **FFY Games** group. Double-click **Execute C# Code** in the action you want, change the bits between `EDIT BELOW` and `EDIT ABOVE`, and click **Save and Compile** when you're done.
 
 | Action | What's in it |
 |---|---|
@@ -52,12 +44,11 @@ Everything is in the **Actions** tab, in the **FFY Games** group. Open an action
 | **FFY Games Triggers** | Connects the commands to FFY Commands. Don't edit its code |
 | **FFY Games Setup** | Runs once on import |
 
-> **Updating this pack replaces these actions.** To keep a change safe, put it in the FFY My actions (in FFY Commands) instead. See [Keeping your changes safe from updates](../../QuickGuide.md#21-keeping-your-changes-safe-from-updates).
-
----
+> Updating the pack replaces these actions, so if you want a change to stick, put it in the FFY My actions (in FFY Commands) instead. See [Keeping your changes safe from updates](../../QuickGuide.md#21-keeping-your-changes-safe-from-updates).
 
 ## Troubleshooting
 
-- **No reply at all:** is **FFY Commands** installed? Check the **Logs** tab for `[FFY Games]`.
-- **One command doesn't reply:** is it switched on in the **Commands** tab (the **FFY Games** folder)?
-- **Anything else:** see the [troubleshooting section](../../QuickGuide.md#28-troubleshooting) in the FFY Commands guide.
+- **Nothing replies:** is **FFY Commands** installed? Look for `[FFY Games]` in the **Logs** tab.
+- **Only one command is quiet:** check it's switched on in the **Commands** tab, in the **FFY Games** folder.
+
+If it's something else, have a look at the [troubleshooting section](../../QuickGuide.md#28-troubleshooting) in the FFY Commands guide.

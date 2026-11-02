@@ -1,24 +1,18 @@
 # FFY Christmas
 
-Festive, silly Christmas commands for your stream, including **Santa's naughty or nice list**. An add-on for **FFY Commands**.
+Christmas commands for chat, and the star of the show is **Santa's naughty or nice list**.
 
-> **You need FFY Commands installed first.** This add-on uses it to work. Install FFY Commands, then this.
-
----
+This plugs into **FFY Commands**, so get that installed first.
 
 ## Installing
 
-1. Make sure **FFY Commands** is already installed.
-2. Download the **`FFY-Christmas`** file from this page.
-3. In Streamer.bot, click **Import** in the bar at the top, drag and drop the file into the box, and click **Import**.
+Grab the **`FFY-Christmas`** file from this page, then in Streamer.bot hit **Import** at the top, drop the file in and click **Import**.
 
-Done. The commands are switched on for you. Type `!grinch` in chat to test.
+The commands switch on by themselves, so you can type `!grinch` straight away to check it's working.
 
-**Only want some of them?** In the **Commands** tab, open the **FFY Christmas** folder and untick **Enabled** on the ones you don't want.
+You can turn off any you don't like. Find them in the **FFY Christmas** folder in the **Commands** tab and untick **Enabled**.
 
----
-
-## The commands (16)
+## Commands (16)
 
 | Command | What it is | Example reply |
 |---|---|---|
@@ -39,13 +33,11 @@ Done. The commands are switched on for you. Type `!grinch` in chat to test.
 | `!santa` / `!santa @Sam` | Naughty or nice | Ho ho ho! Santa checked the list... @Sam is on the **NICE list**! |
 | `!santastats` / `!santastats @Sam` | Santa history | Santa Stats for @Sam \| Nice: 3 \| Naughty: 5 \| Last result: NAUGHTY |
 
----
-
 ## Santa's naughty or nice list
 
-`!santa` (or `!santa @someone`) puts them on the **NICE** or **NAUGHTY** list. `!santastats` shows their history, which is kept forever.
+Type `!santa` (or `!santa @someone`) and Santa checks his list to see if they're **NICE** or **NAUGHTY**. `!santastats` shows everyone's track record, and that's kept forever, so there's no hiding.
 
-**How long a result lasts:** open **FFY Santa** (Actions tab → **FFY Christmas** group) and change `resultDays`:
+By default you get a new result every day. To change how long a result sticks, open **FFY Santa** (it's in the **FFY Christmas** group in the Actions tab) and change `resultDays`:
 
 ```csharp
 Set("resultDays", 1);   // a new result every day
@@ -62,11 +54,9 @@ Set("resultDays", 25);  // one result that lasts all of December
 | `statsMessage` | The `!santastats` reply. Use `{target}`, `{nice}`, `{naughty}` and `{last}`. |
 | `noHistoryMessage` | Shown when someone has no Santa history yet. |
 
----
+## Making changes
 
-## Changing things
-
-Everything is in the **Actions** tab, in the **FFY Christmas** group. Each action is edited the same way as in FFY Commands: open it, double-click **Execute C# Code**, change the lines between `EDIT BELOW` and `EDIT ABOVE`, and click **Save and Compile**.
+It all lives in the **Actions** tab under the **FFY Christmas** group. Open an action, double-click **Execute C# Code**, change whatever's between `EDIT BELOW` and `EDIT ABOVE`, then click **Save and Compile**.
 
 | Action | What's in it |
 |---|---|
@@ -78,14 +68,12 @@ Everything is in the **Actions** tab, in the **FFY Christmas** group. Each actio
 | **FFY Christmas Triggers** | Connects the commands to FFY Commands. Don't edit its code |
 | **FFY Christmas Setup** | Runs once on import |
 
-To add a command of your own, follow the FFY Commands guide (adding a number or list command), and put its lines in **FFY My Number Commands** or **FFY My List Commands**, so updates never touch them.
+If you want to add your own, follow the bit in the FFY Commands guide about adding a number or list command, and put it in **FFY My Number Commands** or **FFY My List Commands**. That way an update won't wipe it.
 
-All the FFY Commands features work with these commands too: special users, user variables, the switches, and `!top` for the interactions.
+Special users, user variables, the switches and `!top` for the interactions from FFY Commands all work with these too.
 
----
+## If something's not working
 
-## Troubleshooting
+No replies at all usually means **FFY Commands** isn't installed. The **Logs** tab will show `[FFY Christmas]` lines if the pack is running. If just one command isn't replying, check it's ticked in the **FFY Christmas** folder in the **Commands** tab.
 
-- **No reply at all:** is **FFY Commands** installed? Check the **Logs** tab for `[FFY Christmas]`.
-- **One command doesn't reply:** is it switched on in the **Commands** tab (the **FFY Christmas** folder)?
-- **Anything else:** see the troubleshooting section in the FFY Commands guide.
+For anything else, there's a troubleshooting section in the FFY Commands guide.

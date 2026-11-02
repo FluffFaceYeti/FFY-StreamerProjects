@@ -1,33 +1,27 @@
 # FFY Counters
 
-Keep a running count of anything, like how many pickles you've eaten, or how many times you've died, raged or crashed.
+Count anything you like. How many pickles you've eaten, how many times you've died, raged, crashed... you get the idea.
 
 ```
 Viewer: !pickle
 Chat: FluffFaceYeti has eaten 5 pickles!
 ```
 
-- Works on its own. You don't need FFY Commands.
-- Works on **Twitch, Kick and YouTube**.
-- Counts are **kept forever**. They don't reset at midnight, and they survive a restart.
-- Can **show your counts on screen** in OBS (optional, see [Showing a counter in OBS](#showing-a-counter-in-obs)).
+You don't need FFY Commands for this one, and it works on Twitch, Kick and YouTube. Counts never reset on their own. They carry on past midnight and through restarts until you change them.
 
----
+If you want, the counts can show up on screen in OBS too. That's optional, and it's explained in [Showing a counter in OBS](#showing-a-counter-in-obs) further down.
 
 ## Installing
 
-1. Download the **`FFY-Counters`** file from this page.
-2. In Streamer.bot, click **Import** in the bar at the top, drag and drop the file into the box, and click **Import**.
+Download the **`FFY-Counters`** file from this page. In Streamer.bot, click **Import** at the top, drag the file into the box and click **Import**.
 
-Done. The commands are switched on for you. Type `!pickle` in chat to test.
+The commands are already on, so type `!pickle` in chat to try it.
 
-Then **make the `!set...` commands mods only** (see [Permissions](#permissions)), so chat can't change your counts.
-
----
+One thing I'd do straight away is make the `!set...` commands mods only, otherwise chat can change your counts to whatever they like. [Permissions](#permissions) shows you how.
 
 ## How it works
 
-Every counter has **three commands**. Here they are for pickles:
+Each counter comes with three commands. For pickles they look like this:
 
 | Command | What it does | Chat shows |
 |---|---|---|
@@ -37,11 +31,9 @@ Every counter has **three commands**. Here they are for pickles:
 | `!setpickle -1` | Takes 1 off | FluffFaceYeti has eaten 9 pickles! |
 | `!setpickle +3` | Adds 3 | FluffFaceYeti has eaten 12 pickles! |
 
-It always says `1 time` but `2 times`, and never goes below 0.
+It gets "1 time" and "2 times" right, and it won't go below 0.
 
----
-
-## The 20 counters
+## All 20 counters
 
 | Add 1 | Show | Set | Chat shows |
 |---|---|---|---|
@@ -66,47 +58,41 @@ It always says `1 time` but `2 times`, and never goes below 0.
 | `!fall` | `!falls` | `!setfall` | FluffFaceYeti has fallen 5 times! |
 | `!bug` | `!bugs` | `!setbug` | FluffFaceYeti has found 5 bugs! |
 
-Your channel name is filled in automatically.
-
----
+It fills your channel name in by itself.
 
 ## Permissions
 
-You'll probably want only mods to change counts:
+You probably only want mods changing the counts. To do that:
 
-1. Click the **Commands** tab and open the **FFY Counters** folder.
-2. Open a `!set...` command, e.g. **!setpickle**.
-3. In its **Permissions** settings, limit it to moderators.
-4. Click **OK**.
+1. Go to the **Commands** tab and open the **FFY Counters** folder.
+2. Open one of the `!set...` commands, like **!setpickle**.
+3. Under **Permissions**, limit it to moderators.
+4. Click **OK**, and do the same for the other `!set...` ones.
 
-You can also give `!pickle` and the others a **cooldown** there, so chat can't spam them.
-
----
+While you're in there, you can give `!pickle` and friends a cooldown so chat can't spam them.
 
 ## Adding your own counter
 
-We'll add `!cat` / `!cats` / `!setcat`.
+As an example, let's make `!cat` / `!cats` / `!setcat`.
 
-### Step 1: add the line
+### First, add the line
 
-1. **Actions tab** → **FFY Counters** group → **FFY Counters** → double-click **Execute C# Code**.
-2. Between `EDIT BELOW` and `EDIT ABOVE`, add a line under the others:
+1. In the **Actions** tab, open the **FFY Counters** group, then the **FFY Counters** action, and double-click **Execute C# Code**.
+2. Somewhere between `EDIT BELOW` and `EDIT ABOVE`, under the other counters, add:
    ```csharp
    Counter("cat", "cats", "{streamer} has pet the cat {count} time{s}!");
    ```
-   - 1st part: the **add** command (`!cat`)
-   - 2nd part: the **show** command (`!cats`)
-   - 3rd part: **what chat says**
+   The first bit is the add command (`!cat`), the second is the show command (`!cats`), and the third is what chat sees.
 3. Click **Save and Compile**.
 
-### Step 2: add the three commands
+### Then add the three commands
 
-For `!cat`, `!cats` and `!setcat`:
+Do this for each of `!cat`, `!cats` and `!setcat`:
 
-1. **Commands tab:** right-click → **Add**. Set **Name** and **Commands** to e.g. `!cat`, **Location** to Start, **Group** to `FFY Counters`, tick your platforms and **Enabled**, then click **OK**.
-2. **Actions tab:** click the **FFY Counters** action. In the **Triggers** box, right-click → **Add** → **Core** → **Commands** → **Command Triggered**, pick the command, and click **OK**.
+1. In the **Commands** tab, right-click and pick **Add**. Set **Name** and **Commands** to the command (e.g. `!cat`), **Location** to Start and **Group** to `FFY Counters`. Tick your platforms and **Enabled**, then click **OK**.
+2. In the **Actions** tab, click the **FFY Counters** action. Right-click in the **Triggers** box, go to **Add** → **Core** → **Commands** → **Command Triggered**, pick your command and click **OK**.
 
-### Writing the sentence
+### Writing what chat sees
 
 | Placeholder | Becomes |
 |---|---|
@@ -114,60 +100,54 @@ For `!cat`, `!cats` and `!setcat`:
 | `{count}` | The number |
 | `{s}` | An "s" when the count isn't 1, so you get `1 time` but `2 times` |
 
-**Your name shows wrong?** Find `StreamerName = "";` in the same code and type your name between the quote marks.
-
----
+If your name comes out wrong, find `StreamerName = "";` in the same code and put your name between the quotes.
 
 ## Showing a counter in OBS
 
-Any counter can also update a text on screen. When someone types `!death`, `!setdeath` or `!deaths`, the text changes straight away.
+Any counter can update a bit of text on screen as well. The moment someone types `!death`, `!setdeath` or `!deaths`, the text changes.
 
-### Step 1: connect Streamer.bot to OBS
+### 1. Connect Streamer.bot to OBS
 
-Skip this if you've done it before.
+You can skip this if you've already done it for something else.
 
-1. In **OBS**: **Tools** → **WebSocket Server Settings**. Tick **Enable WebSocket server** and click **Show Connect Info** to see the password.
-2. In **Streamer.bot**: **Stream Apps** tab → **OBS** → right-click → **Add**. Enter the password and tick **Auto Connect**.
+In OBS, go to **Tools** → **WebSocket Server Settings**, tick **Enable WebSocket server** and click **Show Connect Info** to get the password. Then in Streamer.bot, go to the **Stream Apps** tab, right-click under **OBS** and choose **Add**. Put the password in and tick **Auto Connect**.
 
-### Step 2: add a text in OBS
+### 2. Add a text source in OBS
 
-In the scene you want, add a **Text (GDI+)** source and give it a name, e.g. `Death Counter`. Style it however you like.
+In whichever scene you want it, add a **Text (GDI+)** source and name it something like `Death Counter`. Style it however you want.
 
-### Step 3: tell the counter about it
+### 3. Point the counter at it
 
-1. **Actions tab** → **FFY Counters** group → **FFY Counters** → double-click **Execute C# Code**.
-2. Add the text's name, and what it should show, to the end of the counter's line:
+1. In the **Actions** tab, open the **FFY Counters** group, then the **FFY Counters** action, and double-click **Execute C# Code**.
+2. Add the text source's name, and what you want it to say, onto the end of that counter's line:
    ```csharp
    Counter("death", "deaths", "{streamer} has died {count} time{s}!", "Death Counter", "Deaths: {count}");
    ```
-   - 4th part: the **OBS text's name**. It must match OBS exactly, including capitals.
-   - 5th part: **what the text shows**. Leave it out to show just the number.
+   The 4th bit is the OBS text's name, and it has to match OBS exactly, capitals and all. The 5th bit is what the text shows. Leave it off if you just want the number.
 3. Click **Save and Compile**.
 
-Type `!deaths` in chat and the text fills in with the current count.
+Now type `!deaths` in chat and the text will fill in with the current count.
 
-### Optional: fill in your texts when OBS connects
+### Optional: fill the texts in when OBS connects
 
-So your texts are right as soon as Streamer.bot connects to OBS, without anyone typing a command:
+If you want your texts to be right as soon as Streamer.bot connects to OBS, without anyone typing anything, click the **FFY Counters** action in the **Actions** tab. Then right-click in the **Triggers** box, choose **Add** → **OBS Studio** → **Connected** and click **OK**.
 
-1. **Actions tab**: click the **FFY Counters** action.
-2. In the **Triggers** box, right-click → **Add** → **OBS Studio** → **Connected**, and click **OK**.
+To fill them in once right now, right-click the **FFY Counters** action and choose **Test Trigger**.
 
-To fill them in once right now, right-click the **FFY Counters** action → **Test Trigger**.
+## Worth knowing
 
----
+The counts are saved in the **Global Variables** tab as `counter.pickle`, `counter.crash` and so on, and you can edit or delete them there.
 
-## Good to know
+If you used an older version of FFY Counters, your old counts are kept. Old commands like `!removecrash` or `!crashcount` get switched off when you import, and you can delete them.
 
-- **Counts are saved** in the **Global Variables** tab as `counter.pickle`, `counter.crash` and so on. You can edit or delete them there.
-- **Coming from an older FFY Counters?** Your old counts are kept, and old commands like `!removecrash` or `!crashcount` are switched off when you import. You can delete them.
-- **Updating and added your own counters?** Importing replaces the code. Copy your `Counter(...)` lines somewhere first, then paste them back in after importing and click **Save and Compile**.
+If you've added your own counters, be careful when you update. Importing replaces the code, so copy your `Counter(...)` lines somewhere safe first, paste them back in afterwards and click **Save and Compile**.
 
----
+## If something's not working
 
-## Troubleshooting
+**No reply:** make sure the command is switched on in the **Commands** tab and is set as a trigger on the **FFY Counters** action.
 
-- **No reply:** is the command switched on in the **Commands** tab, and is it a trigger on the **FFY Counters** action?
-- **OBS text not changing:** check the text's name matches the 4th part of the counter's line exactly, including capitals, and that OBS shows as connected in the **Stream Apps** tab. The **Logs** tab says `OBS isn't connected` if it can't reach OBS.
-- **Commands named "... (Copy)":** Streamer.bot adds "(Copy)" when you import a command whose name already exists. Delete the old commands, delete the copies, and import again.
-- **Anything else:** check the **Logs** tab for **FFY Counters**.
+**OBS text isn't changing:** the text source's name has to match the 4th part of the counter's line exactly, capitals included. Also check OBS shows as connected in the **Stream Apps** tab. If it can't reach OBS, the **Logs** tab will say `OBS isn't connected`.
+
+**Commands called "... (Copy)":** Streamer.bot does this when you import a command with a name that already exists. Delete the old commands and the copies, then import again.
+
+For anything else, look for **FFY Counters** in the **Logs** tab.

@@ -1,6 +1,6 @@
 # FFY Dino
 
-Your chat goes **digging for dinosaur fossils**. Every dig turns up bones, junk, amber, or very rarely a legendary **1-1** fossil. Find every bone of a dinosaur to **complete its skeleton** and put it on display in your **museum**.
+Send chat off digging for dinosaur fossils. Most digs turn up bones, some junk, the odd bit of amber, and every now and then a legendary 1-1 fossil. Find every bone of a dinosaur and you've got a full skeleton for your museum.
 
 ```
 Bob: !dig
@@ -10,23 +10,17 @@ Chat: Shiny! @Bob found Amber with a Mosquito worth $212.40!
 Chat: SKELETON COMPLETE!!! @Bob JUST FINISHED A T-REX SKELETON!!! The museum crowd goes wild! Worth $1,000.00!
 ```
 
-- Works on its own. You don't need FFY Commands.
-- Works on **Twitch, Kick and YouTube**.
-- 11 dinosaurs to complete, from the Velociraptor to the Giganotosaurus.
-- You choose how many digs a day, and how often everything **resets**.
+There are 11 dinosaurs to collect, from the little Velociraptor up to the Giganotosaurus. You decide how many digs people get a day and how often it all resets.
 
----
+It works without FFY Commands, on Twitch, Kick and YouTube.
 
 ## Installing
 
-1. Download the **`FFY-Dino`** file from this page.
-2. In Streamer.bot, click **Import** in the bar at the top, drag and drop the file into the box, and click **Import**.
+Download the **`FFY-Dino`** file from this page. In Streamer.bot, click **Import** at the top, drag the file into the box and click **Import**.
 
-Done. The commands are switched on for you. Type `!dig` in chat to test.
+That's it. The commands are on already, so try `!dig` in chat.
 
----
-
-## The commands
+## Commands
 
 | Command | What it does |
 |---|---|
@@ -39,11 +33,9 @@ Done. The commands are switched on for you. Type `!dig` in chat to test.
 | `!dinotop` | The top 5 museums, by value. |
 | `!dinoseason` | Shows how many days are left until the season resets. |
 
----
-
 ## How digging works
 
-Each find is one of these:
+Every find is one of these:
 
 | Find | Chance | What happens |
 |---|---|---|
@@ -52,7 +44,7 @@ Each find is one of these:
 | Amber | 4.95% | A treasure for your museum, worth $50 to $400. |
 | 1-1 fossil | 0.05% | A legendary treasure worth $5,000 to $25,000. **Only one person can own each one.** |
 
-To stop the last bone taking forever, half of all bones are ones you still need (you can change this).
+Half of all bones you dig up will be ones you still need, so you're not stuck forever hunting that one last bone. You can change that in the settings.
 
 ### The dinosaurs
 
@@ -70,20 +62,17 @@ To stop the last bone taking forever, half of all bones are ones you still need 
 | T-Rex | 6 | $1,000 | Very rare |
 | Giganotosaurus | 7 | $1,500 | Very rare |
 
-When you complete a skeleton, chat gets a **SKELETON COMPLETE!** message. Dinosaurs worth $500 or more get extra hype. You can complete the same dinosaur more than once.
+Finishing a skeleton gets a **SKELETON COMPLETE!** message in chat, and the ones worth $500 or more get a bit of extra hype. You can complete the same dinosaur more than once.
 
 ### 1-1 fossils
 
-Golden T-Rex Skull, Crystal Raptor Claw, Dragon Bone, Perfect Dino Egg, Fossilised Heart, Sue's Lost Tooth, The Rainbow Trilobite and Meteorite Fragment.
+There are eight: Golden T-Rex Skull, Crystal Raptor Claw, Dragon Bone, Perfect Dino Egg, Fossilised Heart, Sue's Lost Tooth, The Rainbow Trilobite and Meteorite Fragment.
 
-- Once someone digs one up, nobody else can get it that season.
-- Chat gets its own *"WOW!!! @Bob dug up Dragon Bone, a 1-1 fossil worth $18,250.00!"* message.
-
----
+Once someone digs one up, it's theirs and nobody else can find it that season. Chat gets a message like *"WOW!!! @Bob dug up Dragon Bone, a 1-1 fossil worth $18,250.00!"*
 
 ## Settings
 
-**Actions tab** → **FFY Dino** group → **FFY Dino** → double-click **Execute C# Code**. Everything is between `EDIT BELOW` and `EDIT ABOVE`:
+In the **Actions** tab, open the **FFY Dino** group, then the **FFY Dino** action, and double-click **Execute C# Code**. The settings are between `EDIT BELOW` and `EDIT ABOVE`:
 
 | Setting | What it does |
 |---|---|
@@ -102,20 +91,20 @@ Golden T-Rex Skull, Crystal Raptor Claw, Dragon Bone, Perfect Dino Egg, Fossilis
 | `BestCount = 5;` | How many treasures `!bestfossils` shows. |
 | The `...Message` lines | Every message chat sees. Change the wording, but keep the `{...}` placeholders. |
 
-Click **Save and Compile** after changing anything.
+Don't forget to click **Save and Compile** afterwards.
 
----
+## Worth knowing
 
-## Good to know
+Everything's saved in the **Global Variables** tab as `ffy.dino`. Delete that and a new season starts straight away.
 
-- **Everything is saved** in the **Global Variables** tab as `ffy.dino`. Deleting it starts a new season straight away.
-- **A "day"** follows your PC's clock and resets at midnight.
-- **Long messages are split** so chat doesn't cut them off.
-- **Stop spam:** give `!museum`, `!bones` and `!dinotop` a cooldown in the **Commands** tab.
+A "day" goes by your PC's clock and resets at midnight.
 
----
+Long messages get split up so chat doesn't cut them off.
 
-## Troubleshooting
+If people spam `!museum`, `!bones` or `!dinotop`, stick a cooldown on them in the **Commands** tab.
 
-- **No reply:** check the commands are switched on in the **Commands** tab, in the **FFY Dino** folder.
-- **"Save and Compile" error:** look for a missing `"`, `,` or `;` on the line it mentions.
+## If something's not working
+
+No reply? Check the commands are switched on in the **FFY Dino** folder in the **Commands** tab.
+
+If **Save and Compile** gives you an error, look for a missing `"`, `,` or `;` on the line it mentions.

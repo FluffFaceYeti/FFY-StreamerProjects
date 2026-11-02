@@ -1,6 +1,6 @@
 # FFY Tamagotchi
 
-A Tamagotchi for your chat. Either every viewer hatches their own, or the whole chat looks after one together. Feed it, play with it, keep it clean and let it nap, and it grows up a little every time you go live. Forget about it, and it might fly back to the Tamagotchi Planet.
+Remember Tamagotchis? This puts one in your chat. Every viewer can hatch their own, or the whole chat can share one. Feed it, play with it, clean up after it and let it nap, and it grows up a little bit every time you go live. Neglect it and it might head back to the Tamagotchi Planet...
 
 ```
 Bob: !tama Pickle
@@ -12,32 +12,27 @@ Bob: !tamacolour glitter
 Chat: @Bob's Pickle is now Glitter! It's admiring itself in the mirror.
 ```
 
-- Works on its own. You don't need FFY Commands.
-- Works on **Twitch, Kick and YouTube**.
-- Moods like a real Tamagotchi: it tells chat when it's Hungry, Sleepy, Messy, Bored or Poorly.
-- Its age counts your streams, and it grows from Baby to Senior.
-- An **OBS overlay** shows the chat's Tamagotchi on stream, animated, reacting live when chat looks after it.
+Just like the real thing, it lets chat know when it's Hungry, Sleepy, Messy, Bored or Poorly. Its age goes up with your streams, and it grows from a Baby all the way to a Senior.
 
----
+There's an animated OBS overlay too. It shows the chat's Tamagotchi on screen and reacts as soon as someone looks after it.
+
+You don't need FFY Commands, and it works on Twitch, Kick and YouTube.
 
 ## Installing
 
-1. Download the **`FFY-Tamagotchi`** file from this page.
-2. In Streamer.bot, click **Import** in the bar at the top, drag and drop the file into the box, and click **Import**.
+Download the **`FFY-Tamagotchi`** file from this page. In Streamer.bot, click **Import** at the top, drag the file into the box and click **Import**.
 
-Done. The commands are switched on for you, and Stream Online triggers for Twitch, Kick and YouTube are already set up. A Tamagotchi is hatched with `!tama`. Until then, the other commands tell chat how.
-
----
+The commands are switched on already, and so are the Stream Online triggers for Twitch, Kick and YouTube. Someone needs to hatch a Tamagotchi with `!tama` first. Until they do, the other commands just explain how.
 
 ## Two ways to play
 
 ### Everyone has their own (`SharedTamagotchi = false;`)
 
-Every viewer hatches their own Tamagotchi with `!tama` and looks after it themselves. They can visit each other's with `!tamavisit @Sam`.
+Each viewer hatches their own with `!tama` and looks after it themselves. They can drop in on each other's with `!tamavisit @Sam`.
 
-### The chat's Tamagotchi (`SharedTamagotchi = true;`)
+### One for the whole chat (`SharedTamagotchi = true;`)
 
-The whole chat shares one Tamagotchi and looks after it together:
+Chat shares a single Tamagotchi and looks after it together:
 
 ```
 Mia: !tama Pickle
@@ -46,16 +41,15 @@ Sam: !tamafeed
 Chat: @Sam fed Pickle a dumpling! *munch munch* Hunger 100/100.
 ```
 
-- The feed, play and clean waits are shared too, so once someone has fed it, nobody can feed it again until the wait is over.
-- Only mods (and you) can name it or change its colour and shell. Set `OnlyModsNameChatTamagotchi = false;` to let anyone.
-- `!tamatop` shows the chat's Tamagotchi, and `!tamavisit` isn't used.
-- Its stats are shown under **your** username in Persisted User Globals.
+The waits on feeding, playing and cleaning are shared as well. Once someone's fed it, nobody else can until the wait's up.
 
-Switching between the two keeps both. Viewers' own Tamagotchis and the chat's one are saved separately.
+Only you and your mods can name it or change its colour and shell, unless you set `OnlyModsNameChatTamagotchi = false;`, which lets anyone do it.
 
----
+In this mode `!tamatop` just shows the chat's Tamagotchi, and `!tamavisit` isn't used. Its stats show up under **your** username in Persisted User Globals.
 
-## The commands
+You can switch between the two modes whenever you like without losing anything. Viewers' own Tamagotchis and the chat's one are saved separately.
+
+## Commands
 
 | Command | What it does |
 |---|---|
@@ -72,13 +66,13 @@ Switching between the two keeps both. Viewers' own Tamagotchis and the chat's on
 | `!tamatop` | The 5 oldest Tamagotchis in chat. |
 | `!tamahelp` | Lists the commands in chat. |
 
-Feeding, playing and cleaning each have a 10 minute wait, so chat can't spam them.
-
----
+There's a 10 minute wait on feeding, playing and cleaning, so chat can't just spam them.
 
 ## How it works
 
-**Needs:** Hunger, Happiness, Rest and Cleanliness go from 0 to 100, and slowly drop for every hour you're **live**. When you go offline, the Tamagotchi freezes and carries on from where it was when you next go live (set `OnlyWhileLive = false;` to have them drop all the time):
+### Needs
+
+It has four needs: Hunger, Happiness, Rest and Cleanliness. Each goes from 0 to 100 and drops a little every hour you're **live**. When you go offline it freezes, and picks up where it left off next time you stream. If you'd rather they drop all the time, set `OnlyWhileLive = false;`.
 
 | Need | Drops by | Goes up with |
 |---|---|---|
@@ -87,9 +81,13 @@ Feeding, playing and cleaning each have a 10 minute wait, so chat can't spam the
 | Rest | 3 an hour | `!tamasleep` (+60) |
 | Cleanliness | 3 an hour | `!tamaclean` (back to 100) |
 
-**Health:** while it's starving (Hunger 0) or filthy (Cleanliness 0), its health drops by 3 an hour. Otherwise it slowly recovers. If health reaches 0, it goes back to the Tamagotchi Planet, and the next `!tama` hatches a new egg. A Tamagotchi left alone completely lasts about 40 hours of streaming.
+### Health
 
-**Mood:** like a real Tamagotchi, it tells you what it needs. Chat sees its two most urgent moods, worst first, plus what it's doing, e.g. *Mood: Exhausted and Hungry \*can barely keep its eyes open\**.
+If it's starving (Hunger at 0) or filthy (Cleanliness at 0), it loses 3 health an hour. The rest of the time it slowly gets better. If its health hits 0, it goes back to the Tamagotchi Planet and the next `!tama` hatches a fresh egg. Left completely on its own, one lasts about 40 hours of streaming.
+
+### Mood
+
+Like a real one, it tells you what it needs. Chat sees its two most urgent moods, worst first, and what it's up to, e.g. *Mood: Exhausted and Hungry \*can barely keep its eyes open\**.
 
 | Mood | When |
 |---|---|
@@ -100,36 +98,41 @@ Feeding, playing and cleaning each have a 10 minute wait, so chat can't spam the
 | Lonely / Bored | Happiness below 10 / below 30 |
 | Over the moon, Happy, Grumpy or Miserable | Nothing urgent. It depends on how well looked after it is overall |
 
-**Age and growing up:** its age counts your streams. Each time you go live on Twitch, Kick or YouTube, every Tamagotchi gets 1 stream older, e.g. *"Pickle (Child, 3 streams old)"*. A newly hatched one is *brand new*. It grows from Baby to Child at 1 stream, Teen at 3, Adult at 6 and Senior at 14. Chat sees a message when it grows, the next time someone checks on it.
+### Growing up
 
-- Going live on more than one platform at once only counts as 1 stream (go-lives less than an hour apart are ignored).
-- To count real days instead, set `StreamAge = false;`. The `Stage(...)` numbers then mean days.
+Its age is counted in streams. Every time you go live on Twitch, Kick or YouTube, every Tamagotchi gets 1 stream older, e.g. *"Pickle (Child, 3 streams old)"*. A newly hatched one is *brand new*.
 
-**Colour:** a new Tamagotchi hatches in a random colour: Pink, Blue, Yellow, Green, Purple, Orange, Red, White, Black, Teal, Lilac, Rainbow, Glitter or See-through.
+It goes from Baby to Child at 1 stream, Teen at 3, Adult at 6 and Senior at 14. The next time someone checks on it after it grows, chat gets a message.
 
----
+Going live on a few platforms at once only counts as 1 stream, because go-lives less than an hour apart are ignored. If you'd prefer it to age in real days, set `StreamAge = false;` and the `Stage(...)` numbers will mean days instead.
+
+### Colours
+
+A new Tamagotchi hatches in a random colour: Pink, Blue, Yellow, Green, Purple, Orange, Red, White, Black, Teal, Lilac, Rainbow, Glitter or See-through.
 
 ## The OBS overlay
 
-Put the chat's Tamagotchi on your stream: a Tamagotchi with a pixel screen, in its own colour, with its health hearts across the top of the screen, and a small box underneath with its name, age and mood.
+This puts the chat's Tamagotchi on your stream. It's a Tamagotchi with a little pixel screen, in its own colour, with health hearts along the top and a small box underneath showing its name, age and mood.
 
-- It walks about, hops when it's happy, and grows a new look at each stage (Baby, Child, Teen, Adult, Senior).
-- It shows what it needs, like a real one: a rice ball when it's hungry, Zzz when it's sleepy, a mess when it needs cleaning, a "!" when it's bored, and a skull when it's poorly.
-- **Shells:** 10 shell shapes: Classic (with a keyring), Dinosaur (spikes and a tail), Yeti (fluffy fur and horns), Crochet (knitted, with a flower and a ball of yarn), Cat (ears and whiskers), Bunny, Bear, Frog, Alien and Crown. A new Tamagotchi hatches in a random one, and `!tamashell` changes it.
-- `!tamastats` slides the screen to its needs, 4 hearts each, like a real Tamagotchi: Hunger and Happy, then Rest and Clean, then back to the Tamagotchi.
-- When chat looks after it, it reacts straight away, with a speech bubble saying who did it, e.g. *"@Sam fed Pickle!"*: food drops in, it plays catch, it gets cleaned up, the lights go off for a nap, an egg hatches, it grows up, or it floats off to the Tamagotchi Planet.
+It wanders around, hops when it's happy and gets a new look at every stage (Baby, Child, Teen, Adult, Senior). It shows what it needs the same way a real one does: a rice ball when it's hungry, Zzz when it's sleepy, a mess when it needs cleaning, a "!" when it's bored, and a skull when it's poorly.
 
-The overlay is for the **chat's Tamagotchi**, so it needs `SharedTamagotchi = true;`. Only one is ever on screen.
+There are 10 shells to choose from: Classic (with a keyring), Dinosaur (spikes and a tail), Yeti (fluffy fur and horns), Crochet (knitted, with a flower and a ball of yarn), Cat (ears and whiskers), Bunny, Bear, Frog, Alien and Crown. A new one hatches in a random shell, and `!tamashell` changes it.
 
-**Setting it up:**
+`!tamastats` slides the screen over to its needs, 4 hearts each like a real Tamagotchi. It shows Hunger and Happy first, then Rest and Clean, then goes back to the Tamagotchi.
 
-1. Download **`FFY-Tamagotchi-Overlay.html`** from this page and keep it somewhere safe.
-2. **Switch on Streamer.bot's WebSocket Server:** **Servers/Clients** tab → **WebSocket Server**. Tick **Auto Start**, then click **Start Server**. The default is address `127.0.0.1`, port `8080`. Don't use `4455`: that's OBS's own WebSocket, which Streamer.bot uses to control OBS.
-3. **In OBS:** add a **Browser** source, tick **Local file**, and pick `FFY-Tamagotchi-Overlay.html`. Set the width to **360** and the height to **590**.
+Whenever chat looks after it, it reacts straight away, with a speech bubble saying who did it, like *"@Sam fed Pickle!"*. Food drops in, it plays catch, it gets cleaned up, the lights go off for a nap. You'll also see eggs hatching, it growing up, or it floating off to the Tamagotchi Planet.
 
-That's it. It shows the chat's Tamagotchi straight away, and updates whenever chat uses a command.
+The overlay only shows the **chat's** Tamagotchi, so you need `SharedTamagotchi = true;`. There's only ever one on screen.
 
-**Different WebSocket settings?** Open `FFY-Tamagotchi-Overlay.html` in Notepad. The settings are at the top, between `SETTINGS` and `END OF SETTINGS`:
+### Setting up the overlay
+
+1. Download **`FFY-Tamagotchi-Overlay.html`** from this page and put it somewhere you won't lose it.
+2. Turn on Streamer.bot's WebSocket Server. Go to the **Servers/Clients** tab, then **WebSocket Server**, tick **Auto Start** and click **Start Server**. By default it's address `127.0.0.1` and port `8080`. Don't use `4455`, because that's OBS's own WebSocket, which Streamer.bot uses to control OBS.
+3. In OBS, add a **Browser** source, tick **Local file** and choose `FFY-Tamagotchi-Overlay.html`. Set the width to **360** and the height to **590**.
+
+That's it. The chat's Tamagotchi shows up straight away and updates whenever someone uses a command.
+
+If your WebSocket settings are different, open `FFY-Tamagotchi-Overlay.html` in Notepad. The settings are at the top, between `SETTINGS` and `END OF SETTINGS`:
 
 | Setting | What it does |
 |---|---|
@@ -144,15 +147,13 @@ That's it. It shows the chat's Tamagotchi straight away, and updates whenever ch
 | `shell: "auto"` | `"auto"` = the shell chat picks with `!tamashell`. Or always use one, e.g. `shell: "Cat"`. |
 | `refreshMinutes: 2` | How often it re-checks its needs while nobody uses a command. |
 
-You can also add them to the end of the file's address instead, e.g. `FFY-Tamagotchi-Overlay.html?port=8081&scale=1.5`.
+You can also stick them on the end of the file's address instead, like `FFY-Tamagotchi-Overlay.html?port=8081&scale=1.5`.
 
-**Want to see it first?** Open the file in your web browser with `?demo=1` added to the end of the address. It plays through everything it can do without Streamer.bot. `?demo=shells` shows every shell.
-
----
+Want a look before setting it up? Open the file in your browser with `?demo=1` on the end of the address and it'll play through everything it can do, no Streamer.bot needed. `?demo=shells` shows all the shells.
 
 ## Switches
 
-At the top of the settings. Set each one to `true` (on) or `false` (off):
+These are at the top of the settings. Set each to `true` (on) or `false` (off):
 
 | Switch | What it does |
 |---|---|
@@ -164,11 +165,9 @@ At the top of the settings. Set each one to `true` (on) or `false` (off):
 | `AdoptFirst = true;` | A Tamagotchi must be hatched with `!tama` before the other commands work. `false` = any command hatches one. |
 | `UserVariables = true;` | Shows the stats in Persisted User Globals. `false` turns this off. |
 
----
-
 ## Stats in Persisted User Globals
 
-Every viewer's Tamagotchi is shown in Streamer.bot: **Global Variables** tab → **Persisted User Globals** → the platform (**Twitch**, **Kick** or **YouTube**) → their username.
+You can see everyone's Tamagotchi in Streamer.bot. Go to the **Global Variables** tab, then **Persisted User Globals**, then the platform (**Twitch**, **Kick** or **YouTube**), then their username.
 
 | Variable | Can you change it? |
 |---|---|
@@ -181,13 +180,11 @@ Every viewer's Tamagotchi is shown in Streamer.bot: **Global Variables** tab →
 | **Tamagotchi Stage**, **Age**, **Mood** | No, these are just shown for you |
 | **Tamagotchi Pet ID** | No, leave this alone. It tells the game which Tamagotchi the stats belong to |
 
-Change a value and the Tamagotchi picks it up the next time that viewer uses a command, e.g. set **Tamagotchi Health** to 100 to nurse a poorly Tamagotchi back to health.
+If you change a value, the Tamagotchi picks it up next time that viewer uses a command. Setting **Tamagotchi Health** to 100 is a handy way to nurse a poorly one back to health.
 
----
+## Changing other things
 
-## Changing it
-
-**Actions tab** → **FFY Tamagotchi** group → **FFY Tamagotchi** → double-click **Execute C# Code**. Everything is between `EDIT BELOW` and `EDIT ABOVE`. Click **Save and Compile** after changing anything.
+In the **Actions** tab, open the **FFY Tamagotchi** group, then the **FFY Tamagotchi** action, and double-click **Execute C# Code**. Everything's between `EDIT BELOW` and `EDIT ABOVE`. Click **Save and Compile** when you've finished.
 
 | Setting | What it does |
 |---|---|
@@ -210,22 +207,26 @@ Change a value and the Tamagotchi picks it up the next time that viewer uses a c
 | `MoodsShown = 2;` | How many moods chat sees at once. |
 | The `Message("...", "...")` lines | Every message chat sees. Change the wording, but keep the `{...}` words. |
 
----
+## Worth knowing
 
-## Good to know
+Everything's saved in the **Global Variables** tab as `ffy.tamagotchi`. Delete that and every Tamagotchi goes with it.
 
-- Everything is saved in the **Global Variables** tab as `ffy.tamagotchi`. Deleting it removes every Tamagotchi.
-- **Importing again** (to update) keeps every Tamagotchi, but the settings go back to the defaults, so set your switches again.
-- **Stop spam:** give `!tama` and `!tamatop` a cooldown in the **Commands** tab.
+When you import again to update, all the Tamagotchis are kept but the settings go back to default, so you'll need to set your switches again.
 
----
+If `!tama` or `!tamatop` get spammed, give them a cooldown in the **Commands** tab.
 
-## Troubleshooting
+## If something's not working
 
-- **No reply:** check the commands are switched on in the **Commands** tab, in the **FFY Tamagotchi** folder.
-- **The overlay says it can't reach Streamer.bot:** check the WebSocket Server is started (**Servers/Clients** tab → **WebSocket Server**), and that the port matches the overlay's settings.
-- **The overlay says "Not shared":** set `SharedTamagotchi = true;`. The overlay only shows the chat's Tamagotchi.
-- **The overlay doesn't change when chat uses a command:** check `Overlay = true;`, then right-click the Browser source in OBS and click **Refresh**.
-- **It isn't getting older, or its needs never drop:** check the **FFY Tamagotchi** action has its **Stream Online** and **Stream Offline** triggers (Twitch, Kick and YouTube) in the **Actions** tab.
-- **If Streamer.bot was closed when you ended a stream:** a stream counts for at most 12 hours, so the Tamagotchi won't starve over the following days.
-- **"Save and Compile" error:** look for a missing `"`, `,` or `;` on the line it mentions.
+**No reply:** check the commands are switched on in the **FFY Tamagotchi** folder in the **Commands** tab.
+
+**The overlay says it can't reach Streamer.bot:** make sure the WebSocket Server is started (**Servers/Clients** tab → **WebSocket Server**) and the port matches the overlay's settings.
+
+**The overlay says "Not shared":** set `SharedTamagotchi = true;`. The overlay only shows the chat's Tamagotchi.
+
+**The overlay doesn't change when chat uses a command:** check `Overlay = true;`, then right-click the Browser source in OBS and click **Refresh**.
+
+**It's not getting older, or its needs never go down:** check the **FFY Tamagotchi** action in the **Actions** tab has its **Stream Online** and **Stream Offline** triggers (Twitch, Kick and YouTube).
+
+**Streamer.bot was closed when you ended a stream:** don't worry. A stream never counts for more than 12 hours, so it won't starve over the next few days.
+
+**Save and Compile error:** look for a missing `"`, `,` or `;` on the line it mentions.

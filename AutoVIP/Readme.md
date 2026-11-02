@@ -1,28 +1,28 @@
 # AutoVIP
 
-The people who support you the most deserve the VIP badge, and AutoVIP makes sure they get it. Built for Streamer.bot, it keeps track of who keeps showing up, who stays subbed, who gifts subs and who cheers bits, and gives VIP to your top supporters automatically. When someone new climbs to the top, chat sees them steal a VIP badge. There's an optional OBS overlay for steals, leaderboards, champions, `!myrank`, an end-of-stream recap and boards that pop up on a timer.
+Your biggest supporters should be the ones wearing the VIP badge, and that's what AutoVIP is for. It runs in Streamer.bot and keeps an eye on who keeps turning up, who stays subbed, who gifts subs and who cheers bits, then hands VIP to your top people for you. If someone new climbs into the top spots, chat gets to watch them steal a VIP badge off someone.
 
-## A team effort
+There's also an OBS overlay if you want it. It shows the steals, leaderboards, champions, `!myrank`, a recap at the end of stream, and boards that pop up every so often.
 
-AutoVIP has been a team effort with **[BehavingBeardly](https://www.twitch.tv/behavingbeardly)**. It started as an idea of his, and together we've built it up from the ground. We're very proud to share it with streamers, and we hope it helps you show some love to your channel's top supporters!
+## Made with BehavingBeardly
 
-Here's an early clip of us getting it working for the first time: [watch it on Twitch](https://www.twitch.tv/behavingbeardly/clip/BlitheArtisticOilSoonerLater-MQWa7cLFzc4WW8ya?range=7d)
+This one's been a team effort with **[BehavingBeardly](https://www.twitch.tv/behavingbeardly)**. It was his idea to begin with, and we've built it up together from nothing. We're really proud of how it's turned out and hope it helps you show your top supporters some love.
 
-**Got a clip of AutoVIP on your stream?** Tag **@FluffFaceYeti** on Twitter so we can see it!
+Here's an early clip of the first time we got it working: [watch it on Twitch](https://www.twitch.tv/behavingbeardly/clip/BlitheArtisticOilSoonerLater-MQWa7cLFzc4WW8ya?range=7d)
 
-## Getting started
+If you get a clip of AutoVIP on your stream, tag **@FluffFaceYeti** on Twitter. We'd love to see it.
 
-Everything you need is in this folder:
+## What's in this folder
 
-- **`AutoVIP`**: the import file for Streamer.bot
-- **`Overlay/`**: the OBS overlay, its settings page and a connection test
-- **[`Guide.md`](Guide.md)**: how to install it, every setting and command, and how to set up the overlay
+- **`AutoVIP`** is the file you import into Streamer.bot
+- **`Overlay/`** has the OBS overlay, its settings page and a connection test
+- **[`Guide.md`](Guide.md)** walks you through installing it, every setting and command, and setting up the overlay
 
-## Support the project
+## Supporting it
 
-AutoVIP is free. If you'd like to send a tip in support of it, you can do so on my Ko-fi page: **[ko-fi.com/flufffaceyeti](https://ko-fi.com/flufffaceyeti)**
+AutoVIP is free. If you want to send a tip, you can on my Ko-fi: **[ko-fi.com/flufffaceyeti](https://ko-fi.com/flufffaceyeti)**
 
-Thank you!
+Thanks!
 
 **[flufffaceyeti](https://www.twitch.tv/flufffaceyeti)**
 

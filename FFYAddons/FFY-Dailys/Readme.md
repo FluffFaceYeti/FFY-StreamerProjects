@@ -1,6 +1,6 @@
 # FFY Daily's
 
-**20 daily channel point redeems** for Twitch. Each viewer can claim each one **once a day**:
+20 channel point redeems that each viewer can claim once a day.
 
 ```
 Bob redeems "Daily Head Pat"
@@ -10,14 +10,11 @@ Bob redeems it again the same day
 Chat: Bob, you've already had your daily head pat today! Come back tomorrow. (Points refunded)
 ```
 
-- Works on its own. You don't need FFY Commands.
-- **Twitch only**, because it uses channel points.
-- Keeps each viewer's **total** and **day streak** for every daily.
-- If someone tries twice in one day, their points are **refunded**.
+It keeps track of how many times each viewer has claimed each daily and how many days in a row they've done it. If someone tries to claim one twice in a day, they get their points back.
 
----
+It doesn't need FFY Commands. It is Twitch only though, because it runs on channel points.
 
-## The 20 daily's
+## The dailies
 
 | Reward title (on Twitch) | What chat shows |
 |---|---|
@@ -42,52 +39,48 @@ Chat: Bob, you've already had your daily head pat today! Come back tomorrow. (Po
 | **Daily Wisdom** | Bob's daily wisdom: *(a random wise-ish saying)* |
 | **Daily Chaos** | Bob unleashed their daily chaos: *(something chaotic)* |
 
-You don't have to use all 20. Just set up the ones you want.
+You don't need to use all of them. Only set up the ones you like.
 
----
+## Setting it up
 
-## Installing
+This one takes a few more steps than my other add-ons, because Twitch rewards have to be made by hand.
 
-### Step 1: import it
+### 1. Import it
 
-1. Download the **`FFY-Dailys`** file from this page.
-2. In Streamer.bot, click **Import** in the bar at the top, drag and drop the file into the box, and click **Import**.
+Download the **`FFY-Dailys`** file from this page. In Streamer.bot, click **Import** at the top, drag the file into the box and click **Import**.
 
-### Step 2: create the channel point rewards
+### 2. Make the channel point rewards
 
-Streamer.bot can't create rewards by itself, so make one for each daily you want:
+Streamer.bot can't make the rewards for you, so you'll need to make one for each daily you want:
 
 1. In Streamer.bot, go to **Platforms** → **Twitch** → **Channel Point Rewards**.
-2. **Right-click** in the list and choose **Add**.
-3. Set the **Title** to **exactly** the reward title from the table above, e.g. `Daily Head Pat`. Capitals don't matter, but the spelling does.
-4. Set the **cost**, and anything else you like (colour, prompt, cooldown).
-5. Click **OK**.
+2. Right-click in the list and choose **Add**.
+3. Set the **Title** to the reward title from the table above, e.g. `Daily Head Pat`. Capitals don't matter but the spelling has to be exact.
+4. Pick a cost and anything else you want (colour, prompt, cooldown), then click **OK**.
 
-> **Create the rewards in Streamer.bot, not on the Twitch website.** Twitch only lets the app that created a reward refund or complete it. Rewards made on the Twitch website still work, but nobody gets a refund if they try twice in a day.
+> Make the rewards in Streamer.bot rather than on the Twitch website. Twitch only lets whichever app made a reward refund it. Rewards made on the website will still work, but nobody gets their points back if they try twice in one day.
 
-### Step 3: connect each reward
+### 3. Connect each reward
 
-1. Click the **Actions** tab, open the **FFY Daily's** group, and click the **FFY Daily's** action.
-2. In the **Triggers** box, **right-click** → **Add** → **Twitch** → **Channel Reward** → **Reward Redemption**.
-3. Pick the reward, e.g. **Daily Head Pat**, and click **OK**.
-4. Do this for each daily reward you created.
+1. In the **Actions** tab, open the **FFY Daily's** group and click the **FFY Daily's** action.
+2. Right-click in the **Triggers** box and go to **Add** → **Twitch** → **Channel Reward** → **Reward Redemption**.
+3. Pick the reward (e.g. **Daily Head Pat**) and click **OK**.
 
-### Step 4: check it
+Do that for every daily reward you made.
 
-Right-click the **FFY Daily's** action and choose **Run Now**. A pop-up tells you how many of the 20 rewards it found, and which are missing. Then redeem one on Twitch to test.
+### 4. Check it's working
 
----
+Right-click the **FFY Daily's** action and choose **Run Now**. A pop-up will tell you how many of the 20 rewards it found and which ones are missing. After that, redeem one on Twitch to test it properly.
 
 ## Changing the messages or adding your own
 
-1. **Actions tab** → **FFY Daily's** → double-click **Execute C# Code**.
-2. Between `EDIT BELOW` and `EDIT ABOVE`, each daily is one line:
-   ```csharp
-   Daily("Daily Head Pat", "{user} has redeemed their daily head pat! That's {total} head pat{s} so far.");
-   ```
-   - The **first part** is the reward title, matching the reward on Twitch.
-   - The **second part** is what chat shows.
-3. Click **Save and Compile**.
+In the **Actions** tab, open **FFY Daily's** and double-click **Execute C# Code**. Between `EDIT BELOW` and `EDIT ABOVE`, every daily is one line like this:
+
+```csharp
+Daily("Daily Head Pat", "{user} has redeemed their daily head pat! That's {total} head pat{s} so far.");
+```
+
+The first part is the reward title, which has to match the reward on Twitch. The second part is what chat sees. Click **Save and Compile** after changing anything.
 
 | Placeholder | Becomes |
 |---|---|
@@ -97,28 +90,28 @@ Right-click the **FFY Daily's** action and choose **Run Now**. A pop-up tells yo
 | `{s}` | An "s" when `{total}` isn't 1 |
 | `{pick}` | One of the random picks listed after the message (see below) |
 
-**Random picks:** add choices after the message, separated by commas, and use `{pick}` where one should go:
+For random picks, put the choices after the message, separated by commas, and put `{pick}` where you want one to go:
 
 ```csharp
 Daily("Daily Pizza", "{user}'s daily pizza topping: {pick}", "Pepperoni", "Pineapple", "Extra cheese", "Anchovies (brave)");
 ```
 
-**Adding a brand-new daily:** add its `Daily(...)` line, create a reward with the same title (Step 2), and connect it (Step 3).
+To add a completely new daily, add a `Daily(...)` line for it, make a reward with the same title (step 2) and connect it (step 3).
 
-**The "already claimed" message:** change the `AlreadyMessage` line. `{reward}` is the reward's name.
+The "already claimed" message is the `AlreadyMessage` line. `{reward}` in there is the reward's name.
 
----
+## Worth knowing
 
-## Good to know
+A "day" goes by your PC's clock, so it resets at midnight.
 
-- **A "day"** follows your PC's clock and resets at midnight.
-- **Totals and streaks** are saved on each viewer. To see them, go to **Global Variables** → **Persisted User Globals** → **Twitch** → their username. They're the ones starting `ffyDaily.`.
-- **Missing a day** resets the streak to 1.
+Totals and streaks are saved on each viewer. You can see them in **Global Variables** → **Persisted User Globals** → **Twitch** → their username. They're the ones that start with `ffyDaily.`.
 
----
+If someone misses a day, their streak goes back to 1.
 
-## Troubleshooting
+## If something's not working
 
-- **Nothing happens when someone redeems:** is the reward added as a trigger on the **FFY Daily's** action (Step 3)?
-- **The Logs tab says "No Daily(...) line matches the reward":** the reward's title on Twitch doesn't match any `Daily(...)` line. Check the spelling.
-- **Points aren't refunded on a second try:** the reward was made on the Twitch website. Make it in Streamer.bot instead (Step 2).
+**Nothing happens when someone redeems:** check the reward is added as a trigger on the **FFY Daily's** action (step 3).
+
+**The Logs tab says "No Daily(...) line matches the reward":** the reward's title on Twitch doesn't match any of the `Daily(...)` lines. It's usually a spelling thing.
+
+**People aren't getting refunded when they try twice:** that reward was made on the Twitch website. Make it in Streamer.bot instead (step 2).

@@ -1,6 +1,6 @@
 # FFY Pets
 
-Pets for your chat: dogs, cats, chickens, goats, llamas and more. Either the whole chat looks after the chat's pet together, or every viewer adopts their own. Feed them, walk them, play with them, teach them tricks, and watch the bond grow.
+Give your chat some pets to look after. Dogs, cats, chickens, goats, llamas and a load more. You can have one set of pets the whole chat shares, or let every viewer adopt their own. They get fed, walked, played with and taught tricks, and the bond grows the more they're looked after.
 
 ```
 Bob: !feedpet
@@ -13,45 +13,38 @@ Ann: !pettrick
 Chat: @Ann asked Biscuit to roll over... and it did! Woof!
 ```
 
-- Works on its own. You don't need FFY Commands.
-- Works on **Twitch, Kick and YouTube**.
-- 27 kinds of pet, from dogs and cats to Highland Cows, Mooshrooms and a Baby Dragon, each with its own sound, food, tricks, walks and play.
+There are 27 kinds of pet, from dogs and cats up to Highland Cows, Mooshrooms and a Baby Dragon. Every kind has its own sound, food, tricks, walks and games.
 
----
+It doesn't need FFY Commands, and it works on Twitch, Kick and YouTube.
 
 ## Installing
 
-1. Download the **`FFY-Pets`** file from this page.
-2. In Streamer.bot, click **Import** in the bar at the top, drag and drop the file into the box, and click **Import**.
+Download the **`FFY-Pets`** file from this page. In Streamer.bot, click **Import** at the top, drag the file into the box and click **Import**.
 
-Done. The commands are switched on for you. Before anything else, a pet has to be adopted with `!registerpet`, e.g. `!registerpet Biscuit dog`. Until then, the other commands tell chat how.
-
----
+The commands are already switched on, but nothing happens until a pet's been adopted. Do that with `!registerpet`, e.g. `!registerpet Biscuit dog`. Until then, the other commands will just tell chat how.
 
 ## Two ways to play
 
-### The chat's pet (`SharedPet = true;`)
+### One set of pets for the whole chat (`SharedPet = true;`)
 
-The whole chat looks after the chat's pets together. **A mod or you adopts the chat's pet first**, e.g. `!registerpet Biscuit dog`. Then each pet can be fed, walked, played with and trained once a day, by anyone. Whoever gets there first does it, and everyone else sees *"Biscuit has already been fed today! (by @Bob)"*.
+Chat looks after the pets together. First, you or a mod adopts the chat's pet, e.g. `!registerpet Biscuit dog`. After that, anyone can feed, walk, play with or train each pet, once a day each. Whoever's quickest gets to do it, and everyone after them sees *"Biscuit has already been fed today! (by @Bob)"*.
 
-With more than one chat pet (see `PetAmount`), `!feedpet` feeds whichever pet is still hungry. When they're all done, chat sees *"All the pets have been fed!"*.
+If chat has more than one pet (that's `PetAmount`), `!feedpet` feeds whichever one's still hungry. Once they've all eaten, chat sees *"All the pets have been fed!"*.
 
-**Changing the chat's pet:** a mod types `!releasepet Biscuit`, then adopts the new one, e.g. `!registerpet Clucky chicken`.
+To swap the chat's pet for a different one, a mod types `!releasepet Biscuit` and then adopts the new one, like `!registerpet Clucky chicken`.
 
-### Everyone has their own (`SharedPet = false;`)
+### Everyone gets their own (`SharedPet = false;`)
 
-Every viewer adopts their own pet with `!registerpet`, then looks after it themselves:
+Each viewer adopts their own pet with `!registerpet` and looks after it themselves:
 
 ```
 !registerpet Biscuit dog
 !registerpet Lady Clucksworth chicken
 ```
 
-Leave the kind off and they get a surprise one. `PetAmount` sets how many pets each viewer can have. To swap a pet, they `!releasepet` it first, then adopt a new one.
+If they leave the kind off, they get a surprise. `PetAmount` sets how many pets each viewer is allowed. To swap one, they `!releasepet` it first and then adopt another.
 
----
-
-## The commands
+## Commands
 
 | Command | What it does |
 |---|---|
@@ -68,9 +61,7 @@ Leave the kind off and they get a surprise one. `PetAmount` sets how many pets e
 | `!pettop` | Chat's pets: who's looked after them the most. Own pets: the most bonded pets in chat. |
 | `!pethelp` | Lists the commands in chat. |
 
-**More than one pet?** Add the pet's name to pick which one, e.g. `!feedpet Nugget`, `!pettrick Biscuit` or `!renamepet Biscuit Sir Biscuit`.
-
----
+If there's more than one pet, add its name to say which one you mean, like `!feedpet Nugget`, `!pettrick Biscuit` or `!renamepet Biscuit Sir Biscuit`.
 
 ## The pets
 
@@ -104,17 +95,15 @@ Leave the kind off and they get a surprise one. `PetAmount` sets how many pets e
 | Frog | Ribbit! | catch a fly with its tongue |
 | Baby Dragon | *tiny roar* | roast a marshmallow |
 
-Each kind has its own walk and play too. A cat refuses its lead, a goat climbs on top of a car, and a sloth takes three hours to reach the gate.
+They all have their own walks and games as well. The cat refuses to wear its lead, the goat ends up on top of a car, and the sloth takes three hours to get to the gate.
 
-**Two-word kinds** work too: `!registerpet Bessie highland cow`, `!registerpet Steve minecraft cow` or `!registerpet Toast baby dragon`.
+Kinds with two words work fine: `!registerpet Bessie highland cow`, `!registerpet Steve minecraft cow` or `!registerpet Toast baby dragon`.
 
-**Bond:** every bit of care earns the pet XP, and every 1,000 XP its bond grows: Stranger, Acquaintance, Buddy, Good Friend, Best Friend, Inseparable and finally Soulmate. Chat sees a message each time.
-
----
+Every bit of care gives the pet some XP, and every 1,000 XP its bond goes up a level: Stranger, Acquaintance, Buddy, Good Friend, Best Friend, Inseparable and finally Soulmate. Chat gets a message each time it levels up.
 
 ## Switches
 
-At the top of the settings. Set each one to `true` (on) or `false` (off), or a number where shown:
+These are at the top of the settings. Set them to `true` (on) or `false` (off), or a number where it says so:
 
 | Switch | What it does |
 |---|---|
@@ -132,11 +121,9 @@ At the top of the settings. Set each one to `true` (on) or `false` (off), or a n
 | `AllowRelease = true;` | Pets can be given up with `!releasepet`, to make room for a different one. |
 | `OnlyModsManageChatPets = true;` | Only mods can adopt, rename or release the chat's pets. `false` = anyone can. |
 
----
+## Changing other things
 
-## Changing it
-
-**Actions tab** → **FFY Pets** group → **FFY Pets** → double-click **Execute C# Code**. Everything is between `EDIT BELOW` and `EDIT ABOVE`. Click **Save and Compile** after changing anything.
+In the **Actions** tab, open the **FFY Pets** group, then the **FFY Pets** action, and double-click **Execute C# Code**. It's all between `EDIT BELOW` and `EDIT ABOVE`. Click **Save and Compile** after you change anything.
 
 | Setting | What it does |
 |---|---|
@@ -147,7 +134,7 @@ At the top of the settings. Set each one to `true` (on) or `false` (off), or a n
 | `Kind(...)` lines | The pets: `Kind("name", "sound", "foods", "tricks", "walk", "play")`. Split lists with `\|`. In the walk and play lines, `{pet}` is the pet's name. |
 | The `Message("...", "...")` lines | Every message chat sees. Change the wording, but keep the `{...}` words. |
 
-**Adding a new kind of pet:**
+Here's what a new kind of pet looks like:
 
 ```csharp
 Kind("Penguin", "Honk!", "a fish|a bucket of sardines|a squid",
@@ -156,20 +143,22 @@ Kind("Penguin", "Honk!", "a fish|a bucket of sardines|a squid",
     "{pet} played in the snow and threw snowballs with its flippers!");
 ```
 
----
+## Worth knowing
 
-## Good to know
+Everything's saved in the **Global Variables** tab as `ffy.pets`. If you delete it, everyone's pets start again from scratch.
 
-- Everything is saved in the **Global Variables** tab as `ffy.pets`. Deleting it starts everyone's pets from scratch.
-- **Changing modes** keeps both sets of pets. The chat's pets and viewers' own pets are saved separately.
-- **Updating from the first version?** It gave the chat Biscuit the Dog automatically. To swap Biscuit for a different pet, a mod types `!releasepet Biscuit`, then `!registerpet` with the new name and kind.
-- **"Today"** follows your PC's clock and resets at midnight.
-- **Stop spam:** give `!pet` and `!pettop` a cooldown in the **Commands** tab.
+Switching between the two modes won't lose anything. The chat's pets and everyone's own pets are saved separately.
 
----
+If you're updating from the very first version, that one gave chat Biscuit the Dog automatically. To swap Biscuit for something else, a mod types `!releasepet Biscuit` and then `!registerpet` with the new name and kind.
 
-## Troubleshooting
+"Today" goes by your PC's clock and resets at midnight.
 
-- **No reply:** check the commands are switched on in the **Commands** tab, in the **FFY Pets** folder.
-- **"That's switched off right now":** one of the `Allow...` switches is set to `false`.
-- **"Save and Compile" error:** look for a missing `"`, `,` or `;` on the line it mentions.
+If `!pet` or `!pettop` get spammed, give them a cooldown in the **Commands** tab.
+
+## If something's not working
+
+**No reply:** check the commands are switched on in the **FFY Pets** folder in the **Commands** tab.
+
+**"That's switched off right now":** one of the `Allow...` switches is set to `false`.
+
+**Save and Compile error:** look for a missing `"`, `,` or `;` on the line it mentions.

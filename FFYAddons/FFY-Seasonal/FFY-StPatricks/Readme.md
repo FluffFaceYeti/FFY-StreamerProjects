@@ -1,24 +1,18 @@
 # FFY StPatricks
 
-St Patrick's Day commands: the luck of the Irish, pots of gold, jig-offs and Leprechaun of the Day. An add-on for **FFY Commands**.
+A handful of St Patrick's Day commands. How Irish you are today, pots of gold, jig-offs and a Leprechaun of the Day.
 
-> **You need FFY Commands installed first.** This add-on uses it to work. Install FFY Commands, then this.
-
----
+Heads up: it won't work without **FFY Commands**, so install that first.
 
 ## Installing
 
-1. Make sure **FFY Commands** is already installed.
-2. Download the **`FFY-StPatricks`** file from this page.
-3. In Streamer.bot, click **Import** in the bar at the top, drag and drop the file into the box, and click **Import**.
+Download **`FFY-StPatricks`** from this page. Over in Streamer.bot, click **Import** at the top, drag it into the box and click **Import**.
 
-Done. The commands are switched on for you. Type `!irish` in chat to test.
+Everything's switched on already. Give `!irish` a go in chat.
 
-**Only want some of them?** In the **Commands** tab, open the **FFY StPatricks** folder and untick **Enabled** on the ones you don't want.
+Don't want all of them? Open the **FFY StPatricks** folder in the **Commands** tab and untick **Enabled** on any you'd rather not have.
 
----
-
-## The commands (10)
+## What's in it (10 commands)
 
 | Command | What it is | Example reply |
 |---|---|---|
@@ -33,11 +27,9 @@ Done. The commands are switched on for you. Type `!irish` in chat to test.
 | `!jigoff @Sam` | Duel | @Bob won the jig-off (87 vs 38)! @Sam tripped over a shamrock. |
 | `!leprechaunofday` | Leprechaun of the Day | Who won today. Win it by getting 100% on `!leprechaun` |
 
----
+## Tweaking it
 
-## Changing things
-
-Everything is in the **Actions** tab, in the **FFY StPatricks** group. Each action is edited the same way as in FFY Commands: open it, double-click **Execute C# Code**, change the lines between `EDIT BELOW` and `EDIT ABOVE`, and click **Save and Compile**.
+Everything's in the **FFY StPatricks** group in the **Actions** tab. To change something, open the action, double-click **Execute C# Code**, edit the lines between `EDIT BELOW` and `EDIT ABOVE` and hit **Save and Compile**.
 
 | Action | What's in it |
 |---|---|
@@ -49,14 +41,12 @@ Everything is in the **Actions** tab, in the **FFY StPatricks** group. Each acti
 | **FFY StPatricks Triggers** | Connects the commands to FFY Commands. Don't edit its code |
 | **FFY StPatricks Setup** | Runs once on import |
 
-To add a command of your own, follow the FFY Commands guide (adding a number or list command), and put its lines in **FFY My Number Commands** or **FFY My List Commands**, so updates never touch them.
+To add one of your own, use the FFY Commands guide (adding a number or list command) and keep it in **FFY My Number Commands** or **FFY My List Commands** so updates leave it alone.
 
-All the FFY Commands features work with these commands too: special users, user variables, the switches, and `!top` for the interactions.
+Everything else from FFY Commands works with these too: special users, user variables, the switches, and `!top` for the interactions.
 
----
+## Not working?
 
-## Troubleshooting
+If nothing replies at all, check **FFY Commands** is installed and look in the **Logs** tab for `[FFY StPatricks]`. If it's just one command that's quiet, make sure it's switched on in the **FFY StPatricks** folder in the **Commands** tab.
 
-- **No reply at all:** is **FFY Commands** installed? Check the **Logs** tab for `[FFY StPatricks]`.
-- **One command doesn't reply:** is it switched on in the **Commands** tab (the **FFY StPatricks** folder)?
-- **Anything else:** see the troubleshooting section in the FFY Commands guide.
+For anything else, there's a troubleshooting section in the FFY Commands guide.

@@ -1,6 +1,8 @@
 # FFY Bounty
 
-Put a price on someone's head! Mods and viewers post bounties, bounty hunters try to track them down and claim the reward, and the wanted can lie low in a hideout.
+Put a price on someone's head. Viewers and mods post bounties, everyone else tries to hunt them down for the reward, and whoever's wanted can run off and hide.
+
+Here's roughly how it goes in chat:
 
 ```
 Bob: !bounty @Sam 50 stole my sandwich
@@ -11,32 +13,25 @@ Kim: !bountyhunt @Sam
 Chat: BOUNTY CLAIMED! @Kim tracked down @Sam and collected 70 coins! (1/3)
 ```
 
-- Works on its own. You don't need FFY Commands.
-- Works on **Twitch, Kick and YouTube**.
-
----
+It works on its own (no FFY Commands needed) and runs on Twitch, Kick and YouTube.
 
 ## Installing
 
-1. Download the **`FFY-Bounty`** file from this page.
-2. In Streamer.bot, click **Import** in the bar at the top, drag and drop the file into the box, and click **Import**.
+Download the **`FFY-Bounty`** file from this page. In Streamer.bot, click **Import** at the top, drag the file into the box and click **Import**.
 
-Done. The commands are switched on for you. Type `!bountyhelp` in chat to see them.
-
----
+The commands are already switched on. Type `!bountyhelp` in chat to see them all.
 
 ## How it works
 
-- **Coins:** everyone starts with 100 coins and gets 25 more each day they use a bounty command. They earn far more by claiming bounties.
-- **Posting a bounty:** `!bounty @someone 50 reason` takes 50 of your coins and adds them to that person's bounty. Several people can add to the same bounty, and it keeps growing. **Mods and you** can post bounties for free, with no limit.
-- **Hunting:** `!bountyhunt @someone` tries to catch them. There's a 40% chance to start with.
-  - **Catch them:** you claim the whole bounty, and it's gone.
-  - **They slip away:** you pay a 20 coin fee, which is added to their bounty. Missed hunts make the bounty bigger!
-- **Hideouts:** if you're wanted, `!hideout` lets you lie low for 30 minutes, which makes you much harder to catch. Once a day.
+Everyone starts with 100 coins and gets another 25 on each day they use a bounty command. The real money comes from claiming bounties though.
 
----
+`!bounty @someone 50 reason` puts 50 of your coins on that person's head. Anyone can chip in on the same bounty, so it can get pretty big. You and your mods can post bounties for free, with no limit.
 
-## The commands
+`!bountyhunt @someone` is your attempt to catch them, and you start with a 40% chance. If you get them, the whole bounty's yours and it's cleared. If they get away, you pay a 20 coin fee and it goes on top of their bounty, so every missed hunt makes them worth more.
+
+If you're the one being hunted, `!hideout` lets you lie low for 30 minutes and you'll be much harder to catch. You only get one a day.
+
+## Commands
 
 | Command | What it does |
 |---|---|
@@ -50,11 +45,9 @@ Done. The commands are switched on for you. Type `!bountyhelp` in chat to see th
 | `!bountyclear @Sam` | **Mods and you only.** Removes the bounty on Sam. |
 | `!bountyhelp` | Lists the commands in chat. |
 
----
-
 ## Settings
 
-**Actions tab** → **FFY Bounty** group → **FFY Bounty** → double-click **Execute C# Code**. Everything is between `EDIT BELOW` and `EDIT ABOVE`. Click **Save and Compile** after changing anything.
+Go to the **Actions** tab, open the **FFY Bounty** group, then the **FFY Bounty** action, and double-click **Execute C# Code**. The settings are all between `EDIT BELOW` and `EDIT ABOVE`. Remember to click **Save and Compile** when you've changed something.
 
 | Setting | What it does |
 |---|---|
@@ -72,17 +65,16 @@ Done. The commands are switched on for you. Type `!bountyhelp` in chat to see th
 | `BoardSize = 5;` | How many bounties `!bounties` shows. |
 | The `Message("...", "...")` lines | Every message chat sees. Change the wording, but keep the `{...}` words. |
 
----
+## Worth knowing
 
-## Good to know
+All the data is saved in the **Global Variables** tab as `ffy.bounty`. If you delete it, every bounty and everyone's coins go with it.
 
-- Everything is saved in the **Global Variables** tab as `ffy.bounty`. Deleting it clears every bounty and everyone's coins.
-- **`ProtectMods`** knows who the mods are once they've used a bounty command.
-- **Stop spam:** give `!bounties`, `!wanted` and `!bountytop` a cooldown in the **Commands** tab.
+`ProtectMods` only knows someone's a mod once they've used a bounty command.
 
----
+If chat starts spamming `!bounties`, `!wanted` or `!bountytop`, give them a cooldown in the **Commands** tab.
 
-## Troubleshooting
+## If something's not working
 
-- **No reply:** check the commands are switched on in the **Commands** tab, in the **FFY Bounty** folder.
-- **"Save and Compile" error:** look for a missing `"`, `,` or `;` on the line it mentions.
+No reply? Check the commands are switched on in the **FFY Bounty** folder in the **Commands** tab.
+
+If **Save and Compile** throws an error, it's nearly always a missing `"`, `,` or `;` on the line it points to.

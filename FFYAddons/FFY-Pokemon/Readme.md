@@ -1,6 +1,6 @@
 # FFY Pokemon
 
-Your chat opens **Pokémon booster packs**: 10 cards plus an Energy, just like a real pack. Every card has a **PSA grade** and a **value**. Viewers can **keep** a pack in their binder, or **sell** it to the trader for coins.
+Chat gets to open Pokémon booster packs. Each one has 10 cards plus an Energy, like a real pack, and every card comes with a PSA grade and a price. Once it's open, viewers can keep the pack in their binder or sell it to the trader for coins.
 
 ```
 Bob: !pokemon
@@ -13,23 +13,17 @@ Bob: !pokemonwallet
 Chat: @Bob's wallet: $132.03
 ```
 
-- Works on its own. You don't need FFY Commands.
-- Works on **Twitch, Kick and YouTube**.
-- All **1,025 Pokémon**, plus rare **god packs** and ten **1-1** Pikachus.
-- You choose how many packs a day, and how often everything **resets**.
+All 1,025 Pokémon are in there, plus the odd god pack and ten 1-1 Pikachus. You decide how many packs people get a day and how often everything resets.
 
----
+It doesn't need FFY Commands and it works on Twitch, Kick and YouTube.
 
 ## Installing
 
-1. Download the **`FFY-Pokemon`** file from this page.
-2. In Streamer.bot, click **Import** in the bar at the top, drag and drop the file into the box, and click **Import**.
+Download the **`FFY-Pokemon`** file from this page. In Streamer.bot, click **Import** at the top, drag the file into the box and click **Import**.
 
-Done. The commands are switched on for you. Type `!pokemon` in chat to test.
+That's all. The commands are already on, so type `!pokemon` in chat and rip your first pack.
 
----
-
-## The commands
+## Commands
 
 | Command | What it does |
 |---|---|
@@ -45,15 +39,11 @@ Done. The commands are switched on for you. Type `!pokemon` in chat to test.
 | `!bestcards` | The most valuable cards in the whole channel, and who owns them, e.g. *1. Pikachu Galar (PSA 10, $99,203.63) owned by @Zed*. You choose how many (top 3, 5, 9...). |
 | `!pokemontop` | The top 5 collectors, by binder value. |
 
-> If someone doesn't `!keep` or sell a pack, it goes into their binder automatically when they open their next one.
->
-> Once they've opened all their packs, `!pokemon` says *"that's all your packs for today (3/3)! Come back tomorrow!"*
-
----
+If someone forgets to `!keep` or sell a pack, it goes into their binder by itself when they open the next one. And when they've used up their packs for the day, `!pokemon` tells them *"that's all your packs for today (3/3)! Come back tomorrow!"*
 
 ## What's in a pack
 
-Packs follow a real Scarlet & Violet booster:
+The packs are based on a real Scarlet & Violet booster:
 
 | Slot | Cards | What can be in it |
 |---|---|---|
@@ -64,11 +54,11 @@ Packs follow a real Scarlet & Violet booster:
 | Reverse Holo or better | 1 | Usually a reverse holo, sometimes a Holo, Ultra or Secret Rare |
 | Rare or better | 1 | At least a Rare, with a chance of Holo, Ultra, Secret Rare or a **1-1** |
 
-Reverse holo cards show **(Reverse Holo)** after the name and are worth **double**.
+Reverse holos have **(Reverse Holo)** after the name and they're worth double.
 
 ### God packs
 
-About **1 in 2,000** packs is a **god pack**: every card is a Holo, Ultra or Secret Rare. Chat gets one big announcement, and the pack goes **straight into the binder** (there is nothing to keep or sell):
+Roughly 1 in every 2,000 packs is a god pack, where every single card is a Holo, Ultra or Secret Rare. Chat gets one big announcement and the whole thing goes straight into the binder, so there's nothing to keep or sell:
 
 ```
 GOD PACK ALERT!!! @Bob JUST RIPPED OPEN A GOD PACK!!! EVERY. SINGLE. CARD. IS. A. HIT! The best pull is Gold Rayquaza (PSA 8, $7,966.37) and the whole pack is worth $12,222.68! It's gone straight into their binder. CHAT, GO WILD!!!
@@ -76,7 +66,7 @@ GOD PACK ALERT!!! @Bob JUST RIPPED OPEN A GOD PACK!!! EVERY. SINGLE. CARD. IS. A
 
 ### Big hits
 
-Pulling an **Ultra Rare** or **Secret Rare** in a normal pack gets its own message after the pack:
+If you pull an Ultra Rare or Secret Rare in a normal pack, it gets its own message after the pack:
 
 ```
 BIG HIT!!! @Bob just pulled Latias (PSA 9, $1,204.50)! WHAT A PULL!
@@ -84,21 +74,15 @@ BIG HIT!!! @Bob just pulled Latias (PSA 9, $1,204.50)! WHAT A PULL!
 
 ### 1-1s
 
-Ten special Pikachus can come out of the Rare slot, about **1 in 1,000** packs:
+There are ten special Pikachus that can turn up in the Rare slot, in about 1 in 1,000 packs: Pikachu Kanto, Johto, Hoenn, Sinnoh, Hisui, Unova, Kalos, Alola, Galar and Paldea.
 
-Pikachu Kanto, Johto, Hoenn, Sinnoh, Hisui, Unova, Kalos, Alola, Galar and Paldea.
+Each one can only belong to one person. So once someone's pulled Pikachu Kanto, that's it, nobody else can get it. They're always PSA 10 and worth anywhere from $20,000 to $100,000, and chat gets a message like *"WOW!!! @Bob pulled Pikachu Kalos, PSA 10, a 1-1 card worth $60,858.54!"*
 
-- **Only one person can own each one.** Once someone pulls Pikachu Kanto, nobody else can get it.
-- They're **always PSA 10**, worth $20,000 to $100,000. Chat gets its own *"WOW!!! @Bob pulled Pikachu Kalos, PSA 10, a 1-1 card worth $60,858.54!"* message.
-- If the owner **sells** it, it goes back into the packs for someone else to pull.
-- When the season resets, they're all back up for grabs.
-- Once all ten are owned, that slot gives a Secret Rare instead.
-
----
+If the owner sells theirs, it goes back into the packs for someone else to find. They all go back up for grabs when the season resets too. If all ten are owned, that slot gives a Secret Rare instead.
 
 ## How cards are valued
 
-**Rarity** sets the card's base value:
+The rarity sets the starting value:
 
 | Rarity | Value range | Cards | Which Pokémon |
 |---|---|---|---|
@@ -111,7 +95,7 @@ Pikachu Kanto, Johto, Hoenn, Sinnoh, Hisui, Unova, Kalos, Alola, Galar and Palde
 | Secret Rare | $500 – $5,000, always PSA 7 or better | 14 | Gold, Shiny and Illustrator cards: Gold Charizard, Shiny Umbreon |
 | 1-1 | $2,000 – $10,000 (always PSA 10) | 10 | The regional Pikachus |
 
-**The PSA grade** then multiplies the value:
+Then the PSA grade multiplies it:
 
 | PSA | Chance | Value |
 |---|---|---|
@@ -122,11 +106,9 @@ Pikachu Kanto, Johto, Hoenn, Sinnoh, Hisui, Unova, Kalos, Alola, Galar and Palde
 | 6 | 15% | ×1 |
 | 5 and below | 30% | ×0.8 down to ×0.25 |
 
----
-
 ## Settings
 
-**Actions tab** → **FFY Pokemon** group → **FFY Pokemon** → double-click **Execute C# Code**. Everything is between `EDIT BELOW` and `EDIT ABOVE`:
+Go to the **Actions** tab, open the **FFY Pokemon** group and the **FFY Pokemon** action, and double-click **Execute C# Code**. The settings are all between `EDIT BELOW` and `EDIT ABOVE`:
 
 | Setting | What it does |
 |---|---|
@@ -146,33 +128,36 @@ Pikachu Kanto, Johto, Hoenn, Sinnoh, Hisui, Unova, Kalos, Alola, Galar and Palde
 | `MinGrade(...)` | The lowest PSA a rarity can get, e.g. `MinGrade("Secret Rare", 7);` means Secret Rares are always PSA 7 to 10. Add a line for any rarity, e.g. `MinGrade("Ultra Rare", 5);`. |
 | The `...Message` lines | Every message chat sees. Change the wording, but keep the `{...}` placeholders. `{opened}/{limit}` is the "pack 2/3" counter. Change `GodPackMessage`, `BigHitMessage` or `OneOfOneMessage` to make the hype your own. |
 
-Click **Save and Compile** after changing anything.
+Click **Save and Compile** once you've made your changes.
 
-**Adding a card:** add its name to the end of a `Tier(...)` list, in quotes, with a comma before it. For example, to add a Gold Mew to Secret Rare:
+To add a card, put its name on the end of one of the `Tier(...)` lists, in quotes with a comma before it. Say you wanted a Gold Mew in Secret Rare:
 
 ```csharp
             "Shiny Gyarados", "Rainbow Umbreon", "Gold Lugia", "Illustrator Charizard", "Gold Mew");
 ```
 
-**Adding a 1-1:** add its name to the `Tier("1-1", ...)` list the same way.
+Adding a 1-1 works the same way, just in the `Tier("1-1", ...)` list.
 
-**Bigger packs:** change the number in a `Slot(...)` line, e.g. `Slot("Common", 6, "Common", 100);` for 6 commons.
+Want bigger packs? Change the number in a `Slot(...)` line. `Slot("Common", 6, "Common", 100);` would give you 6 commons, for example.
 
----
+## Worth knowing
 
-## Good to know
+Everyone's cards are saved in the **Global Variables** tab as `ffy.pokemon`. Delete that and a new season starts right away.
 
-- **Everyone's cards** are saved in the **Global Variables** tab as `ffy.pokemon`. Deleting it starts a new season straight away.
-- **Bulk is saved as a total.** Hits are saved card by card, but Energy, Commons and Uncommons are only kept as a count and a value, so the save stays small.
-- **When a season ends,** the next command shows *"A new Pokémon season has started!"*, and everyone starts again with an empty binder and wallet.
-- **A "day"** follows your PC's clock and resets at midnight.
-- **Long messages are split.** A pack message that's too long for chat is sent in two parts.
-- **Stop spam:** give `!pokemontop`, `!bestcards`, `!binder` and `!pokemonwallet` a cooldown in the **Commands** tab.
+To keep the save small, hits are stored card by card but bulk isn't. Energy, Commons and Uncommons are just saved as a count and a total value.
 
----
+When a season ends, the next command anyone uses says *"A new Pokémon season has started!"*, and everybody starts over with an empty binder and wallet.
 
-## Troubleshooting
+A "day" goes by your PC's clock and resets at midnight.
 
-- **No reply:** check the commands are switched on in the **Commands** tab, in the **FFY Pokemon** folder.
-- **The Logs tab says "No Tier(...) line called ...":** a `Slot(...)` or `GodPack(...)` line names a rarity that has no `Tier(...)` line. Check the spelling.
-- **"Save and Compile" error:** look for a missing `"`, `,` or `;` on the line it mentions.
+If a pack message is too long for chat, it gets sent in two parts.
+
+`!pokemontop`, `!bestcards`, `!binder` and `!pokemonwallet` are the ones people tend to spam, so a cooldown in the **Commands** tab is a good idea.
+
+## If something's not working
+
+**No reply:** make sure the commands are switched on in the **FFY Pokemon** folder in the **Commands** tab.
+
+**The Logs tab says "No Tier(...) line called ...":** one of your `Slot(...)` or `GodPack(...)` lines mentions a rarity that doesn't have a `Tier(...)` line. Usually it's a typo.
+
+**Save and Compile error:** look for a missing `"`, `,` or `;` on the line it points to.

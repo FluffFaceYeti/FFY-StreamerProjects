@@ -1,40 +1,31 @@
 ## FFY Streamer Tools
 
-Free tools to make your stream more fun, more personal, and more you.
+Hi, I'm FluffFaceYeti. This is where I keep all the stream stuff I've made: daily commands, per-user commands, walk-ons, games for chat and a few overlays. I'm a streamer too, so most of it started as something I wanted for my own channel.
 
-Custom daily commands, per-user commands, walk-ons and more, all built by a streamer, for streamers. Grab what you need, plug it in, and give your community something to talk about.
+Grab whatever looks fun. Every folder has its own instructions for setting it up.
 
-These tools take a lot of late nights to build, test and keep working when platforms change. If they've saved you time, made your chat laugh, or made a viewer feel special, please consider buying me a coffee. Every donation, big or small, helps me keep these tools updated and keep making new ones.
+### It's all free
 
-Support me on Ko-fi
+No paywalls, nothing locked away, no catch. These take a lot of late nights to build and test, and they break whenever a platform changes something, so if one has saved you time or made your chat laugh, a coffee on [Ko-fi](https://ko-fi.com/flufffaceyeti) really does help me keep going.
 
-Each folder has its own setup instructions.
+Can't donate? Honestly, that's fine. You can still help by:
 
-Free to use, powered by kindness
+- starring the repo so other streamers can find it
+- telling your streamer mates about it
+- reporting bugs or ideas in Issues
 
-Everything here is 100% free: no paywalls, no locked features, no catch.
+### Want something made just for you?
 
-Not able to donate? That's completely fine. You can still help by:
+I'm saving up to replace my GPU at the moment. It's slowly dying on me! So for a small donation I'll tweak the tools to fit your channel. Things like:
 
-- Starring this repo so more streamers can find it
-- Shouting it out to your streamer friends
-- Reporting bugs or ideas in Issues
+- commands built around your community's inside jokes
+- renaming the "of the day" titles, so "Daddy of the day" becomes "Penguin of the day", "Goblin of the day" or whatever suits your chat
+- new interactions like !poke, !prod or !boop
 
-Want it made just for you?
+If you can think of it, just ask. Message me on Ko-fi and tell me what you're after.
 
-Right now I'm raising money to replace my defective GPU - My current GPU is slowly reaching the end of it's life!
+### Video editing
 
-So for a small donation, I'll tailor the tools to fit your channel perfectly:
-
-- New commands built around your community's inside jokes
-- Rename the "of the day": turn "Daddy of the day" into "Penguin of the day", "Goblin of the day", or whatever suits your chat
-- New interactions like !poke, !prod, !boop and more
-- And plenty more. If you can imagine it, just ask!
-
-Get in touch via Ko-fi and tell me what you have in mind.
-
-Need video editing too?
-
-I also edit clips, Shorts, Reels and YouTube videos from your streams. See the Commissions page for pricing, bundle deals and current availability.
+I also edit clips, Shorts, Reels and YouTube videos from streams. Pricing, bundles and when I'm free are all on the [Commissions](Comissions.md) page.
 
 <p align="center"> Made with love by <b>FluffFaceYeti</b><br> <a href="https://ko-fi.com/flufffaceyeti">ko-fi.com/flufffaceyeti</a> </p>

@@ -1,6 +1,6 @@
 # FFY Mining
 
-Your chat goes **mining for ores and gems**. Sell what you find for coins, then **upgrade your pickaxe** to find more, and rarer, gems. Very rarely, someone strikes a legendary **1-1** gem.
+Chat goes mining for ores and gems. They sell what they dig up for coins and save up for a better pickaxe, which finds more stuff and rarer gems. Once in a blue moon somebody hits a legendary 1-1 gem.
 
 ```
 Bob: !mine
@@ -12,23 +12,17 @@ Bob: !upgrade
 Chat: @Bob upgraded to the Gold Pickaxe! More finds and rarer gems await. Wallet: $14.30.
 ```
 
-- Works on its own. You don't need FFY Commands.
-- Works on **Twitch, Kick and YouTube**.
-- 12 ores and gems, 6 pickaxes, and 8 legendary 1-1 gems.
-- You choose how many mines a day, and how often everything **resets**.
+There are 12 ores and gems, 6 pickaxes and 8 legendary 1-1 gems. You pick how many times a day people can mine and how often everything resets.
 
----
+You don't need FFY Commands for it, and it works on Twitch, Kick and YouTube.
 
 ## Installing
 
-1. Download the **`FFY-Mining`** file from this page.
-2. In Streamer.bot, click **Import** in the bar at the top, drag and drop the file into the box, and click **Import**.
+Download the **`FFY-Mining`** file from this page. In Streamer.bot, click **Import** at the top, drag the file into the box and click **Import**.
 
-Done. The commands are switched on for you. Type `!mine` in chat to test.
+The commands are already switched on. Type `!mine` in chat to give it a go.
 
----
-
-## The commands
+## Commands
 
 | Command | What it does |
 |---|---|
@@ -41,8 +35,6 @@ Done. The commands are switched on for you. Type `!mine` in chat to test.
 | `!minewallet` | Shows how many coins you have. `!minewallet @Sam` shows someone else's. |
 | `!minetop` | The top 5 miners, by coins plus haul. |
 | `!mineseason` | Shows how many days are left until the season resets. |
-
----
 
 ## Ores and gems
 
@@ -61,11 +53,11 @@ Done. The commands are switched on for you. Type `!mine` in chat to test.
 | Diamond | Very rare (**BIG FIND**) | $200 – $800 |
 | Mythril | Super rare (**BIG FIND**) | $800 – $3,000 |
 
-Diamond and Mythril get their own **BIG FIND!!!** message.
+Diamond and Mythril each get a **BIG FIND!!!** shout in chat.
 
 ### Pickaxes
 
-Better pickaxes find **more ores per mine** and make **rare gems more likely**:
+A better pickaxe finds more ores each time you mine, and makes rare gems more likely:
 
 | Pickaxe | Price | Finds per mine | Rare gem chance |
 |---|---|---|---|
@@ -80,16 +72,13 @@ Better pickaxes find **more ores per mine** and make **rare gems more likely**:
 
 Heart of the Mountain, Star Sapphire, Dragon's Eye Ruby, The Endless Diamond, Moonstone Crown Jewel, Phoenix Fire Opal, Ancient Dwarven Emerald and The Void Pearl.
 
-- About **1 in 2,000** finds. They're worth $5,000 to $25,000.
-- Once someone strikes one, nobody else can get it that season.
-- Chat gets its own *"WOW!!! @Bob unearthed Star Sapphire, a 1-1 gem worth $18,824.42!"* message.
-- `!sellores` never sells them. They're yours for the season.
+You'll find one roughly once every 2,000 finds, and they're worth between $5,000 and $25,000. When someone strikes one, nobody else can get it for the rest of the season, and chat gets something like *"WOW!!! @Bob unearthed Star Sapphire, a 1-1 gem worth $18,824.42!"*
 
----
+`!sellores` won't ever sell them, so they're safe until the season ends.
 
 ## Settings
 
-**Actions tab** → **FFY Mining** group → **FFY Mining** → double-click **Execute C# Code**. Everything is between `EDIT BELOW` and `EDIT ABOVE`:
+In the **Actions** tab, open the **FFY Mining** group, then the **FFY Mining** action, and double-click **Execute C# Code**. Everything you can change is between `EDIT BELOW` and `EDIT ABOVE`:
 
 | Setting | What it does |
 |---|---|
@@ -105,20 +94,20 @@ Heart of the Mountain, Star Sapphire, Dragon's Eye Ruby, The Endless Diamond, Mo
 | `BestCount = 5;` | How many gems `!bestgems` shows. |
 | The `...Message` lines | Every message chat sees. Change the wording, but keep the `{...}` placeholders. |
 
-Click **Save and Compile** after changing anything.
+Click **Save and Compile** when you're done.
 
----
+## Worth knowing
 
-## Good to know
+It's all saved in the **Global Variables** tab as `ffy.mining`. Delete that if you want a fresh season right now.
 
-- **Everything is saved** in the **Global Variables** tab as `ffy.mining`. Deleting it starts a new season straight away.
-- **A "day"** follows your PC's clock and resets at midnight.
-- **Long messages are split** so chat doesn't cut them off.
-- **Stop spam:** give `!mineinv`, `!pickaxe` and `!minetop` a cooldown in the **Commands** tab.
+Days go by your PC's clock and reset at midnight.
 
----
+Long messages are split up so chat doesn't cut the end off.
 
-## Troubleshooting
+`!mineinv`, `!pickaxe` and `!minetop` can get spammy, so you might want to give them a cooldown in the **Commands** tab.
 
-- **No reply:** check the commands are switched on in the **Commands** tab, in the **FFY Mining** folder.
-- **"Save and Compile" error:** look for a missing `"`, `,` or `;` on the line it mentions.
+## If something's not working
+
+If there's no reply, make sure the commands are switched on in the **FFY Mining** folder in the **Commands** tab.
+
+A **Save and Compile** error almost always means there's a missing `"`, `,` or `;` on the line it mentions.

@@ -1,24 +1,18 @@
 # FFY New Year
 
-New Year commands: resolutions, predictions, party hats, countdown clashes and Party Animal of the Day. An add-on for **FFY Commands**.
+New Year commands. Resolutions, predictions for the year, party hats, countdown clashes and a Party Animal of the Day.
 
-> **You need FFY Commands installed first.** This add-on uses it to work. Install FFY Commands, then this.
-
----
+This plugs into **FFY Commands**, so get that installed first.
 
 ## Installing
 
-1. Make sure **FFY Commands** is already installed.
-2. Download the **`FFY-New-Year`** file from this page.
-3. In Streamer.bot, click **Import** in the bar at the top, drag and drop the file into the box, and click **Import**.
+Grab the **`FFY-New-Year`** file from this page, then in Streamer.bot hit **Import** at the top, drop the file in and click **Import**.
 
-Done. The commands are switched on for you. Type `!resolution` in chat to test.
+The commands switch on by themselves, so you can type `!resolution` straight away to check it's working.
 
-**Only want some of them?** In the **Commands** tab, open the **FFY New Year** folder and untick **Enabled** on the ones you don't want.
+You can turn off any you don't like. Find them in the **FFY New Year** folder in the **Commands** tab and untick **Enabled**.
 
----
-
-## The commands (11)
+## Commands (11)
 
 | Command | What it is | Example reply |
 |---|---|---|
@@ -34,11 +28,9 @@ Done. The commands are switched on for you. Type `!resolution` in chat to test.
 | `!countdownclash @Sam` | Duel | @Bob shouted HAPPY NEW YEAR first (87 vs 38)! @Sam was still on "three". |
 | `!partyanimalofday` | Party Animal of the Day | Who won today. Win it by getting 100% on `!partyanimal` |
 
----
+## Making changes
 
-## Changing things
-
-Everything is in the **Actions** tab, in the **FFY New Year** group. Each action is edited the same way as in FFY Commands: open it, double-click **Execute C# Code**, change the lines between `EDIT BELOW` and `EDIT ABOVE`, and click **Save and Compile**.
+It all lives in the **Actions** tab under the **FFY New Year** group. Open an action, double-click **Execute C# Code**, change whatever's between `EDIT BELOW` and `EDIT ABOVE`, then click **Save and Compile**.
 
 | Action | What's in it |
 |---|---|
@@ -50,14 +42,12 @@ Everything is in the **Actions** tab, in the **FFY New Year** group. Each action
 | **FFY New Year Triggers** | Connects the commands to FFY Commands. Don't edit its code |
 | **FFY New Year Setup** | Runs once on import |
 
-To add a command of your own, follow the FFY Commands guide (adding a number or list command), and put its lines in **FFY My Number Commands** or **FFY My List Commands**, so updates never touch them.
+If you want to add your own, follow the bit in the FFY Commands guide about adding a number or list command, and put it in **FFY My Number Commands** or **FFY My List Commands**. That way an update won't wipe it.
 
-All the FFY Commands features work with these commands too: special users, user variables, the switches, and `!top` for the interactions.
+Special users, user variables, the switches and `!top` for the interactions from FFY Commands all work with these too.
 
----
+## If something's not working
 
-## Troubleshooting
+No replies at all usually means **FFY Commands** isn't installed. The **Logs** tab will show `[FFY New Year]` lines if the pack is running. If just one command isn't replying, check it's ticked in the **FFY New Year** folder in the **Commands** tab.
 
-- **No reply at all:** is **FFY Commands** installed? Check the **Logs** tab for `[FFY New Year]`.
-- **One command doesn't reply:** is it switched on in the **Commands** tab (the **FFY New Year** folder)?
-- **Anything else:** see the troubleshooting section in the FFY Commands guide.
+For anything else, there's a troubleshooting section in the FFY Commands guide.

@@ -1,24 +1,18 @@
 # FFY Gym
 
-Lift, deadlift, bench press, sprint and more. A pack for **FFY Commands**.
+Gym commands. How much everyone's lifting, deadlifting and bench pressing today, how fast they sprint, and so on.
 
-> **You need FFY Commands installed first.** Install FFY Commands, then this pack.
-
----
+You need **FFY Commands** installed before adding this pack.
 
 ## Installing
 
-1. Make sure **FFY Commands** is already installed.
-2. Download the **`FFY-Gym`** file from this page.
-3. In Streamer.bot, click **Import** in the bar at the top, drag and drop the file into the box, and click **Import**.
+Grab the **`FFY-Gym`** file from this page, then in Streamer.bot hit **Import** at the top, drop the file in and click **Import**.
 
-Done. The commands are switched on for you. Type `!lift` in chat to test.
+The commands switch on by themselves, so you can type `!lift` straight away to check it's working.
 
-**Only want some of them?** In the **Commands** tab, open the **FFY Gym** folder and untick **Enabled** on the ones you don't want.
+You can turn off any you don't like. Find them in the **FFY Gym** folder in the **Commands** tab and untick **Enabled**.
 
----
-
-## The commands (8)
+## Commands (8)
 
 | Command | What it is | Example reply |
 |---|---|---|
@@ -31,11 +25,9 @@ Done. The commands are switched on for you. Type `!lift` in chat to test.
 | `!stretch` | 0–100 % | @Bob, Your flexibility is 50% today! |
 | `!benchpress` | 20–200 kg | @Bob, you're bench pressing 110kg today! |
 
----
+## Making changes
 
-## Changing things
-
-Everything is in the **Actions** tab, in the **FFY Gym** group. Open an action, double-click **Execute C# Code**, change the lines between `EDIT BELOW` and `EDIT ABOVE`, and click **Save and Compile**.
+It all lives in the **Actions** tab under the **FFY Gym** group. Open an action, double-click **Execute C# Code**, change whatever's between `EDIT BELOW` and `EDIT ABOVE`, then click **Save and Compile**.
 
 | Action | What's in it |
 |---|---|
@@ -43,12 +35,10 @@ Everything is in the **Actions** tab, in the **FFY Gym** group. Open an action, 
 | **FFY Gym Triggers** | Connects the commands to FFY Commands. Don't edit its code |
 | **FFY Gym Setup** | Runs once on import |
 
-> **Updating this pack replaces these actions.** To keep a change safe, put it in **FFY My Number Commands** (in FFY Commands) instead. See [Keeping your changes safe from updates](../../QuickGuide.md#21-keeping-your-changes-safe-from-updates).
+> Updating the pack replaces these actions, so if you want a change to stick, put it in **FFY My Number Commands** (in FFY Commands) instead. See [Keeping your changes safe from updates](../../QuickGuide.md#21-keeping-your-changes-safe-from-updates).
 
----
+## If something's not working
 
-## Troubleshooting
+No replies at all usually means **FFY Commands** isn't installed. The **Logs** tab will show `[FFY Gym]` lines if the pack is running. If just one command isn't replying, check it's ticked in the **FFY Gym** folder in the **Commands** tab.
 
-- **No reply at all:** is **FFY Commands** installed? Check the **Logs** tab for `[FFY Gym]`.
-- **One command doesn't reply:** is it switched on in the **Commands** tab (the **FFY Gym** folder)?
-- **Anything else:** see the [troubleshooting section](../../QuickGuide.md#28-troubleshooting) in the FFY Commands guide.
+If it's something else, have a look at the [troubleshooting section](../../QuickGuide.md#28-troubleshooting) in the FFY Commands guide.

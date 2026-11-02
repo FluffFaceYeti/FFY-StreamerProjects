@@ -1,24 +1,18 @@
 # FFY Gears Of War
 
-Gears of War commands for your stream: active reloads, Gnashers, chainsaw duels, curb stomps and more. An add-on for **FFY Commands**.
+Gears of War commands. Active reloads, Gnashers, chainsaw duels, curb stomps and plenty more.
 
-> **You need FFY Commands installed first.** This add-on uses it to work. Install FFY Commands, then this.
-
----
+This plugs into **FFY Commands**, so get that installed first.
 
 ## Installing
 
-1. Make sure **FFY Commands** is already installed.
-2. Download the **`FFY-Gears-Of-War`** file from this page.
-3. In Streamer.bot, click **Import** in the bar at the top, drag and drop the file into the box, and click **Import**.
+Grab the **`FFY-Gears-Of-War`** file from this page, then in Streamer.bot hit **Import** at the top, drop the file in and click **Import**.
 
-Done. The commands are switched on for you. Type `!activereload` in chat to test.
+The commands switch on by themselves, so you can type `!activereload` straight away to check it's working.
 
-**Only want some of them?** In the **Commands** tab, open the **FFY Gears Of War** folder and untick **Enabled** on the ones you don't want.
+You can turn off any you don't like. Find them in the **FFY Gears Of War** folder in the **Commands** tab and untick **Enabled**.
 
----
-
-## The commands (20)
+## Commands (20)
 
 | Command | What it is | Example reply |
 |---|---|---|
@@ -43,11 +37,9 @@ Done. The commands are switched on for you. Type `!activereload` in chat to test
 | `!cogofday` | COG of the Day | Who won today. Win it by getting 100% on `!cog` |
 | `!locustofday` | Locust of the Day | Who won today. Win it by getting 100% on `!locust` |
 
----
+## Making changes
 
-## Changing things
-
-Everything is in the **Actions** tab, in the **FFY Gears Of War** group. Each action is edited the same way as in FFY Commands: open it, double-click **Execute C# Code**, change the lines between `EDIT BELOW` and `EDIT ABOVE`, and click **Save and Compile**.
+It all lives in the **Actions** tab under the **FFY Gears Of War** group. Open an action, double-click **Execute C# Code**, change whatever's between `EDIT BELOW` and `EDIT ABOVE`, then click **Save and Compile**.
 
 | Action | What's in it |
 |---|---|
@@ -59,14 +51,12 @@ Everything is in the **Actions** tab, in the **FFY Gears Of War** group. Each ac
 | **FFY Gears Of War Triggers** | Connects the commands to FFY Commands. Don't edit its code |
 | **FFY Gears Of War Setup** | Runs once on import |
 
-To add a command of your own, follow the FFY Commands guide (adding a number or list command), and put its lines in **FFY My Number Commands** or **FFY My List Commands**, so updates never touch them.
+If you want to add your own, follow the bit in the FFY Commands guide about adding a number or list command, and put it in **FFY My Number Commands** or **FFY My List Commands**. That way an update won't wipe it.
 
-All the FFY Commands features work with these commands too: special users, user variables, the switches, and `!top` for the interactions.
+Special users, user variables, the switches and `!top` for the interactions from FFY Commands all work with these too.
 
----
+## If something's not working
 
-## Troubleshooting
+No replies at all usually means **FFY Commands** isn't installed. The **Logs** tab will show `[FFY Gears Of War]` lines if the pack is running. If just one command isn't replying, check it's ticked in the **FFY Gears Of War** folder in the **Commands** tab.
 
-- **No reply at all:** is **FFY Commands** installed? Check the **Logs** tab for `[FFY Gears Of War]`.
-- **One command doesn't reply:** is it switched on in the **Commands** tab (the **FFY Gears Of War** folder)?
-- **Anything else:** see the troubleshooting section in the FFY Commands guide.
+For anything else, there's a troubleshooting section in the FFY Commands guide.
