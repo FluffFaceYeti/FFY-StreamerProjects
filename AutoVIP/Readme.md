@@ -4,6 +4,15 @@ Your biggest supporters should be the ones wearing the VIP badge, and that's wha
 
 There's also an OBS overlay if you want it. It shows the steals, leaderboards, champions, `!myrank`, a recap at the end of stream, and boards that pop up every so often.
 
+## What it does
+
+- **Four leaderboards:** watch streak, sub streak, gifted subs and bits, and you pick how many VIP spots each one gives
+- **Lurkers count too.** Anyone sitting in your chat while you're live keeps their watch streak going, even if they never type
+- **VIP steals.** When someone climbs into the top spots, chat sees who they took the badge from
+- **A VIP block list.** Add anyone who should never get VIP, and they're kept off the boards completely
+- **Mods, editors and VIPs you gave by hand are left alone,** so they never lose their badge
+- **An optional OBS overlay** with a settings page and live preview, so you can make it match your stream
+
 ## Made with BehavingBeardly
 
 This one's been a team effort with **[BehavingBeardly](https://www.twitch.tv/behavingbeardly)**. It was his idea to begin with, and we've built it up together from nothing. We're really proud of how it's turned out and hope it helps you show your top supporters some love.
