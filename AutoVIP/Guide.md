@@ -23,7 +23,7 @@ The top viewers on each leaderboard get VIP, as long as they meet the minimum. B
 
 | Leaderboard | How it's counted |
 |-------------|------------------|
-| Watch streak | Viewers who **chat at least once** in a stream (or share their Twitch watch streak) keep their streak going. Miss a stream and it goes back to 0. Silent lurkers don't build a streak, unless you set `WATCH_STREAK_COUNTS_LURKERS = true`. If your stream crashes and you go live again within 30 minutes, it counts as the same stream |
+| Watch streak | Everyone who is **in your chat** during a stream keeps their streak going, even if they never type, so lurkers count too. AutoVIP checks who's in chat every 5 minutes while you're live (needs the **Auto VIP Refresh** timer on). Chatting or sharing a Twitch watch streak also counts. Miss a stream and it goes back to 0. If your stream crashes and you go live again within 30 minutes, it counts as the same stream |
 | Sub streak | Updated when someone resubs and shares their streak in chat. If someone stops subscribing, their streak ends (AutoVIP checks with Twitch when VIPs refresh) |
 | Gifted subs | Uses Twitch's lifetime gift total for your channel when the gifter shares it. If they hide it, AutoVIP counts their gifts itself. The number never goes down. Anonymous gifts aren't counted |
 | Bits cheered | Uses Twitch's lifetime bits for your channel, or AutoVIP's own count if that's higher |
@@ -34,6 +34,7 @@ Stats from before you installed AutoVIP fill in the next time that viewer gifts,
 
 - Mods, lead mods, editors and artists (detected automatically)
 - Bots and the broadcaster
+- Anyone on the **VIP block list** (`VIP_BLOCK_LIST`)
 - Manual VIPs: anyone on the **Manual VIPs** list, or anyone given VIP by hand
 
 Skipped users never appear on the leaderboards, in `!myrank`, in the stream recap or in the saved lists, and never take up a VIP spot. Only normal viewers can win or lose the badge.
@@ -126,12 +127,12 @@ All settings are at the top of the **AUTOVIP** code, in sections marked `// SETT
 | `GRACE_PERIOD_DAYS`      | Days someone keeps VIP after dropping off a leaderboard. `0` removes it straight away |
 | `MANUAL_EXCLUDE_LOGINS`  | Manual VIPs and editors: names AutoVIP leaves alone. Replace `ManualVIPUsername1` and the others with real names (one per line), or remove them |
 | `IGNORE_LOGINS`          | Bots and accounts that are never tracked |
+| `VIP_BLOCK_LIST`         | Viewers who should never get VIP. They're never tracked, never on the boards and never given VIP. Replace `BlockedUsername1` with real names (one per line), or remove it |
 
 ### Watch streaks, resets and data
 
 | Setting                  | Description |
 |--------------------------|-------------|
-| `WATCH_STREAK_COUNTS_LURKERS` | `false` = viewers must chat (or share their Twitch watch streak) to count for a stream. `true` = anyone sitting in your chat counts, even if they never type. AutoVIP checks who's in chat every 5 minutes while you're live (needs the **Auto VIP Refresh** timer on) |
 | `STREAM_RESTART_MINUTES` | If you go live again within this many minutes of ending (e.g. after a crash), it counts as the same stream, so nobody loses their watch streak. Default `30`. `0` turns it off |
 | `RESET_PERIOD_MONTHS`    | `0` never resets, or set a period such as `6`, `12`, `24`… |
 | `RESET_START_DATE`       | When reset periods start, e.g. `"2026-01-01"`. Use `""` to start from the first run |
