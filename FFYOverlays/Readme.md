@@ -1,6 +1,10 @@
 # FFY Overlays
 
-OBS overlays for your stream. Each one is just a single HTML file, so there's no Streamer.bot, no login and nothing to install.
+OBS overlays for your stream. There's no Streamer.bot, no login and nothing to install.
+
+## FFY Socials
+
+**[`FFY_Socials`](FFY_Socials)** pops up your socials on a timer, with your own list, colours, animations and custom promos. Setup is in [its Readme](FFY_Socials/Readme.md).
 
 ## FFY Raid Battle
 

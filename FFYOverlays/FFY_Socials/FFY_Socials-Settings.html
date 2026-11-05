@@ -1,0 +1,407 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>FFY_Socials Settings</title>
+<style>
+  :root { --ui: #ff6b1a; --ui-ink: #ffffff; --ui-soft: color-mix(in srgb, var(--ui) 55%, #ffffff); }
+  * { box-sizing: border-box; scrollbar-width: thin; scrollbar-color: #3a3a3a #161616; }
+  html { color-scheme: dark; }
+  body { margin: 0; background: #121212; color: #eee; font: 15px/1.45 "Segoe UI", Arial, sans-serif; }
+  header { padding: 14px 24px; border-bottom: 1px solid #2a2a2a; }
+  h1 { margin: 0; font-size: 22px; color: var(--ui); }
+  header p { margin: 2px 0 0; color: #aaa; }
+  main { display: grid; grid-template-columns: 460px minmax(0, 1fr); gap: 20px; padding: 18px 24px; }
+  aside { max-height: calc(100vh - 125px); overflow: auto; padding-right: 8px; }
+  section { margin-bottom: 14px; padding: 14px; border-radius: 10px; background: #1c1c1c; }
+  h2 { margin: 0 0 10px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: var(--ui-soft); }
+  label { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 8px 0; }
+  label span { color: #ccc; }
+  input[type=text], input[type=number], select { width: 210px; padding: 6px 8px; border: 1px solid #333; border-radius: 6px; background: #111; color: #eee; font: inherit; }
+  input[type=color] { width: 54px; height: 30px; padding: 0; border: 1px solid #333; border-radius: 6px; background: none; cursor: pointer; }
+  input[type=range] { width: 210px; accent-color: var(--ui); }
+  .toggle { position: relative; flex: none; display: block; width: 44px; height: 24px; }
+  .toggle input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+  .toggle i { position: absolute; inset: 0; border-radius: 12px; background: #3a3a3a; pointer-events: none; transition: background .15s; }
+  .toggle i::after { content: ""; position: absolute; left: 3px; top: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: transform .15s; }
+  .toggle input:checked + i { background: var(--ui); }
+  .toggle input:checked + i::after { transform: translateX(20px); }
+  .toggle input:focus-visible + i { outline: 2px solid #fff; outline-offset: 2px; }
+  .btn { padding: 7px 14px; border: 0; border-radius: 8px; background: var(--ui); color: var(--ui-ink); font: 700 14px inherit; cursor: pointer; }
+  .btn.grey { background: #333; color: #fff; }
+  .btn.small { padding: 4px 9px; font-size: 12px; }
+  .btn:disabled { opacity: .35; cursor: default; }
+  .note { color: #999; font-size: 13px; margin: 6px 0; }
+  .warn { color: #ffb4a0; }
+  .good { color: #7ddc8a; }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .item { margin-bottom: 10px; padding: 10px 12px; border: 1px solid #2c2c2c; border-radius: 8px; background: #161616; }
+  .item.focus { border-color: var(--ui); }
+  .item.off .fields { opacity: .5; }
+  .item-head { display: flex; align-items: center; gap: 8px; }
+  .item-head b { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .picture-row { display: flex; gap: 6px; }
+  .picture-row input { width: 138px; }
+  #stageBox { position: relative; width: 100%; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 10px; border: 1px solid #2a2a2a;
+    background: repeating-conic-gradient(#2b2d36 0 25%, #24262e 0 50%) 0 0 / 48px 48px; }
+  #preview { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; border: 0; transform-origin: 0 0; color-scheme: light; }
+  #linkBox { width: 100%; margin-top: 10px; padding: 6px 8px; border: 1px solid #333; border-radius: 6px; background: #111; color: var(--ui-soft); font: 13px Consolas, monospace; }
+  .ok { color: #7ddc8a; font-weight: 700; visibility: hidden; }
+  .ok.on { visibility: visible; }
+  @media (max-width: 1050px) { main { grid-template-columns: 1fr; } aside { max-height: none; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>FFY_Socials Settings</h1>
+  <p>Build your list of socials and promos, pick the look, then copy the link into an OBS browser source.</p>
+</header>
+<main>
+  <aside>
+    <section>
+      <h2>Your socials and promos</h2>
+      <div id="items"></div>
+      <p class="note" id="empty"></p>
+      <div class="row">
+        <select id="addWhich" aria-label="Which one to add"></select>
+        <button class="btn" id="add" type="button">Add</button>
+      </div>
+      <p class="note">Pick <b>Custom or promo</b> for your own name and picture. Switch one off to keep it for later.</p>
+    </section>
+    <section>
+      <h2>Timing and order</h2>
+      <label><span>Seconds on screen</span><input type="number" min="1" data-key="showSeconds"></label>
+      <label><span>Seconds between pop ups</span><input type="number" min="0" data-key="gapSeconds"></label>
+      <label><span>Minutes to wait after the full list</span><input type="number" min="0" data-key="roundMinutes"></label>
+      <label><span>Order</span><select data-key="order"><option value="list">In list order</option><option value="shuffle">Shuffled</option></select></label>
+    </section>
+    <section>
+      <h2>Animation</h2>
+      <label><span>Appear</span><select data-key="appear" data-animate>
+        <option value="slide-left">Slide in from left</option><option value="slide-right">Slide in from right</option><option value="slide-top">Slide in from top</option><option value="slide-bottom">Slide in from bottom</option>
+        <option value="fade">Fade in</option><option value="pop">Pop in</option><option value="zoom">Zoom in</option><option value="flip">Flip in</option><option value="bounce">Bounce in</option><option value="spin">Spin in</option><option value="none">Just appear</option>
+      </select></label>
+      <label><span>Disappear</span><select data-key="disappear" data-animate>
+        <option value="slide-left">Slide out to left</option><option value="slide-right">Slide out to right</option><option value="slide-top">Slide out to top</option><option value="slide-bottom">Slide out to bottom</option>
+        <option value="fade">Fade out</option><option value="pop">Pop out</option><option value="zoom">Zoom out</option><option value="flip">Flip out</option><option value="bounce">Bounce out</option><option value="spin">Spin out</option><option value="none">Just vanish</option>
+      </select></label>
+      <label><span>Animation seconds</span><input type="range" min="0.2" max="2" step="0.1" data-key="speed" data-animate></label>
+    </section>
+    <section>
+      <h2>Colours</h2>
+      <label><span>Each one uses its own colour</span><span class="toggle"><input type="checkbox" data-key="useItemColours"><i></i></span></label>
+      <label id="accentRow"><span>Colour for all of them</span><input type="color" data-key="accent"></label>
+      <label><span>Card background</span><input type="color" data-key="background"></label>
+      <label><span>How solid the card is</span><input type="range" min="0" max="100" data-key="opacity"></label>
+      <label><span>Name</span><input type="color" data-key="nameColour"></label>
+      <label><span>Text</span><input type="color" data-key="textColour"></label>
+    </section>
+    <section>
+      <h2>What to show</h2>
+      <label><span>Icon or picture</span><span class="toggle"><input type="checkbox" data-key="showIcon"><i></i></span></label>
+      <label><span>Name</span><span class="toggle"><input type="checkbox" data-key="showName"><i></i></span></label>
+      <label><span>Text</span><span class="toggle"><input type="checkbox" data-key="showText"><i></i></span></label>
+      <label><span>Box behind it</span><span class="toggle"><input type="checkbox" data-key="showBox"><i></i></span></label>
+      <label><span>Coloured edge</span><span class="toggle"><input type="checkbox" data-key="edge"><i></i></span></label>
+    </section>
+    <section>
+      <h2>Style and placement</h2>
+      <label><span>Font</span><select data-key="font">
+        <option>Segoe UI</option><option>Arial Black</option><option>Impact</option><option>Georgia</option><option>Trebuchet MS</option><option>Comic Sans MS</option><option>Consolas</option>
+      </select></label>
+      <label><span>Icon shape</span><select data-key="badgeShape"><option value="rounded">Rounded square</option><option value="circle">Circle</option><option value="square">Square</option></select></label>
+      <label><span>Icon size</span><input type="range" min="32" max="200" step="2" data-key="iconSize"></label>
+      <label><span>Rounded corners</span><input type="range" min="0" max="60" data-key="corners"></label>
+      <label><span>Position</span><select data-key="position">
+        <option value="top-left">Top left</option><option value="top-center">Top middle</option><option value="top-right">Top right</option>
+        <option value="middle-left">Middle left</option><option value="middle-center">Centre</option><option value="middle-right">Middle right</option>
+        <option value="bottom-left">Bottom left</option><option value="bottom-center">Bottom middle</option><option value="bottom-right">Bottom right</option>
+      </select></label>
+      <label><span>Size</span><input type="range" min="50" max="200" step="5" data-key="size"></label>
+    </section>
+    <button class="btn grey" id="reset" type="button">Back to the default look</button>
+  </aside>
+  <div>
+    <div id="stageBox"><iframe id="preview" title="Overlay preview"></iframe></div>
+    <div class="row" style="margin-top:12px">
+      <button class="btn" id="copy" type="button">Copy link for OBS</button>
+      <button class="btn grey" id="play" type="button">Play the whole list</button>
+      <span class="ok" id="copied">Copied!</span>
+    </div>
+    <input id="linkBox" type="text" readonly aria-label="Link for OBS">
+    <p class="note">In OBS, add a <b>Browser</b> source, paste this link into <b>URL</b> (leave Local file unticked) and set the size to 1920 x 1080. Changed something here? Copy the link again and paste it over the old one.</p>
+    <p class="note">The preview shortens the timings when you play the whole list, so you don't have to wait. OBS uses your real timings.</p>
+  </div>
+</main>
+<input id="filePicker" type="file" accept="image/*" hidden>
+<script>
+const OVERLAY = "FFY_Socials-Overlay.html";
+const STORE = "ffy-socials-settings";
+const PLATFORMS = {
+  youtube: { name: "YouTube", colour: "#ff0000", hint: "youtube.com/@yourname" },
+  twitch: { name: "Twitch", colour: "#9146ff", hint: "twitch.tv/yourname" },
+  kick: { name: "Kick", colour: "#53fc18", hint: "kick.com/yourname" },
+  x: { name: "X", colour: "#ffffff", hint: "@yourname" },
+  instagram: { name: "Instagram", colour: "#e4405f", hint: "@yourname" },
+  tiktok: { name: "TikTok", colour: "#ff0050", hint: "@yourname" },
+  discord: { name: "Discord", colour: "#5865f2", hint: "discord.gg/yourinvite" },
+  facebook: { name: "Facebook", colour: "#1877f2", hint: "facebook.com/yourname" },
+  threads: { name: "Threads", colour: "#ffffff", hint: "@yourname" },
+  bluesky: { name: "Bluesky", colour: "#0085ff", hint: "@yourname.bsky.social" },
+  patreon: { name: "Patreon", colour: "#ff424d", hint: "patreon.com/yourname" },
+  kofi: { name: "Ko-fi", colour: "#ff6433", hint: "ko-fi.com/yourname" },
+  spotify: { name: "Spotify", colour: "#1db954", hint: "Your playlist name" },
+  snapchat: { name: "Snapchat", colour: "#fffc00", hint: "yourname" },
+  steam: { name: "Steam", colour: "#66c0f4", hint: "yourname" },
+  reddit: { name: "Reddit", colour: "#ff4500", hint: "r/yourname" },
+  linktree: { name: "Linktree", colour: "#43e55e", hint: "linktr.ee/yourname" },
+  custom: { name: "Custom or promo", colour: "#ff6b1a", hint: "Use code STREAM for 20% off" },
+};
+const LOOK = {
+  showIcon: true, showName: true, showText: true, useItemColours: true, edge: true, showBox: true,
+  background: "#14161c", opacity: 92, accent: "#ff6b1a", nameColour: "#ffffff", textColour: "#d9dde6",
+  font: "Segoe UI", badgeShape: "rounded", corners: 16, iconSize: 72, position: "bottom-left", size: 100,
+  showSeconds: 10, gapSeconds: 30, roundMinutes: 0, order: "list", appear: "slide-left", disappear: "slide-left", speed: 0.6,
+};
+
+function newItem(platform) {
+  const p = PLATFORMS[platform] || PLATFORMS.custom;
+  return { on: true, platform, name: platform === "custom" ? "My promo" : p.name, text: "", image: "", colour: p.colour };
+}
+
+function startingItems() {
+  const items = ["youtube", "twitch", "discord"].map(newItem);
+  items[0].text = "youtube.com/@yourname";
+  items[1].text = "twitch.tv/yourname";
+  items[2].text = "discord.gg/yourinvite";
+  return items;
+}
+
+let state = Object.assign({}, LOOK, { items: startingItems() });
+try {
+  const saved = JSON.parse(localStorage.getItem(STORE) || "{}");
+  Object.assign(state, saved);
+  if (!Array.isArray(state.items)) state.items = startingItems();
+} catch (e) {}
+
+let focus = 0;
+let pickerFor = -1;
+const inputs = [...document.querySelectorAll("[data-key]")];
+const frame = document.getElementById("preview");
+const linkBox = document.getElementById("linkBox");
+const itemsBox = document.getElementById("items");
+const picker = document.getElementById("filePicker");
+
+function link() {
+  const url = new URL(OVERLAY, location.href);
+  for (const key of Object.keys(LOOK)) url.searchParams.set(key, state[key]);
+  const shown = state.items.filter((item) => item.on).map((item) => {
+    const out = { platform: item.platform, name: item.name, colour: item.colour };
+    if (item.text) out.text = item.text;
+    if (item.image) out.image = item.image;
+    return out;
+  });
+  url.searchParams.set("items", JSON.stringify(shown));
+  return url.href;
+}
+
+function post(kind) {
+  if (frame.contentWindow) frame.contentWindow.postMessage({ ffySocials: kind, settings: state, focus }, "*");
+}
+
+function saved() {
+  try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) {}
+  linkBox.value = link();
+  const on = state.items.filter((item) => item.on).length;
+  document.getElementById("empty").textContent = on ? "" : "Nothing is switched on, so the overlay won't show anything.";
+  document.getElementById("empty").className = on ? "note" : "note warn";
+  document.getElementById("accentRow").style.display = state.useItemColours ? "none" : "";
+  for (const key of ["background", "opacity", "edge", "corners"]) document.querySelector('[data-key="' + key + '"]').closest("label").style.display = state.showBox ? "" : "none";
+}
+
+function changed(kind) {
+  saved();
+  post(kind || "settings");
+}
+
+function imageUrl(value) {
+  if (/^https?:\/\//i.test(value)) return value;
+  return value.split("/").map(encodeURIComponent).join("/");
+}
+
+function checkImage(value, note) {
+  note.textContent = "";
+  note.className = "note";
+  if (!value) return;
+  const test = new Image();
+  test.onload = () => { if (note.isConnected) { note.textContent = "Picture found."; note.className = "note good"; } };
+  test.onerror = () => {
+    if (!note.isConnected) return;
+    note.textContent = /^https?:/i.test(value) ? "Can't load that link. Check it opens in your browser." : "Can't find it. Put the file in the images folder next to these pages.";
+    note.className = "note warn";
+  };
+  test.src = imageUrl(value);
+}
+
+function field(labelText, input) {
+  const label = document.createElement("label");
+  const span = document.createElement("span");
+  span.textContent = labelText;
+  label.append(span, input);
+  return label;
+}
+
+function button(text, title, onClick, disabled) {
+  const b = document.createElement("button");
+  b.type = "button";
+  b.className = "btn grey small";
+  b.textContent = text;
+  b.title = title;
+  b.setAttribute("aria-label", title);
+  b.disabled = !!disabled;
+  b.addEventListener("click", onClick);
+  return b;
+}
+
+function move(from, to) {
+  const [item] = state.items.splice(from, 1);
+  state.items.splice(to, 0, item);
+  focus = to;
+  renderItems();
+  changed();
+}
+
+function renderItems() {
+  itemsBox.replaceChildren();
+  state.items.forEach((item, index) => {
+    const box = document.createElement("div");
+    box.className = "item" + (index === focus ? " focus" : "") + (item.on ? "" : " off");
+    box.addEventListener("focusin", () => setFocus(index, box));
+    box.addEventListener("click", () => setFocus(index, box));
+
+    const head = document.createElement("div");
+    head.className = "item-head";
+    const toggle = document.createElement("span");
+    toggle.className = "toggle";
+    const check = document.createElement("input");
+    check.type = "checkbox";
+    check.checked = item.on;
+    check.setAttribute("aria-label", "Show " + (item.name || "this one"));
+    check.addEventListener("input", () => { item.on = check.checked; box.classList.toggle("off", !item.on); changed(); });
+    toggle.append(check, document.createElement("i"));
+    const title = document.createElement("b");
+    title.textContent = (PLATFORMS[item.platform] || PLATFORMS.custom).name;
+    head.append(toggle, title,
+      button("▲", "Move up", (e) => { e.stopPropagation(); move(index, index - 1); }, index === 0),
+      button("▼", "Move down", (e) => { e.stopPropagation(); move(index, index + 1); }, index === state.items.length - 1),
+      button("✕", "Remove", (e) => { e.stopPropagation(); state.items.splice(index, 1); focus = Math.max(0, Math.min(focus, state.items.length - 1)); renderItems(); changed(); }));
+
+    const fields = document.createElement("div");
+    fields.className = "fields";
+    const text = (key, placeholder) => {
+      const input = document.createElement("input");
+      input.type = "text";
+      input.value = item[key] || "";
+      input.placeholder = placeholder;
+      input.addEventListener("input", () => { item[key] = input.value; changed(); });
+      return input;
+    };
+    const colour = document.createElement("input");
+    colour.type = "color";
+    colour.value = item.colour;
+    colour.addEventListener("input", () => { item.colour = colour.value; changed(); });
+
+    const pictureRow = document.createElement("span");
+    pictureRow.className = "picture-row";
+    const image = text("image", "None");
+    const note = document.createElement("p");
+    note.className = "note";
+    image.addEventListener("change", () => checkImage(item.image, note));
+    pictureRow.append(image, button("Choose", "Choose a picture from the images folder", () => { pickerFor = index; picker.value = ""; picker.click(); }));
+    checkImage(item.image, note);
+
+    fields.append(
+      field("Name", text("name", "Name")),
+      field("Text", text("text", (PLATFORMS[item.platform] || PLATFORMS.custom).hint)),
+      field("Colour", colour),
+      field("Picture", pictureRow),
+      note);
+    box.append(head, fields);
+    itemsBox.append(box);
+  });
+}
+
+function setFocus(index, box) {
+  if (focus === index) return;
+  focus = index;
+  [...itemsBox.children].forEach((child) => child.classList.remove("focus"));
+  box.classList.add("focus");
+  post("settings");
+}
+
+picker.addEventListener("change", () => {
+  const file = picker.files[0];
+  if (!file || !state.items[pickerFor]) return;
+  state.items[pickerFor].image = "images/" + file.name;
+  focus = pickerFor;
+  renderItems();
+  changed();
+});
+
+const addWhich = document.getElementById("addWhich");
+for (const key of ["custom", ...Object.keys(PLATFORMS).filter((k) => k !== "custom")]) {
+  const option = document.createElement("option");
+  option.value = key;
+  option.textContent = PLATFORMS[key].name;
+  addWhich.append(option);
+}
+document.getElementById("add").addEventListener("click", () => {
+  state.items.push(newItem(addWhich.value));
+  focus = state.items.length - 1;
+  renderItems();
+  changed();
+  itemsBox.lastElementChild.scrollIntoView({ block: "nearest" });
+});
+
+function showLook() {
+  for (const input of inputs) {
+    if (input.type === "checkbox") input.checked = !!state[input.dataset.key];
+    else input.value = state[input.dataset.key];
+  }
+}
+
+for (const input of inputs) {
+  input.addEventListener("input", () => {
+    const key = input.dataset.key;
+    state[key] = input.type === "checkbox" ? input.checked : typeof LOOK[key] === "number" ? Number(input.value) : input.value;
+    changed("animate" in input.dataset ? "animate" : "settings");
+  });
+}
+
+document.getElementById("play").addEventListener("click", () => post("play"));
+document.getElementById("reset").addEventListener("click", () => {
+  state = Object.assign({}, LOOK, { items: state.items });
+  showLook();
+  changed();
+});
+document.getElementById("copy").addEventListener("click", async () => {
+  linkBox.select();
+  let done = false;
+  try { await navigator.clipboard.writeText(linkBox.value); done = true; } catch (e) { done = document.execCommand("copy"); }
+  const copied = document.getElementById("copied");
+  copied.textContent = done ? "Copied!" : "Press Ctrl+C to copy";
+  copied.classList.add("on");
+  setTimeout(() => copied.classList.remove("on"), 2500);
+});
+
+function fitPreview() { frame.style.transform = "scale(" + document.getElementById("stageBox").clientWidth / 1920 + ")"; }
+new ResizeObserver(fitPreview).observe(document.getElementById("stageBox"));
+
+frame.addEventListener("load", () => post("settings"));
+frame.src = OVERLAY + "?preview=1";
+showLook();
+renderItems();
+saved();
+</script>
+</body>
+</html>
