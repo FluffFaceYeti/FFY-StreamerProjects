@@ -1,0 +1,410 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>FFY_Appreciation Overlay</title>
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; }
+  #stage { position: fixed; inset: 0; display: flex; padding: 48px; }
+  #wrap { position: relative; transform: scale(var(--scale)); transform-origin: var(--origin); }
+  #card { position: relative; z-index: 1; width: 980px; padding: 28px 40px; border-radius: var(--radius); border: 6px solid var(--edge); background: var(--background); color: var(--text); font-family: var(--font); text-align: center;
+    box-shadow: 0 18px 45px rgba(0, 0, 0, .55), 0 0 45px color-mix(in srgb, var(--accent) 35%, transparent); visibility: hidden; }
+  #card.on { visibility: visible; }
+  #scene { display: flex; align-items: flex-start; justify-content: center; gap: 34px; margin-bottom: 16px; }
+  .person { width: 230px; min-width: 0; }
+  .picture { position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; width: 150px; height: 150px; margin: 0 auto; border: 6px solid var(--accent); border-radius: var(--picture-radius);
+    background: #000; color: var(--accent); box-shadow: 0 0 24px color-mix(in srgb, var(--accent) 55%, transparent); font-size: 70px; font-weight: 900; }
+  .picture img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .who { margin-top: 10px; color: var(--name); font-size: 26px; font-weight: 900; line-height: 1.15; overflow-wrap: anywhere; }
+  #emoji { flex: none; align-self: center; margin-top: -30px; font-size: 92px; line-height: 1; }
+  #title { color: var(--name); font: 54px/1.05 var(--font-head); letter-spacing: 1.5px; text-shadow: 0 4px 0 rgba(0, 0, 0, .45); overflow-wrap: anywhere; }
+  #subtitle { margin-top: 8px; font-size: 26px; font-weight: 800; line-height: 1.25; opacity: .85; overflow-wrap: anywhere; }
+  #empty { margin: 26px 0 12px; font-size: 34px; font-weight: 900; opacity: .8; }
+  #rows { display: grid; gap: 8px; margin-top: 18px; text-align: left; }
+  .row { display: flex; align-items: center; gap: 15px; min-height: 62px; padding: 7px 18px 7px 9px; border-radius: 15px; background: rgba(255, 255, 255, .06); font-size: 27px; font-weight: 800; }
+  .row .name { flex: 1; min-width: 0; color: var(--name); overflow-wrap: anywhere; }
+  .row .value { flex: none; color: var(--accent); font-weight: 900; }
+  .rank { flex: none; display: flex; align-items: center; justify-content: center; width: 46px; height: 46px; border-radius: 50%; background: rgba(255, 255, 255, .12); font-size: 22px; font-weight: 900; }
+  .r1 .rank { background: var(--gold); color: #1a1200; box-shadow: 0 0 14px var(--gold); }
+  .r2 .rank { background: var(--silver); color: #14171b; }
+  .r3 .rank { background: var(--bronze); color: #1b0f05; }
+  .row .picture { width: 46px; height: 46px; margin: 0; border-width: 2px; box-shadow: none; font-size: 22px; }
+  .row .icon { flex: none; width: 46px; font-size: 32px; text-align: center; }
+  #heroLine { display: flex; align-items: center; justify-content: center; gap: 22px; }
+  #heroLine .picture { width: 100px; height: 100px; margin: 0; border-width: 5px; font-size: 46px; }
+  #heroName { color: var(--name); font: 60px/1 var(--font-head); letter-spacing: 2px; overflow-wrap: anywhere; }
+  #card.board #title { color: var(--accent); font: 900 22px/1.2 var(--font); letter-spacing: 3px; text-shadow: none; text-transform: uppercase; margin-top: 8px; }
+  #card.list #title { font-size: 70px; }
+  .hidden { display: none !important; }
+  #floats { position: absolute; z-index: 0; inset: -60px; overflow: visible; pointer-events: none; }
+  .float { position: absolute; top: var(--float-top); bottom: var(--float-bottom); font-size: var(--s); opacity: 0; animation: floatUp var(--d) ease-out var(--w) infinite; }
+  @keyframes floatUp { 0% { opacity: 0; transform: translateY(0) rotate(0); } 15% { opacity: 1; } 75% { opacity: .9; } 100% { opacity: 0; transform: translate(var(--x), var(--travel)) rotate(var(--r)); } }
+  .meet #fromPerson { animation: meetL 1.5s ease-in-out .5s 2; }
+  .meet #toPerson { animation: meetR 1.5s ease-in-out .5s 2; }
+  .bump #fromPerson { animation: bumpL .7s ease-in-out .5s 3; }
+  .bump #toPerson { animation: bumpR .7s ease-in-out .5s 3; }
+  .meet #emoji, .bump #emoji { animation: beat .75s ease-in-out .4s 5; }
+  @keyframes meetL { 50% { transform: translateX(60px) rotate(6deg); } }
+  @keyframes meetR { 50% { transform: translateX(-60px) rotate(-6deg); } }
+  @keyframes bumpL { 50% { transform: translateX(34px); } }
+  @keyframes bumpR { 50% { transform: translateX(-34px); } }
+  @keyframes beat { 50% { transform: scale(1.3); } }
+  .slide.in { animation: slideIn .55s cubic-bezier(.2, .9, .25, 1.05) both; }
+  .slide.out { animation: slideOut .4s ease-in both; }
+  .pop.in { animation: popIn .5s cubic-bezier(.2, 1.3, .4, 1) both; }
+  .pop.out { animation: popOut .3s ease-in both; }
+  .fade.in { animation: fadeIn .5s ease-out both; }
+  .fade.out { animation: fadeOut .4s ease-in both; }
+  #card.in .row { animation: rowIn .35s ease-out both; animation-delay: calc(.2s + var(--i) * 70ms); }
+  @keyframes rowIn { from { opacity: 0; transform: translateX(36px); } to { opacity: 1; transform: none; } }
+  @keyframes slideIn { from { opacity: 0; transform: translate(var(--from-x), var(--from-y)); } to { opacity: 1; transform: none; } }
+  @keyframes slideOut { from { opacity: 1; transform: none; } to { opacity: 0; transform: translate(var(--from-x), var(--from-y)); } }
+  @keyframes popIn { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: none; } }
+  @keyframes popOut { from { opacity: 1; transform: none; } to { opacity: 0; transform: scale(.8); } }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+  #status { position: fixed; left: 12px; bottom: 10px; padding: 5px 9px; border-radius: 6px; background: rgba(0, 0, 0, .75); color: #ffb4a0; font: 14px "Segoe UI", Arial, sans-serif; }
+  #status:empty { display: none; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="wrap">
+    <div id="card">
+      <div id="scene"><div class="person" id="fromPerson"><div class="picture" id="fromPicture"></div><div class="who" id="fromName"></div></div><div id="emoji"></div><div class="person" id="toPerson"><div class="picture" id="toPicture"></div><div class="who" id="toName"></div></div></div>
+      <div id="heroLine"><div class="picture" id="heroPicture"></div><div id="heroName"></div></div>
+      <div id="title"></div>
+      <div id="subtitle"></div>
+      <div id="empty">No data yet</div>
+      <div id="rows"></div>
+    </div>
+    <div id="floats"></div>
+  </div>
+</div>
+<div id="status"></div>
+<script>
+const SETTINGS = {
+  host: "127.0.0.1",
+  port: 8080,
+  endpoint: "/",
+  password: "",
+  showAppreciate: true,
+  showHug: true,
+  showKiss: true,
+  showHighfive: true,
+  showBoop: true,
+  showPat: true,
+  showCuddle: true,
+  showWave: true,
+  showAirhug: true,
+  showThumbsup: true,
+  showStim: true,
+  showParallel: true,
+  showInfodump: true,
+  showSpoons: true,
+  showFidget: true,
+  showBlanket: true,
+  showHeadphones: true,
+  showStats: true,
+  showTop: true,
+  showPictures: true,
+  showFloats: true,
+  calmAll: false,
+  background: "#1d1d1f",
+  backgroundTo: "#0b0b0c",
+  opacity: 100,
+  edge: "#ff5fa2",
+  accent: "#ff5fa2",
+  nameColour: "#ffffff",
+  textColour: "#ffffff",
+  headFont: "Bangers",
+  font: "Nunito",
+  pictureShape: "circle",
+  corners: 32,
+  position: "bottom-center",
+  size: 100,
+  seconds: 7,
+  animation: "pop",
+};
+
+const SWITCHES = { appreciate: "showAppreciate", hug: "showHug", kiss: "showKiss", highfive: "showHighfive", boop: "showBoop", pat: "showPat", cuddle: "showCuddle", wave: "showWave", airhug: "showAirhug", thumbsup: "showThumbsup", stim: "showStim", parallel: "showParallel", infodump: "showInfodump", spoons: "showSpoons", fidget: "showFidget", blanket: "showBlanket", headphones: "showHeadphones" };
+const BUMPS = ["highfive", "boop", "pat"];
+const MAX_WAITING = 10;
+const FONTS = { "Bangers": 'Bangers, Impact, sans-serif', "Nunito": 'Nunito, "Segoe UI", sans-serif', "Segoe UI": '"Segoe UI", Arial, sans-serif', "Arial Black": '"Arial Black", Arial, sans-serif', "Impact": 'Impact, "Arial Black", sans-serif', "Georgia": 'Georgia, serif', "Trebuchet MS": '"Trebuchet MS", Arial, sans-serif', "Comic Sans MS": '"Comic Sans MS", cursive', "Consolas": 'Consolas, monospace' };
+const ANIMATIONS = ["slide", "pop", "fade"];
+const SHAPES = { circle: "50%", rounded: "18%", square: "0" };
+const VERTICAL = { top: "flex-start", middle: "center", bottom: "flex-end" };
+const HORIZONTAL = { left: "flex-start", center: "center", right: "flex-end" };
+const action = (act, emoji, title, subtitle, to, calm) => ({ kind: "action", action: act, emoji, calm: !!calm, title, subtitle, from: "KindKeeper", fromPicture: "", to, toPicture: "" });
+const SAMPLES = {
+  hug: action("hug", "🤗", "KindKeeper gave MossyMod a big hug!", "That's 12 hugs for MossyMod.", "MossyMod"),
+  kiss: action("kiss", "😘", "KindKeeper gave MossyMod a kiss!", "That's 3 kisses for MossyMod.", "MossyMod"),
+  appreciate: action("appreciate", "❤️", "KindKeeper appreciates MossyMod!", "You always make the stream better", "MossyMod"),
+  highfive: action("highfive", "🙌", "KindKeeper high-fived MossyMod!", "That's 8 high fives for MossyMod.", "MossyMod"),
+  wave: action("wave", "👋", "KindKeeper waved at MossyMod!", "That's 4 waves for MossyMod.", "MossyMod", true),
+  spoons: action("spoons", "🥄", "KindKeeper gave MossyMod a spare spoon for today.", "That's 2 spare spoons for MossyMod.", "MossyMod", true),
+  everyone: action("hug", "🤗", "KindKeeper gave everyone a big hug!", "", ""),
+  stats: { kind: "stats", title: "Appreciation", hero: "MossyMod", rows: [{ name: "hugs", label: "🤗", value: "12" }, { name: "kisses", label: "😘", value: "3" }, { name: "appreciations", label: "❤️", value: "2" }] },
+  top: { kind: "top", title: "Most Appreciated", rows: [{ name: "MossyMod", label: "#1", value: "42" }, { name: "KindKeeper", label: "#2", value: "31" }, { name: "Banhammer_Bea", label: "#3", value: "18" }] },
+  empty: { kind: "top", title: "Most Appreciated", rows: [] },
+};
+
+const params = new URLSearchParams(location.search);
+for (const key of Object.keys(SETTINGS)) {
+  if (!params.has(key)) continue;
+  const value = params.get(key);
+  SETTINGS[key] = typeof SETTINGS[key] === "number" ? Number(value) : typeof SETTINGS[key] === "boolean" ? value !== "false" && value !== "0" : value;
+}
+const DEMO = params.get("demo");
+
+const $ = (id) => document.getElementById(id);
+const card = $("card");
+const isColour = (value) => /^#[0-9a-f]{6}$/i.test(value || "");
+const wait = (ms) => new Promise((done) => setTimeout(done, ms));
+let current = null, animation = "pop", sample = "hug";
+const isCalm = (d) => !!(SETTINGS.calmAll || (d && d.calm));
+
+function rgba(hex, alpha) {
+  const n = parseInt((isColour(hex) ? hex : "#1d1d1f").slice(1), 16);
+  return "rgba(" + (n >> 16) + "," + ((n >> 8) & 255) + "," + (n & 255) + "," + alpha + ")";
+}
+
+function applySettings() {
+  const s = SETTINGS, root = document.documentElement.style;
+  const [v, h] = String(s.position).split("-");
+  const across = HORIZONTAL[h] ? h : "center", down = VERTICAL[v] ? v : "bottom";
+  const accent = isColour(s.accent) ? s.accent : "#ff5fa2";
+  $("stage").style.alignItems = VERTICAL[down];
+  $("stage").style.justifyContent = HORIZONTAL[across];
+  root.setProperty("--origin", (down === "middle" ? "center" : down) + " " + across);
+  root.setProperty("--from-x", across === "left" ? "-120%" : across === "right" ? "120%" : "0");
+  root.setProperty("--from-y", across !== "center" ? "0" : down === "top" ? "-160%" : "160%");
+  root.setProperty("--float-top", down === "top" ? "auto" : "70px");
+  root.setProperty("--float-bottom", down === "top" ? "70px" : "auto");
+  root.setProperty("--travel", down === "top" ? "300px" : "-300px");
+  root.setProperty("--scale", Math.max(10, Number(s.size) || 100) / 100);
+  const solid = Math.max(0, Math.min(100, Number(s.opacity))) / 100;
+  root.setProperty("--background", "linear-gradient(160deg, " + rgba(s.background, solid) + ", " + rgba(isColour(s.backgroundTo) ? s.backgroundTo : s.background, solid) + ")");
+  root.setProperty("--edge", isColour(s.edge) ? s.edge : accent);
+  root.setProperty("--accent", accent);
+  root.setProperty("--gold", "#ffc83d");
+  root.setProperty("--silver", "#d7dde5");
+  root.setProperty("--bronze", "#d08a4a");
+  root.setProperty("--name", isColour(s.nameColour) ? s.nameColour : "#ffffff");
+  root.setProperty("--text", isColour(s.textColour) ? s.textColour : "#ffffff");
+  root.setProperty("--font", FONTS[s.font] || FONTS["Nunito"]);
+  root.setProperty("--font-head", FONTS[s.headFont] || FONTS["Bangers"]);
+  root.setProperty("--radius", Math.max(0, Number(s.corners) || 0) + "px");
+  root.setProperty("--picture-radius", SHAPES[s.pictureShape] || SHAPES.circle);
+  animation = ANIMATIONS.includes(s.animation) ? s.animation : "pop";
+  if (current) fill(current);
+}
+
+function picture(box, name, url) {
+  box.replaceChildren(String(name || "?").charAt(0).toUpperCase());
+  box.classList.toggle("hidden", !SETTINGS.showPictures);
+  if (!url || !SETTINGS.showPictures || !/^https?:\/\//i.test(url)) return;
+  const image = new Image();
+  image.alt = "";
+  image.onload = () => box.append(image);
+  image.src = url;
+}
+
+function makeRow(r, kind, index) {
+  const line = document.createElement("div");
+  line.className = "row";
+  line.style.setProperty("--i", index);
+  if (kind === "top") {
+    const place = parseInt(String(r.label || "").replace("#", ""), 10);
+    const rank = document.createElement("div");
+    rank.className = "rank";
+    rank.textContent = place || "";
+    if (place >= 1 && place <= 3) line.classList.add("r" + place);
+    const box = document.createElement("div");
+    box.className = "picture";
+    picture(box, r.name, r.picture);
+    line.append(rank, box);
+  } else {
+    const icon = document.createElement("div");
+    icon.className = "icon";
+    icon.textContent = r.label || "";
+    line.append(icon);
+  }
+  const name = document.createElement("div");
+  name.className = "name";
+  name.textContent = r.name || "";
+  const value = document.createElement("div");
+  value.className = "value";
+  value.textContent = r.value || "";
+  line.append(name, value);
+  return line;
+}
+
+function makeFloats(emoji) {
+  const box = $("floats");
+  box.replaceChildren();
+  if (!SETTINGS.showFloats || !emoji) return;
+  for (let i = 0; i < 14; i++) {
+    const item = document.createElement("span");
+    item.className = "float";
+    item.textContent = emoji;
+    item.style.left = 4 + Math.random() * 90 + "%";
+    item.style.setProperty("--s", 26 + Math.random() * 30 + "px");
+    item.style.setProperty("--d", 2.2 + Math.random() * 1.8 + "s");
+    item.style.setProperty("--w", Math.random() * 2.5 + "s");
+    item.style.setProperty("--x", (Math.random() * 120 - 60).toFixed(0) + "px");
+    item.style.setProperty("--r", (Math.random() * 60 - 30).toFixed(0) + "deg");
+    box.append(item);
+  }
+}
+
+function fill(d) {
+  const rows = Array.isArray(d.rows) ? d.rows : [];
+  const kind = String(d.kind || "action");
+  const acting = kind === "action" || kind === "test";
+  const scene = $("scene");
+  card.className = [...card.classList].filter((c) => ["on", "slide", "pop", "fade", "in", "out"].includes(c)).join(" ");
+  card.classList.add(acting ? "acting" : kind === "stats" ? "board" : "list");
+  scene.classList.toggle("hidden", !acting);
+  scene.classList.remove("meet", "bump");
+  $("heroLine").classList.toggle("hidden", !d.hero);
+  $("title").textContent = d.title || "";
+  $("subtitle").textContent = d.subtitle || "";
+  $("subtitle").classList.toggle("hidden", !d.subtitle);
+  $("empty").classList.toggle("hidden", acting || rows.length > 0);
+  $("rows").classList.toggle("hidden", rows.length === 0);
+  $("rows").replaceChildren(...rows.map((r, i) => makeRow(r, kind, i)));
+  if (d.hero) { $("heroName").textContent = d.hero; picture($("heroPicture"), d.hero, d.heroPicture); }
+  if (acting) {
+    $("fromName").textContent = d.from || "";
+    picture($("fromPicture"), d.from, d.fromPicture);
+    $("toName").textContent = d.to || "";
+    $("toPerson").classList.toggle("hidden", !d.to);
+    if (d.to) picture($("toPicture"), d.to, d.toPicture);
+    $("emoji").textContent = d.emoji || "";
+    void scene.offsetWidth;
+    if (!isCalm(d)) scene.classList.add(BUMPS.includes(d.action) ? "bump" : "meet");
+  }
+  makeFloats(acting && !isCalm(d) ? d.emoji : "");
+}
+
+function setAnimation(step) {
+  card.classList.remove("slide", "pop", "fade", "in", "out");
+  void card.offsetWidth;
+  if (step) card.classList.add(isCalm(current) ? "fade" : animation, step);
+}
+
+const queue = [];
+let busy = false;
+
+async function next() {
+  if (busy) return;
+  busy = true;
+  while (queue.length) {
+    current = queue.shift();
+    fill(current);
+    setAnimation("in");
+    card.classList.add("on");
+    await wait(Math.max(1, Number(SETTINGS.seconds) || 7) * 1000);
+    setAnimation("out");
+    $("floats").replaceChildren();
+    await wait(450);
+    card.classList.remove("on");
+    setAnimation("");
+  }
+  busy = false;
+}
+
+function handle(d) {
+  if (!d || !d.ffyAppreciation) return;
+  const key = d.kind === "stats" ? "showStats" : d.kind === "top" ? "showTop" : SWITCHES[d.action];
+  if (key && !SETTINGS[key]) return;
+  if (queue.length >= MAX_WAITING) return;
+  queue.push(d);
+  next();
+}
+
+let socket = null, helloTimer = 0;
+function status(text) { $("status").textContent = text || ""; }
+function send(message) { if (socket && socket.readyState === 1) socket.send(JSON.stringify(message)); }
+function ready() {
+  send({ request: "Subscribe", id: "ffy-appreciation-sub", events: { General: ["Custom"] } });
+  status("");
+}
+async function sha256(text) {
+  const bytes = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return btoa(String.fromCharCode(...new Uint8Array(bytes)));
+}
+function connect() {
+  const address = "ws://" + (SETTINGS.host === "0.0.0.0" ? "127.0.0.1" : SETTINGS.host) + ":" + SETTINGS.port + (SETTINGS.endpoint || "/");
+  try { socket = new WebSocket(address); } catch (e) { status("Can't connect to " + address); setTimeout(connect, 5000); return; }
+  status("Connecting to Streamer.bot at " + address + "...");
+  socket.onopen = () => { helloTimer = setTimeout(ready, 1500); };
+  socket.onmessage = async (e) => {
+    let m; try { m = JSON.parse(e.data); } catch { return; }
+    if (m.op !== undefined && m.d) {
+      clearTimeout(helloTimer);
+      status("Port " + SETTINGS.port + " is OBS's WebSocket, not Streamer.bot's. Use the port from Streamer.bot: Servers/Clients > WebSocket Server (usually 8080).");
+      socket.onclose = null; socket.close();
+      return;
+    }
+    if (m.request === "Hello") {
+      clearTimeout(helloTimer);
+      if (m.authentication) {
+        if (!SETTINGS.password) { status("Streamer.bot wants a password. Add it in FFY_Appreciation-Settings.html and copy the link again."); return; }
+        const secret = await sha256(SETTINGS.password + m.authentication.salt);
+        send({ request: "Authenticate", id: "ffy-appreciation-auth", authentication: await sha256(secret + m.authentication.challenge) });
+        return;
+      }
+      ready();
+      return;
+    }
+    if (m.id === "ffy-appreciation-auth") { if (m.status === "ok") ready(); else status("Streamer.bot said the password is wrong."); return; }
+    if (m.event && m.event.source === "General" && m.event.type === "Custom") {
+      let d = m.data;
+      if (typeof d === "string") { try { d = JSON.parse(d); } catch { return; } }
+      if (d && d.data && !d.ffyAppreciation) d = d.data;
+      handle(d);
+    }
+  };
+  socket.onclose = () => {
+    clearTimeout(helloTimer);
+    status("Can't reach Streamer.bot at " + address + ". Is its WebSocket Server running?");
+    setTimeout(connect, 5000);
+  };
+}
+
+function showSample() {
+  current = SAMPLES[sample] || SAMPLES.hug;
+  fill(current);
+  setAnimation("");
+  card.classList.add("on");
+}
+
+applySettings();
+if (DEMO === "hold") {
+  showSample();
+  window.addEventListener("message", async (e) => {
+    if (!e.data || !e.data.appPreview) return;
+    Object.assign(SETTINGS, e.data.settings || {});
+    if (e.data.sample) sample = e.data.sample;
+    applySettings();
+    showSample();
+    if (e.data.appPreview === "play") {
+      setAnimation("out");
+      await wait(450);
+      setAnimation("in");
+    }
+  });
+} else if (DEMO) {
+  const names = Object.keys(SAMPLES);
+  let n = 0;
+  const play = () => { handle(Object.assign({ ffyAppreciation: true }, SAMPLES[names[n % names.length]])); n++; };
+  play();
+  setInterval(play, (Math.max(1, Number(SETTINGS.seconds) || 7) + 2) * 1000);
+} else connect();
+</script>
+</body>
+</html>
