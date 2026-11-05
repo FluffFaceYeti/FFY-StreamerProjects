@@ -13,6 +13,7 @@ Extra bits for your stream. Every add-on is a separate import, so just grab the 
 | **[FFY Pets](FFY-Pets/Readme.md)** | 27 kinds of pet, from dogs, cats and chickens up to Highland Cows, Mooshrooms and a Baby Dragon. Either chat shares one pet, or everyone adopts their own with `!registerpet`. Then it's `!feedpet`, `!walkpet`, `!playpet`, `!trainpet` to teach tricks, `!pettrick`, `!cuddlepet`, bond levels and easy on/off switches | No |
 | **[FFY Tamagotchi](FFY-Tamagotchi/Readme.md)** | Every viewer hatches their own Tamagotchi, or chat shares one. `!tamafeed`, `!tamaplay`, `!tamaclean`, `!tamasleep`, names and colours, and proper Tamagotchi moods (Hungry, Sleepy, Bored...). It grows up a bit every time you go live, and there's an animated OBS overlay for the chat's one | No |
 | **[FFY Bounty](FFY-Bounty/Readme.md)** | Put a price on someone's head with `!bounty @someone 50`, claim it with `!bountyhunt @someone`, or hide with `!hideout`. Wanted posters and a hunter leaderboard too | No |
+| **[FFY Mod Appreciation](FFY-ModAppreciation/Readme.md)** | Show your mods some love. Watch streaks, a Mod of the Stream, `!modchamps`, `!thankmod` and an OBS overlay. It never touches anyone's badges | No |
 | **[FFY Counters](FFY-Counters/Readme.md)** | 20 counters, like `!pickle` (+1), `!pickles` (show it) and `!setpickle 5` | No |
 
 ## How to install one
