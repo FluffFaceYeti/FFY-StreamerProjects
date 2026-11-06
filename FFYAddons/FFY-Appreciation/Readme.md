@@ -98,7 +98,7 @@ To reword something, change its `Add` or `Message` line. To say something when s
 
 **Address:** use `127.0.0.1` if OBS and Streamer.bot are on the same PC. On a dual PC setup, use the IP address of the PC running Streamer.bot.
 
-If lots of cards come in at once they show one after another, and it holds up to 10 in the queue. Any more than that get skipped on the overlay, but they still count.
+If lots of cards come in at once they show one after another, and it holds up to 3 in the queue. Any more than that get skipped on the overlay, but they still count. Cards with others waiting behind them fade in calmly and stay up for 3 seconds at most, which stops a burst of commands from dragging down your OBS frame rate.
 
 ## Troubleshooting
 

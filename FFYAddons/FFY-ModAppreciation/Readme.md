@@ -123,7 +123,7 @@ You can skip this if you only want it in chat. Set `Overlay = false;` in that ca
 5. In OBS, add a **Browser** source, paste the link into **URL** (leave **Local file** unticked), and set the size to **1920 x 1080**.
 6. Type `!testmodcard` in chat to check it's working.
 
-If you change a setting later, copy the link again and paste it over the old one. If several cards come in at once, they show one after another.
+If you change a setting later, copy the link again and paste it over the old one. If several cards come in at once, they show one after another. Up to 3 can wait, and any more get skipped on the overlay, apart from milestones and Mod of the Stream, which always show. Cards with others waiting behind them fade in and stay up for 4 seconds at most, which stops a burst of commands from dragging down your OBS frame rate.
 
 You can run this next to AutoVIP's overlay. They're separate and each ignores the other's cards.
 

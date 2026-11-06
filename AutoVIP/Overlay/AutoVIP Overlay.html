@@ -22,19 +22,20 @@
   .name { display: inline-block; margin-top: 16px; padding: 6px 22px; border-radius: 999px; background: var(--name-tag); color: var(--name-text); border: 4px solid var(--name-tag-border);
     font-size: 34px; font-weight: 900; max-width: 380px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 4px 10px rgba(0,0,0,.4); }
   #victim .face { border-color: var(--loser-ring); }
-  #streaks { position: absolute; left: 0; top: 0; width: 420px; height: 270px; opacity: 0; pointer-events: none;
+  #streaks { position: absolute; left: 0; top: 0; width: 420px; height: 270px; opacity: 0; pointer-events: none; will-change: transform, opacity;
     background: repeating-linear-gradient(180deg, transparent 0 28px, var(--streaks) 28px 34px, transparent 34px 52px);
     -webkit-mask: linear-gradient(90deg, transparent, #000 70%); mask: linear-gradient(90deg, transparent, #000 70%); }
-  #badge { position: absolute; left: 0; top: 0; width: 100px; height: 100px; opacity: 0; transform-origin: 50px 50px;
-    --glow: 1; filter: drop-shadow(0 0 calc(10px * var(--glow)) var(--badge)) drop-shadow(0 0 calc(24px * var(--glow)) var(--badge)); overflow: visible; }
-  #flash { position: absolute; inset: 0; background: radial-gradient(circle at 1280px 670px, var(--flash), transparent 420px); opacity: 0; pointer-events: none; }
+  #badge { position: absolute; left: 0; top: 0; width: 100px; height: 100px; opacity: 0; transform-origin: 50px 50px; will-change: transform, opacity;
+    filter: drop-shadow(0 0 10px var(--badge)) drop-shadow(0 0 24px var(--badge)); overflow: visible; }
+  #flash { position: absolute; inset: 0; background: radial-gradient(circle at 1280px 670px, var(--flash), transparent 420px); opacity: 0; pointer-events: none; will-change: opacity; }
   #banner { position: absolute; left: 50%; top: 1000px; transform: translateX(-50%); min-width: 900px; max-width: 1900px; padding: 22px 44px; border-radius: 28px;
     background: linear-gradient(135deg, var(--banner-from), var(--banner-to)); color: var(--banner-words); text-align: center; border: 6px solid var(--banner-border);
-    box-shadow: 0 10px 26px rgba(0,0,0,.45); opacity: 0; }
+    box-shadow: 0 10px 26px rgba(0,0,0,.45); opacity: 0; will-change: transform, opacity; }
   #banner .big { font: calc(72px * var(--hs, 1)) var(--font-head); letter-spacing: 1.5px; line-height: 1.1; text-shadow: 0 4px 0 var(--banner-border); -webkit-text-stroke: 2px var(--banner-border); }
   #banner .small { margin-top: 6px; font-size: 34px; font-weight: 800; opacity: .95; }
 
-  .fx { position: absolute; left: 0; top: 0; width: 2560px; height: 1440px; pointer-events: none; }
+  .fx { position: absolute; left: 0; top: 0; width: 2560px; height: 1440px; pointer-events: none; display: none; }
+  #stage.fxon .fx { display: block; }
   #stealWrap { position: absolute; left: 0; top: 0; width: 2560px; height: 1440px; transform-origin: 1280px 720px; pointer-events: none; }
   #boardWrap { position: absolute; left: 330px; top: 110px; width: 1900px; height: 1220px; transform-origin: top left; }
   #board { position: absolute; left: 0; top: 0; width: 1900px; height: 1220px; box-sizing: border-box; padding: 40px 56px; border-radius: 42px;
@@ -305,6 +306,7 @@ const lerp = (a, b, p) => a + (b - a) * p;
 const ease = { out: (p) => 1 - Math.pow(1 - p, 3), in: (p) => p * p * p, inOut: (p) => p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2,
   back: (p) => 1 + 2.7 * Math.pow(p - 1, 3) + 1.7 * Math.pow(p - 1, 2) };
 const part = (t, start, length) => clamp((t - start) / length);
+const settle = (t) => 1 - part(t, 3000, 800);
 function keys(t, list) {
   if (t <= list[0][0]) return list[0][1];
   for (let i = 1; i < list.length; i++) if (t <= list[i][0]) {
@@ -378,7 +380,6 @@ function stealFrame(t) {
   else if (t < IMPACT + 1220) b = keys(t, [[IMPACT + 120, [bx(VICTIM.x), by(VICTIM.y), 0, 1]], [IMPACT + 615, [CX - 60, VICTIM.y - 300, 200, 1.4]], [IMPACT + 1055, [bx(CENTER_X), by(VICTIM.y), 360, 1.15]], [IMPACT + 1220, [bx(CENTER_X), by(VICTIM.y), 360, 1]]]);
   else b = [bx(tp[0]), by(tp[1]) + hop + idle, 360 + sway * 3, 1 + .08 * Math.sin((t - IMPACT) / 220)];
   place($("badge"), b[0], b[1], b[2], b[3], t < 300 ? 0 : fadeOut);
-  $("badge").style.setProperty("--glow", (1 + .45 * Math.sin(t / 180)).toFixed(3));
   $("flash").style.opacity = !eff.flash || style === "yoink" || t < IMPACT ? 0 : .7 * (1 - part(t, IMPACT, 220));
   const sp = part(t, IMPACT, 320), shake = eff.shake && style !== "yoink" && sp > 0 && sp < 1 ? Math.sin(sp * Math.PI * 6) * 12 * (1 - sp) : 0;
   $("stage").style.translate = shake.toFixed(1) + "px " + (-shake / 2).toFixed(1) + "px";
@@ -520,7 +521,7 @@ function rankFrame(t) {
   if (SH > 0 && t < SH) st = boardAnim(M.showAnimation, part(t, 0, SH), true);
   if (t >= rankTotal - HI) st = HI > 0 ? boardAnim(M.hideAnimation, 1 - part(t, rankTotal - HI, HI), false) : Object.assign(st, { o: 0 });
   card.style.opacity = st.o;
-  card.style.transform = "perspective(2000px) translate(" + st.x.toFixed(1) + "px," + (st.y + Math.sin(t / 900) * 3).toFixed(1) + "px) rotate(" + st.rot.toFixed(2) + "deg) rotateY(" + st.ry.toFixed(2) + "deg) scale(" + st.s.toFixed(4) + ")";
+  card.style.transform = "perspective(2000px) translate(" + st.x.toFixed(1) + "px," + (st.y + Math.sin(t / 900) * 3 * settle(t)).toFixed(1) + "px) rotate(" + st.rot.toFixed(2) + "deg) rotateY(" + st.ry.toFixed(2) + "deg) scale(" + st.s.toFixed(4) + ")";
   card.querySelectorAll(".rkrow").forEach((r, k) => {
     const p = ease.out(part(t, Math.max(200, SH * .6) + k * 110, 320));
     r.style.opacity = p;
@@ -638,6 +639,7 @@ let fxOn = false;
 function fxClear() {
   for (const id of ["fxBack", "fxFront"]) { const c = $(id); c.getContext("2d").clearRect(0, 0, c.width, c.height); }
   $("stage").style.translate = "0px 0px";
+  $("stage").classList.remove("fxon");
   fxOn = false;
 }
 function boardRect() {
@@ -658,6 +660,7 @@ function drawCog(ctx, cx, cy, r, teeth, rot) {
 function fxFrame(style, local, P) {
   const S = RECAP_STYLES[style], back = $("fxBack").getContext("2d"), front = $("fxFront").getContext("2d");
   back.clearRect(0, 0, 2560, 1440); front.clearRect(0, 0, 2560, 1440);
+  $("stage").classList.add("fxon");
   fxOn = true;
   const R = boardRect(), fade = Math.min(part(local, 0, 500), 1 - part(local, P - S.out, S.out)), t = local;
   back.globalAlpha = front.globalAlpha = Math.max(0, fade);
@@ -834,14 +837,14 @@ function boardsFrame(t) {
   board.style.transformOrigin = SS ? SS.origin : "50% 50%";
   board.style.filter = st.filter || "";
   board.style.opacity = st.o;
-  board.style.transform = "perspective(2400px) translate(" + st.x.toFixed(1) + "px," + (st.y + (styled ? 0 : Math.sin(t / 900) * 4)).toFixed(1) + "px) rotateX(" + (st.rx || 0).toFixed(2) + "deg) rotate(" + st.rot.toFixed(2) + "deg) rotateY(" + st.ry.toFixed(2) + "deg) scale(" + st.s.toFixed(4) + "," + (st.s * (st.sy || 1)).toFixed(4) + ")";
+  board.style.transform = "perspective(2400px) translate(" + st.x.toFixed(1) + "px," + (st.y + (styled ? 0 : Math.sin(t / 900) * 4 * settle(local))).toFixed(1) + "px) rotateX(" + (st.rx || 0).toFixed(2) + "deg) rotate(" + st.rot.toFixed(2) + "deg) rotateY(" + st.ry.toFixed(2) + "deg) scale(" + st.s.toFixed(4) + "," + (st.s * (st.sy || 1)).toFixed(4) + ")";
   const lead = SS ? SS.intro + SS.in * .6 : first ? Math.max(260, SH * .6) : 260;
   const photo = board.querySelector(".bphoto");
-  photo.style.transform = "rotate(" + (Math.sin(t / 700) * 4).toFixed(2) + "deg) scale(" + (1 + .03 * Math.sin(t / 450)).toFixed(4) + ")";
+  photo.style.transform = "rotate(" + (Math.sin(t / 700) * 4 * settle(local)).toFixed(2) + "deg) scale(" + (1 + .03 * Math.sin(t / 450) * settle(local)).toFixed(4) + ")";
   const rows = board.querySelectorAll(".row");
   rows.forEach((r, k) => {
     const p = ease.out(part(local, lead + Number(r.dataset.o) * Math.min(45, 1100 / rows.length), 320));
-    const lift = r.classList.contains("r1") ? Math.sin(t / 260) * 3 : 0;
+    const lift = r.classList.contains("r1") ? Math.sin(t / 260) * 3 * settle(local) : 0;
     r.style.opacity = p;
     r.style.transform = "translateX(" + lerp(60, 0, p).toFixed(1) + "px) translateY(" + lift.toFixed(1) + "px)";
   });
@@ -850,7 +853,7 @@ function boardsFrame(t) {
     c.style.opacity = Math.min(1, p * 2);
     c.style.transform = "scale(" + pop.toFixed(4) + ")";
     const crown = c.querySelector(".crown");
-    if (crown) crown.style.transform = "rotate(" + (-14 + Math.sin(t / 300 + k) * 6).toFixed(2) + "deg) translateY(" + (Math.sin(t / 400 + k) * 5).toFixed(1) + "px)";
+    if (crown) crown.style.transform = "rotate(" + (-14 + Math.sin(t / 300 + k) * 6 * settle(local)).toFixed(2) + "deg) translateY(" + (Math.sin(t / 400 + k) * 5 * settle(local)).toFixed(1) + "px)";
   });
   return t < total;
 }
@@ -927,6 +930,7 @@ function handle(d) {
     const auto = isAutoShow(d) ? d.autoShow || takeAutoShow() : "";
     if (isAutoShow(d) && !auto) return;
     if (auto) autoUntil = 0;
+    if (queue.filter((q) => q.type === "boards").length >= 2) return;
     queue.push({ type: "boards", boards: d.boards, champs: !!d.champs, demo: !!d.demo, auto, all: d.all !== undefined ? !!d.all : d.boards.length > 1 }); next(); }
   else if (d.autoVipMyRank && has("myrank") && (cfg.myrank.show || d.force)) { if (queue.filter((q) => q.type === "myrank").length < 3) { queue.push({ type: "myrank", data: d }); next(); } }
   else if (d.autoVipRecap && has("recap")) { queue.push({ type: "recap", data: d }); next(); }

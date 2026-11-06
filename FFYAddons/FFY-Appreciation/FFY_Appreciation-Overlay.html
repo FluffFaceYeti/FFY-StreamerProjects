@@ -39,7 +39,7 @@
   #card.list #title { font-size: 70px; }
   .hidden { display: none !important; }
   #floats { position: absolute; z-index: 0; inset: -60px; overflow: visible; pointer-events: none; }
-  .float { position: absolute; top: var(--float-top); bottom: var(--float-bottom); font-size: var(--s); opacity: 0; animation: floatUp var(--d) ease-out var(--w) infinite; }
+  .float { position: absolute; top: var(--float-top); bottom: var(--float-bottom); font-size: var(--s); opacity: 0; animation: floatUp var(--d) ease-out var(--w); }
   @keyframes floatUp { 0% { opacity: 0; transform: translateY(0) rotate(0); } 15% { opacity: 1; } 75% { opacity: .9; } 100% { opacity: 0; transform: translate(var(--x), var(--travel)) rotate(var(--r)); } }
   .meet #fromPerson { animation: meetL 1.5s ease-in-out .5s 2; }
   .meet #toPerson { animation: meetR 1.5s ease-in-out .5s 2; }
@@ -131,7 +131,8 @@ const SETTINGS = {
 
 const SWITCHES = { appreciate: "showAppreciate", hug: "showHug", kiss: "showKiss", highfive: "showHighfive", boop: "showBoop", pat: "showPat", cuddle: "showCuddle", wave: "showWave", airhug: "showAirhug", thumbsup: "showThumbsup", stim: "showStim", parallel: "showParallel", infodump: "showInfodump", spoons: "showSpoons", fidget: "showFidget", blanket: "showBlanket", headphones: "showHeadphones" };
 const BUMPS = ["highfive", "boop", "pat"];
-const MAX_WAITING = 10;
+const MAX_WAITING = 3;
+const RUSH_SECONDS = 3;
 const FONTS = { "Bangers": 'Bangers, Impact, sans-serif', "Nunito": 'Nunito, "Segoe UI", sans-serif', "Segoe UI": '"Segoe UI", Arial, sans-serif', "Arial Black": '"Arial Black", Arial, sans-serif', "Impact": 'Impact, "Arial Black", sans-serif', "Georgia": 'Georgia, serif', "Trebuchet MS": '"Trebuchet MS", Arial, sans-serif', "Comic Sans MS": '"Comic Sans MS", cursive', "Consolas": 'Consolas, monospace' };
 const ANIMATIONS = ["slide", "pop", "fade"];
 const SHAPES = { circle: "50%", rounded: "18%", square: "0" };
@@ -163,8 +164,8 @@ const $ = (id) => document.getElementById(id);
 const card = $("card");
 const isColour = (value) => /^#[0-9a-f]{6}$/i.test(value || "");
 const wait = (ms) => new Promise((done) => setTimeout(done, ms));
-let current = null, animation = "pop", sample = "hug";
-const isCalm = (d) => !!(SETTINGS.calmAll || (d && d.calm));
+let current = null, animation = "pop", sample = "hug", rushing = false;
+const isCalm = (d) => !!(SETTINGS.calmAll || rushing || (d && d.calm));
 
 function rgba(hex, alpha) {
   const n = parseInt((isColour(hex) ? hex : "#1d1d1f").slice(1), 16);
@@ -246,14 +247,14 @@ function makeFloats(emoji) {
   const box = $("floats");
   box.replaceChildren();
   if (!SETTINGS.showFloats || !emoji) return;
-  for (let i = 0; i < 14; i++) {
+  for (let i = 0; i < 8; i++) {
     const item = document.createElement("span");
     item.className = "float";
     item.textContent = emoji;
     item.style.left = 4 + Math.random() * 90 + "%";
     item.style.setProperty("--s", 26 + Math.random() * 30 + "px");
-    item.style.setProperty("--d", 2.2 + Math.random() * 1.8 + "s");
-    item.style.setProperty("--w", Math.random() * 2.5 + "s");
+    item.style.setProperty("--d", 2 + Math.random() + "s");
+    item.style.setProperty("--w", Math.random() * 1.2 + "s");
     item.style.setProperty("--x", (Math.random() * 120 - 60).toFixed(0) + "px");
     item.style.setProperty("--r", (Math.random() * 60 - 30).toFixed(0) + "deg");
     box.append(item);
@@ -304,16 +305,19 @@ async function next() {
   busy = true;
   while (queue.length) {
     current = queue.shift();
+    rushing = queue.length > 0;
     fill(current);
     setAnimation("in");
     card.classList.add("on");
-    await wait(Math.max(1, Number(SETTINGS.seconds) || 7) * 1000);
+    const seconds = Math.max(1, Number(SETTINGS.seconds) || 7);
+    await wait((rushing ? Math.min(seconds, RUSH_SECONDS) : seconds) * 1000);
     setAnimation("out");
     $("floats").replaceChildren();
     await wait(450);
     card.classList.remove("on");
     setAnimation("");
   }
+  rushing = false;
   busy = false;
 }
 

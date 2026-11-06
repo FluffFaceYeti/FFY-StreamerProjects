@@ -119,6 +119,9 @@ const SETTINGS = {
 const KINDS = { champs: "showChamps", top: "showTop", rank: "showRank", recap: "showRecap", thanks: "showThanks", appreciate: "showAppreciate", milestone: "showMilestone", mvp: "showMvp" };
 const FONTS = { "Bangers": 'Bangers, Impact, sans-serif', "Nunito": 'Nunito, "Segoe UI", sans-serif', "Segoe UI": '"Segoe UI", Arial, sans-serif', "Arial Black": '"Arial Black", Arial, sans-serif', "Impact": 'Impact, "Arial Black", sans-serif', "Georgia": 'Georgia, serif', "Trebuchet MS": '"Trebuchet MS", Arial, sans-serif', "Comic Sans MS": '"Comic Sans MS", cursive', "Consolas": 'Consolas, monospace' };
 const NO_DATA = ["champs", "top", "rank", "recap"];
+const ALWAYS_SHOW = ["milestone", "mvp"];
+const MAX_WAITING = 3;
+const RUSH_SECONDS = 4;
 const CROWN = '<svg class="crown" viewBox="0 0 100 58"><path d="M10 46 L18 12 L34 30 L50 6 L66 30 L82 12 L90 46 Z" fill="#ffc83d" stroke="#2a1a00" stroke-width="2.5" stroke-linejoin="round"/><rect x="9" y="42" width="82" height="13" rx="4" fill="#ffd877" stroke="#2a1a00" stroke-width="2.5"/><circle cx="18" cy="12" r="4.5" fill="#e8332a"/><circle cx="50" cy="6" r="5.5" fill="#3cb4ff"/><circle cx="82" cy="12" r="4.5" fill="#e8332a"/><circle cx="30" cy="48.5" r="3" fill="#3cb4ff"/><circle cx="50" cy="48.5" r="3.5" fill="#e8332a"/><circle cx="70" cy="48.5" r="3" fill="#3cb4ff"/></svg>';
 const ANIMATIONS = ["slide", "pop", "fade"];
 const SHAPES = { circle: "50%", rounded: "18%", square: "0" };
@@ -149,7 +152,7 @@ const $ = (id) => document.getElementById(id);
 const card = $("card");
 const isColour = (value) => /^#[0-9a-f]{6}$/i.test(value || "");
 const wait = (ms) => new Promise((done) => setTimeout(done, ms));
-let current = null, animation = "slide", sample = "champs";
+let current = null, animation = "slide", sample = "champs", rushing = false;
 
 function rgba(hex, alpha) {
   const n = parseInt((isColour(hex) ? hex : "#14161c").slice(1), 16);
@@ -279,7 +282,7 @@ function fill(d) {
 function setAnimation(step) {
   card.classList.remove("slide", "pop", "fade", "in", "out");
   void card.offsetWidth;
-  if (step) card.classList.add(animation, step);
+  if (step) card.classList.add(rushing ? "fade" : animation, step);
 }
 
 const queue = [];
@@ -290,15 +293,18 @@ async function next() {
   busy = true;
   while (queue.length) {
     current = queue.shift();
+    rushing = queue.length > 0;
     fill(current);
     setAnimation("in");
     card.classList.add("on");
-    await wait(Math.max(1, Number(SETTINGS.seconds) || 10) * 1000);
+    const seconds = Math.max(1, Number(SETTINGS.seconds) || 10);
+    await wait((rushing ? Math.min(seconds, RUSH_SECONDS) : seconds) * 1000);
     setAnimation("out");
     await wait(450);
     card.classList.remove("on");
     setAnimation("");
   }
+  rushing = false;
   busy = false;
 }
 
@@ -306,6 +312,7 @@ function handle(d) {
   if (!d || !d.modAppreciation) return;
   const key = KINDS[d.kind];
   if (key && !SETTINGS[key]) return;
+  if (queue.length >= MAX_WAITING && !ALWAYS_SHOW.includes(d.kind)) return;
   queue.push(d);
   next();
 }
