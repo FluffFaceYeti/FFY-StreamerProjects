@@ -15,6 +15,7 @@ Extra bits for your stream. Every add-on is a separate import, so just grab the 
 | **[FFY Bounty](FFY-Bounty/Readme.md)** | Put a price on someone's head with `!bounty @someone 50`, claim it with `!bountyhunt @someone`, or hide with `!hideout`. Wanted posters and a hunter leaderboard too | No |
 | **[FFY Appreciation](FFY-Appreciation/Readme.md)** | Viewers `!hug`, `!kiss` and `!appreciate` each other, and it pops up on stream with both their pictures. Gentle no-touch ones too, like `!wave`, `!airhug` and `!spoons`. Shares some command names with FFY Interactions, so check its guide | No |
 | **[FFY Mod Appreciation](FFY-ModAppreciation/Readme.md)** | Show your mods some love. Watch streaks, a Mod of the Stream, `!modchamps`, `!thankmod` and an OBS overlay. It never touches anyone's badges | No |
+| **[FFY AutoShoutout](FFY-AutoShoutout/Readme.md)** | Shout out your friends automatically the first time they chat each stream, with their own message if you like. In chat, on an OBS overlay, or both. Twitch, Kick and YouTube | No |
 | **[FFY Counters](FFY-Counters/Readme.md)** | 20 counters, like `!pickle` (+1), `!pickles` (show it) and `!setpickle 5` | No |
 
 ## How to install one

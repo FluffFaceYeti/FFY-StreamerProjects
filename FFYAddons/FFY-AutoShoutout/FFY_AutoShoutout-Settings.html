@@ -1,0 +1,192 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>FFY_AutoShoutout Overlay Settings</title>
+<style>
+  :root { --ui: #ff6b1a; --ui-ink: #ffffff; --ui-soft: color-mix(in srgb, var(--ui) 55%, #ffffff); }
+  * { box-sizing: border-box; scrollbar-width: thin; scrollbar-color: #3a3a3a #161616; }
+  html { color-scheme: dark; }
+  body { margin: 0; background: #121212; color: #eee; font: 15px/1.45 "Segoe UI", Arial, sans-serif; }
+  header { padding: 14px 24px; border-bottom: 1px solid #2a2a2a; }
+  h1 { margin: 0; font-size: 22px; color: var(--ui); }
+  header p { margin: 2px 0 0; color: #aaa; }
+  main { display: grid; grid-template-columns: 420px minmax(0, 1fr); gap: 20px; padding: 18px 24px; }
+  aside { max-height: calc(100vh - 125px); overflow: auto; padding-right: 8px; }
+  section { margin-bottom: 14px; padding: 14px; border-radius: 10px; background: #1c1c1c; }
+  h2 { margin: 0 0 10px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: var(--ui-soft); }
+  label { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 8px 0; }
+  label span { color: #ccc; }
+  input[type=text], input[type=number], input[type=password], select { width: 190px; padding: 6px 8px; border: 1px solid #333; border-radius: 6px; background: #111; color: #eee; font: inherit; }
+  input[type=color] { width: 54px; height: 30px; padding: 0; border: 1px solid #333; border-radius: 6px; background: none; cursor: pointer; }
+  input[type=range] { width: 190px; accent-color: var(--ui); }
+  .toggle { position: relative; flex: none; width: 44px; height: 24px; }
+  .toggle input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+  .toggle i { position: absolute; inset: 0; border-radius: 12px; background: #3a3a3a; pointer-events: none; transition: background .15s; }
+  .toggle i::after { content: ""; position: absolute; left: 3px; top: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: transform .15s; }
+  .toggle input:checked + i { background: var(--ui); }
+  .toggle input:checked + i::after { transform: translateX(20px); }
+  .toggle input:focus-visible + i { outline: 2px solid #fff; outline-offset: 2px; }
+  .btn { padding: 7px 14px; border: 0; border-radius: 8px; background: var(--ui); color: var(--ui-ink); font: 700 14px inherit; cursor: pointer; }
+  .btn.grey { background: #333; color: #fff; }
+  .note { color: #999; font-size: 13px; margin: 6px 0; }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  #stageBox { position: relative; width: 100%; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 10px; border: 1px solid #2a2a2a;
+    background: repeating-conic-gradient(#2b2d36 0 25%, #24262e 0 50%) 0 0 / 48px 48px; }
+  #preview { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; border: 0; transform-origin: 0 0; color-scheme: light; }
+  #linkBox { width: 100%; margin-top: 10px; padding: 6px 8px; border: 1px solid #333; border-radius: 6px; background: #111; color: var(--ui-soft); font: 13px Consolas, monospace; }
+  .ok { color: #7ddc8a; font-weight: 700; visibility: hidden; }
+  .ok.on { visibility: visible; }
+  @media (max-width: 1000px) { main { grid-template-columns: 1fr; } aside { max-height: none; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>FFY_AutoShoutout Overlay Settings</h1>
+  <p>Pick how the shoutout looks, then copy the link into an OBS browser source.</p>
+</header>
+<main>
+  <aside>
+    <section>
+      <h2>What to show</h2>
+      <label><span>Picture</span><span class="toggle"><input type="checkbox" data-key="showPicture"><i></i></span></label>
+      <label><span>Heading</span><span class="toggle"><input type="checkbox" data-key="showLabel"><i></i></span></label>
+      <label><span>Main line</span><span class="toggle"><input type="checkbox" data-key="showMessage"><i></i></span></label>
+      <label><span>Last game played</span><span class="toggle"><input type="checkbox" data-key="showGame"><i></i></span></label>
+      <label><span>Followage</span><span class="toggle"><input type="checkbox" data-key="showFollowage"><i></i></span></label>
+      <label><span>Channel link</span><span class="toggle"><input type="checkbox" data-key="showLink"><i></i></span></label>
+      <label><span>Heading text</span><input type="text" data-key="label"></label>
+      <p class="note">The last game, followage and picture come from Twitch. On Kick and YouTube, the game and followage are left out, and the picture falls back to the first letter of their name if there isn't one.</p>
+    </section>
+    <section>
+      <h2>Colours</h2>
+      <label><span>Card background</span><input type="color" data-key="background"></label>
+      <label><span>How solid the card is</span><input type="range" min="0" max="100" data-key="opacity"></label>
+      <label><span>Accent</span><input type="color" data-key="accent"></label>
+      <label><span>Main line</span><input type="color" data-key="nameColour"></label>
+      <label><span>Details</span><input type="color" data-key="textColour"></label>
+    </section>
+    <section>
+      <h2>Style</h2>
+      <label><span>Font</span><select data-key="font">
+        <option>Segoe UI</option><option>Arial Black</option><option>Impact</option><option>Georgia</option><option>Trebuchet MS</option><option>Comic Sans MS</option><option>Consolas</option>
+      </select></label>
+      <label><span>Picture shape</span><select data-key="pictureShape">
+        <option value="circle">Circle</option><option value="rounded">Rounded square</option><option value="square">Square</option>
+      </select></label>
+      <label><span>Rounded corners</span><input type="range" min="0" max="48" data-key="corners"></label>
+    </section>
+    <section>
+      <h2>Where and how long</h2>
+      <label><span>Position</span><select data-key="position">
+        <option value="top-left">Top left</option><option value="top-center">Top middle</option><option value="top-right">Top right</option>
+        <option value="middle-left">Middle left</option><option value="middle-center">Centre</option><option value="middle-right">Middle right</option>
+        <option value="bottom-left">Bottom left</option><option value="bottom-center">Bottom middle</option><option value="bottom-right">Bottom right</option>
+      </select></label>
+      <label><span>Size</span><input type="range" min="50" max="200" step="5" data-key="size"></label>
+      <label><span>Seconds on screen</span><input type="number" min="1" max="60" data-key="seconds"></label>
+      <label><span>Animation</span><select data-key="animation">
+        <option value="slide">Slide in</option><option value="pop">Pop</option><option value="fade">Fade</option>
+      </select></label>
+    </section>
+    <section>
+      <h2>Streamer.bot connection</h2>
+      <label><span>Address</span><input type="text" data-key="host"></label>
+      <label><span>Port</span><input type="number" data-key="port"></label>
+      <label><span>Endpoint</span><input type="text" data-key="endpoint"></label>
+      <label><span>Password</span><input type="password" data-key="password" autocomplete="off"></label>
+      <p class="note">Address: use 127.0.0.1 if OBS and Streamer.bot are on the same PC. On a dual PC setup, use the IP address of the PC running Streamer.bot, e.g. 192.168.1.20. Streamer.bot itself can stay on 0.0.0.0. Copy the port and endpoint from Streamer.bot: Servers/Clients &gt; WebSocket Server, and make sure it's running. Only fill in the password if you switched on Authentication there. It's saved inside the link, so don't share the link.</p>
+    </section>
+    <button class="btn grey" id="reset" type="button">Back to the default look</button>
+  </aside>
+  <div>
+    <div id="stageBox"><iframe id="preview" title="Overlay preview"></iframe></div>
+    <div class="row" style="margin-top:12px">
+      <button class="btn" id="copy" type="button">Copy link for OBS</button>
+      <button class="btn grey" id="play" type="button">Play the animation</button>
+      <span class="ok" id="copied">Copied!</span>
+    </div>
+    <input id="linkBox" type="text" readonly aria-label="Link for OBS">
+    <p class="note">In OBS, add a <b>Browser</b> source, paste this link into <b>URL</b> (leave Local file unticked) and set the size to 1920 x 1080. Changed something here? Copy the link again and paste it over the old one.</p>
+  </div>
+</main>
+<script>
+const OVERLAY = "FFY_AutoShoutout-Overlay.html";
+const STORE = "ffy-autoshoutout-overlay-settings";
+const CONNECTION = ["host", "port", "endpoint", "password"];
+const DEFAULTS = {
+  host: "127.0.0.1", port: 8080, endpoint: "/", password: "",
+  showPicture: true, showLabel: false, showMessage: true, showGame: true, showFollowage: true, showLink: true, label: "Shoutout",
+  background: "#14161c", opacity: 92, accent: "#ff6b1a", nameColour: "#ffffff", textColour: "#d9dde6",
+  font: "Segoe UI", pictureShape: "circle", corners: 16, position: "bottom-left", size: 100, seconds: 8, animation: "slide",
+};
+
+let state = Object.assign({}, DEFAULTS);
+try { Object.assign(state, JSON.parse(localStorage.getItem(STORE) || "{}")); } catch (e) {}
+
+const inputs = [...document.querySelectorAll("[data-key]")];
+const frame = document.getElementById("preview");
+const linkBox = document.getElementById("linkBox");
+
+function showState() {
+  for (const input of inputs) {
+    if (input.type === "checkbox") input.checked = !!state[input.dataset.key];
+    else input.value = state[input.dataset.key];
+  }
+}
+
+function link() {
+  const url = new URL(OVERLAY, location.href);
+  for (const key of Object.keys(DEFAULTS)) {
+    if (key === "password" && !state.password) continue;
+    url.searchParams.set(key, state[key]);
+  }
+  return url.href;
+}
+
+function post(kind) {
+  if (frame.contentWindow) frame.contentWindow.postMessage({ ffyPreview: kind, settings: state }, "*");
+}
+
+function changed() {
+  try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) {}
+  linkBox.value = link();
+  post("settings");
+}
+
+for (const input of inputs) {
+  input.addEventListener("input", () => {
+    const key = input.dataset.key;
+    state[key] = input.type === "checkbox" ? input.checked : typeof DEFAULTS[key] === "number" ? Number(input.value) : input.value;
+    changed();
+  });
+}
+
+document.getElementById("play").addEventListener("click", () => post("play"));
+document.getElementById("reset").addEventListener("click", () => {
+  const keep = {};
+  for (const key of CONNECTION) keep[key] = state[key];
+  state = Object.assign({}, DEFAULTS, keep);
+  showState();
+  changed();
+});
+document.getElementById("copy").addEventListener("click", async () => {
+  linkBox.select();
+  let done = false;
+  try { await navigator.clipboard.writeText(linkBox.value); done = true; } catch (e) { done = document.execCommand("copy"); }
+  const copied = document.getElementById("copied");
+  copied.textContent = done ? "Copied!" : "Press Ctrl+C to copy";
+  copied.classList.add("on");
+  setTimeout(() => copied.classList.remove("on"), 2500);
+});
+
+function fitPreview() { frame.style.transform = "scale(" + document.getElementById("stageBox").clientWidth / 1920 + ")"; }
+new ResizeObserver(fitPreview).observe(document.getElementById("stageBox"));
+
+frame.addEventListener("load", () => post("settings"));
+frame.src = OVERLAY + "?demo=hold&seconds=1";
+showState();
+linkBox.value = link();
+</script>
+</body>
+</html>

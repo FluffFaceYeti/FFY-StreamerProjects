@@ -27,12 +27,6 @@ If you get a clip of AutoVIP on your stream, tag **@FluffFaceYeti** on Twitter. 
 - **`Overlay/`** has the OBS overlay, its settings page and a connection test
 - **[`Guide.md`](Guide.md)** walks you through installing it, every setting and command, and setting up the overlay
 
-## Supporting it
-
-AutoVIP is free. If you want to send a tip, you can on my Ko-fi: **[ko-fi.com/flufffaceyeti](https://ko-fi.com/flufffaceyeti)**
-
-Thanks!
-
 **[flufffaceyeti](https://www.twitch.tv/flufffaceyeti)**
 
 Sam - **Enabled Private Mode**

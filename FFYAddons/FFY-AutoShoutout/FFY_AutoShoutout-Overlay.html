@@ -1,0 +1,263 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>FFY_AutoShoutout Overlay</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; }
+  #stage { position: fixed; inset: 0; display: flex; padding: 48px; }
+  #wrap { transform: scale(var(--scale)); transform-origin: var(--origin); }
+  #card { display: flex; align-items: center; gap: 22px; width: max-content; min-width: 340px; max-width: 760px; padding: 20px 28px 20px 20px;
+    border-radius: var(--radius); background: var(--background); color: var(--text); font-family: var(--font); border-left: 8px solid var(--accent);
+    box-shadow: 0 10px 34px rgba(0, 0, 0, .45); visibility: hidden; }
+  #card.on { visibility: visible; }
+  #picture { flex: none; position: relative; width: 112px; height: 112px; overflow: hidden; background: var(--accent); border: 4px solid var(--accent); border-radius: var(--picture-radius); }
+  #picture img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  #initial { display: flex; align-items: center; justify-content: center; height: 100%; color: var(--background-solid); font-size: 54px; font-weight: 800; }
+  #words { min-width: 0; }
+  #label { color: var(--accent); font-size: 17px; font-weight: 800; letter-spacing: 2.5px; text-transform: uppercase; }
+  #message { margin-top: 2px; color: var(--name); font-size: 34px; font-weight: 800; line-height: 1.15; overflow-wrap: anywhere; }
+  #game, #followage, #link { margin-top: 6px; font-size: 21px; line-height: 1.3; overflow-wrap: anywhere; }
+  #game b, #followage b { color: var(--accent); }
+  #link { color: var(--accent); font-weight: 700; }
+  .hidden { display: none !important; }
+
+  .slide.in { animation: slideIn .55s cubic-bezier(.2, .9, .25, 1.05) both; }
+  .slide.out { animation: slideOut .4s ease-in both; }
+  .pop.in { animation: popIn .5s cubic-bezier(.2, 1.3, .4, 1) both; }
+  .pop.out { animation: popOut .3s ease-in both; }
+  .fade.in { animation: fadeIn .5s ease-out both; }
+  .fade.out { animation: fadeOut .4s ease-in both; }
+  @keyframes slideIn { from { opacity: 0; transform: translate(var(--from-x), var(--from-y)); } to { opacity: 1; transform: none; } }
+  @keyframes slideOut { from { opacity: 1; transform: none; } to { opacity: 0; transform: translate(var(--from-x), var(--from-y)); } }
+  @keyframes popIn { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: none; } }
+  @keyframes popOut { from { opacity: 1; transform: none; } to { opacity: 0; transform: scale(.8); } }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+
+  #status { position: fixed; left: 12px; bottom: 10px; padding: 5px 9px; border-radius: 6px; background: rgba(0, 0, 0, .75); color: #ffb4a0; font: 14px "Segoe UI", Arial, sans-serif; }
+  #status:empty { display: none; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="wrap">
+    <div id="card">
+      <div id="picture"><div id="initial"></div><img id="image" alt=""></div>
+      <div id="words">
+        <div id="label"></div>
+        <div id="message"></div>
+        <div id="game"><b>Last playing:</b> <span id="gameName"></span></div>
+        <div id="followage"><b>Followage:</b> <span id="followageText"></span></div>
+        <div id="link"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="status"></div>
+<script>
+const SETTINGS = {
+  host: "127.0.0.1",
+  port: 8080,
+  endpoint: "/",
+  password: "",
+  showPicture: true,
+  showLabel: false,
+  showMessage: true,
+  showGame: true,
+  showFollowage: true,
+  showLink: true,
+  label: "Shoutout",
+  background: "#14161c",
+  opacity: 92,
+  accent: "#ff6b1a",
+  nameColour: "#ffffff",
+  textColour: "#d9dde6",
+  font: "Segoe UI",
+  pictureShape: "circle",
+  corners: 16,
+  position: "bottom-left",
+  size: 100,
+  seconds: 8,
+  animation: "slide",
+};
+
+const FONTS = { "Segoe UI": '"Segoe UI", Arial, sans-serif', "Arial Black": '"Arial Black", Arial, sans-serif', "Impact": 'Impact, "Arial Black", sans-serif', "Georgia": 'Georgia, serif', "Trebuchet MS": '"Trebuchet MS", Arial, sans-serif', "Comic Sans MS": '"Comic Sans MS", cursive', "Consolas": 'Consolas, monospace' };
+const ANIMATIONS = ["slide", "pop", "fade"];
+const SHAPES = { circle: "50%", rounded: "18%", square: "0" };
+const VERTICAL = { top: "flex-start", middle: "center", bottom: "flex-end" };
+const HORIZONTAL = { left: "flex-start", center: "center", right: "flex-end" };
+const SAMPLE_PICTURE = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#5b4bd6"/><circle cx="50" cy="39" r="19" fill="#fff"/><path d="M14 100c3-27 18-40 36-40s33 13 36 40z" fill="#fff"/></svg>');
+const SAMPLE = { ffyAutoShoutout: true, user: "SampleStreamer", picture: SAMPLE_PICTURE, game: "Sea of Thieves", followage: "6 years 2 months", link: "https://twitch.tv/samplestreamer", message: "Please send some love to SampleStreamer!" };
+
+const params = new URLSearchParams(location.search);
+for (const key of Object.keys(SETTINGS)) {
+  if (!params.has(key)) continue;
+  const value = params.get(key);
+  SETTINGS[key] = typeof SETTINGS[key] === "number" ? Number(value) : typeof SETTINGS[key] === "boolean" ? value !== "false" && value !== "0" : value;
+}
+const DEMO = params.get("demo");
+
+const $ = (id) => document.getElementById(id);
+const card = $("card");
+let current = null, animation = "", holding = DEMO === "hold";
+
+function hexToRgba(hex, percent) {
+  const m = /^#([0-9a-f]{6})$/i.exec(hex) || [0, "14161c"];
+  const n = parseInt(m[1], 16);
+  return "rgba(" + (n >> 16) + "," + ((n >> 8) & 255) + "," + (n & 255) + "," + Math.max(0, Math.min(100, percent)) / 100 + ")";
+}
+
+function applySettings() {
+  const s = SETTINGS, root = document.documentElement.style;
+  const [v, h] = String(s.position).split("-");
+  const across = HORIZONTAL[h] ? h : "left", down = VERTICAL[v] ? v : "bottom";
+  $("stage").style.alignItems = VERTICAL[down];
+  $("stage").style.justifyContent = HORIZONTAL[across];
+  root.setProperty("--origin", (down === "middle" ? "center" : down) + " " + across);
+  root.setProperty("--from-x", across === "left" ? "-120%" : across === "right" ? "120%" : "0");
+  root.setProperty("--from-y", across !== "center" ? "0" : down === "top" ? "-160%" : "160%");
+  root.setProperty("--scale", Math.max(10, Number(s.size) || 100) / 100);
+  root.setProperty("--background", hexToRgba(s.background, s.opacity));
+  root.setProperty("--background-solid", hexToRgba(s.background, 100));
+  root.setProperty("--accent", s.accent);
+  root.setProperty("--name", s.nameColour);
+  root.setProperty("--text", s.textColour);
+  root.setProperty("--font", FONTS[s.font] || FONTS["Segoe UI"]);
+  root.setProperty("--radius", Math.max(0, Number(s.corners) || 0) + "px");
+  root.setProperty("--picture-radius", SHAPES[s.pictureShape] || SHAPES.circle);
+  animation = ANIMATIONS.includes(s.animation) ? s.animation : "slide";
+  fill(current);
+}
+
+function fill(d) {
+  if (!d) return;
+  const s = SETTINGS;
+  $("label").textContent = s.label;
+  $("message").textContent = d.message || "";
+  $("gameName").textContent = d.game || "";
+  $("followageText").textContent = d.followage || "";
+  $("link").textContent = (d.link || "").replace(/^https?:\/\//, "");
+  $("initial").textContent = (d.user || "?").charAt(0).toUpperCase();
+  $("picture").classList.toggle("hidden", !s.showPicture);
+  $("label").classList.toggle("hidden", !s.showLabel || !s.label);
+  $("message").classList.toggle("hidden", !s.showMessage);
+  $("game").classList.toggle("hidden", !s.showGame || !d.game);
+  $("followage").classList.toggle("hidden", !s.showFollowage || !d.followage);
+  $("link").classList.toggle("hidden", !s.showLink || !d.link);
+}
+
+const queue = [];
+let busy = false;
+const wait = (ms) => new Promise((done) => setTimeout(done, ms));
+
+function loadPicture(url) {
+  const image = $("image");
+  image.classList.add("hidden");
+  image.removeAttribute("src");
+  if (!url || !SETTINGS.showPicture) return Promise.resolve();
+  return new Promise((done) => {
+    const timer = setTimeout(done, 2500);
+    image.onload = () => { clearTimeout(timer); image.classList.remove("hidden"); done(); };
+    image.onerror = () => { clearTimeout(timer); done(); };
+    image.src = url;
+  });
+}
+
+function setAnimation(step) {
+  card.classList.remove("slide", "pop", "fade", "in", "out");
+  void card.offsetWidth;
+  if (step) card.classList.add(animation, step);
+}
+
+async function next() {
+  if (busy) return;
+  busy = true;
+  while (queue.length) {
+    current = queue.shift();
+    await loadPicture(current.picture);
+    fill(current);
+    setAnimation("in");
+    card.classList.add("on");
+    await wait(Math.max(1, Number(SETTINGS.seconds) || 8) * 1000);
+    if (holding && !queue.length) break;
+    setAnimation("out");
+    await wait(450);
+    card.classList.remove("on");
+    setAnimation("");
+  }
+  busy = false;
+}
+
+function handle(d) {
+  if (!d || !d.ffyAutoShoutout) return;
+  queue.push(d);
+  next();
+}
+
+let socket = null, helloTimer = 0;
+function status(text) { $("status").textContent = text || ""; }
+function send(message) { if (socket && socket.readyState === 1) socket.send(JSON.stringify(message)); }
+function ready() {
+  send({ request: "Subscribe", id: "ffy-shoutout-sub", events: { General: ["Custom"] } });
+  status("");
+}
+async function sha256(text) {
+  const bytes = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return btoa(String.fromCharCode(...new Uint8Array(bytes)));
+}
+function connect() {
+  const address = "ws://" + (SETTINGS.host === "0.0.0.0" ? "127.0.0.1" : SETTINGS.host) + ":" + SETTINGS.port + (SETTINGS.endpoint || "/");
+  try { socket = new WebSocket(address); } catch (e) { status("Can't connect to " + address); setTimeout(connect, 5000); return; }
+  status("Connecting to Streamer.bot at " + address + "...");
+  socket.onopen = () => { helloTimer = setTimeout(ready, 1500); };
+  socket.onmessage = async (e) => {
+    let m; try { m = JSON.parse(e.data); } catch { return; }
+    if (m.op !== undefined && m.d) {
+      clearTimeout(helloTimer);
+      status("Port " + SETTINGS.port + " is OBS's WebSocket, not Streamer.bot's. Use the port from Streamer.bot: Servers/Clients > WebSocket Server (usually 8080).");
+      socket.onclose = null; socket.close();
+      return;
+    }
+    if (m.request === "Hello") {
+      clearTimeout(helloTimer);
+      if (m.authentication) {
+        if (!SETTINGS.password) { status("Streamer.bot wants a password. Add it in FFY_AutoShoutout-Settings.html and copy the link again."); return; }
+        const secret = await sha256(SETTINGS.password + m.authentication.salt);
+        send({ request: "Authenticate", id: "ffy-shoutout-auth", authentication: await sha256(secret + m.authentication.challenge) });
+        return;
+      }
+      ready();
+      return;
+    }
+    if (m.id === "ffy-shoutout-auth") { if (m.status === "ok") ready(); else status("Streamer.bot said the password is wrong."); return; }
+    if (m.event && m.event.source === "General" && m.event.type === "Custom") {
+      let d = m.data;
+      if (typeof d === "string") { try { d = JSON.parse(d); } catch { return; } }
+      if (d && d.data && !d.ffyAutoShoutout) d = d.data;
+      handle(d);
+    }
+  };
+  socket.onclose = () => {
+    clearTimeout(helloTimer);
+    status("Can't reach Streamer.bot at " + address + ". Is its WebSocket Server running?");
+    setTimeout(connect, 5000);
+  };
+}
+
+applySettings();
+if (DEMO) {
+  handle(SAMPLE);
+  if (holding) window.addEventListener("message", (e) => {
+    if (!e.data || !e.data.ffyPreview) return;
+    Object.assign(SETTINGS, e.data.settings || {});
+    applySettings();
+    if (e.data.ffyPreview !== "play" && !$("image").getAttribute("src")) loadPicture(current && current.picture);
+    if (e.data.ffyPreview === "play") { queue.push(current || SAMPLE); next(); }
+  });
+  else setInterval(() => handle(SAMPLE), (Math.max(1, Number(SETTINGS.seconds) || 8) + 2) * 1000);
+} else connect();
+</script>
+</body>
+</html>

@@ -6,5 +6,3 @@ Each one has its own folder with its own instructions:
 
 - **[FFY Raid Battles](FFY-RaidBattles)** turns raids into a battle between your chat and the raiders.
 - **[FFY Socials](FFY-Socials)** pops up your socials and promos on a timer.
-
-They're all free. If one's been useful and you'd like to leave a tip, my Ko-fi is **[ko-fi.com/flufffaceyeti](https://ko-fi.com/flufffaceyeti)**.
