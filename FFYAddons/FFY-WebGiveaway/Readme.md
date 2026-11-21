@@ -7,7 +7,7 @@ Chat: 🎁 A giveaway for a Steam Key has started! Enter here: https://yourname.
 (Mia logs in on the site, sees she has 1,240 Fluff, and grabs 5 tickets)
 Chat: @Mia entered the giveaway with 5 tickets!
 ...
-(You press Draw on your phone, and the winner pops up on stream)
+(You press Draw on your control page, from your PC or your phone, and the winner pops up on stream)
 Chat: 🎉 The winner of a Steam Key is @Mia with a 12% chance!
 ```
 
@@ -17,6 +17,7 @@ Chat: 🎉 The winner of a Steam Key is @Mia with a 12% chance!
 - **Chat knows what's going on.** Messages go out when a giveaway starts and when someone wins, and for every entry too if you like.
 - **A winner overlay** for OBS, with confetti and their chance of winning.
 - **Make it yours:** your banner, profile picture, background, colours, and your own name and icon for points.
+- **Your own web address.** Got a domain? Point something like `giveaway.yoursite.com` at it instead of the GitHub address.
 - **Fair for everyone.** Subscribers don't get extra points or tickets, so it keeps to Twitch's rules.
 
 It's completely free. Everything runs on your own GitHub and your own Supabase (a free online database), so nobody else holds your viewers' points.
@@ -40,4 +41,8 @@ You'll need free accounts on **GitHub** and **Supabase**, plus your Twitch. No c
 
 ## Using your own website address
 
-Already got a website? You can put the giveaway on a subdomain like `giveaway.yoursite.com`, and your main site isn't touched. The end of the setup guide shows you how.
+Don't fancy sharing `yourname.github.io/giveaway`? If you own a domain, you can put the giveaway on your own address, like `giveaway.yoursite.com`. You add one DNS record wherever you bought the domain (123 Reg, GoDaddy, Namecheap, Cloudflare...), and your main website isn't touched.
+
+It works even if your main site is on Wix, Shopify or Squarespace, because only the `giveaway.` part points to GitHub. The end of the setup guide shows you how, and the setup helper gives you the extra Twitch link to add.
+
+Once it's set up, old `github.io` links forward to your new address by themselves, so nothing you've already shared breaks.
