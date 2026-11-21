@@ -851,7 +851,7 @@ const OVERLAY_HTML = "\u003c!doctype html>\n\u003chtml lang=\"en\">\n\u003chead>
     const link = ev.dataTransfer.getData("text/uri-list") || ev.dataTransfer.getData("text/plain");
     if (filePath) setFile(input, filePath);
     else if (link) setFile(input, link.split(/\r?\n/)[0]);
-    else if (file) alert("Your browser can't see where that file is saved. Hold Shift, right-click the file, pick Copy as path and paste it in. In the Giveaway Tool you can drag files straight in.");
+    else if (file) alert("Your browser can't see where that file is saved. Hold Shift, right-click the file, pick Copy as path and paste it in.");
   });
   document.addEventListener("dragover", (ev) => ev.preventDefault());
   document.addEventListener("drop", (ev) => ev.preventDefault());
