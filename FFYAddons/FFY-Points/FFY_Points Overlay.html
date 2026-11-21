@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>FFY_Points Overlay</title>
+<style>
+  /* Streamer.bot on another PC? Change the address in SETTINGS below, or add ?host=192.168.1.20&port=8080 to the end of the file path in OBS */
+  html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; font-family: "Segoe UI", system-ui, sans-serif; }
+  #card {
+    position: absolute; left: 50%; top: 50%; width: 560px; max-width: 92vw; transform: translate(-50%, -50%) scale(.9);
+    opacity: 0; transition: opacity .35s, transform .35s; text-align: center; color: #fff;
+    background: rgba(18, 16, 30, .82); border: 2px solid rgba(160, 130, 255, .7); border-radius: 22px; padding: 22px 26px 26px;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, .45);
+  }
+  #card.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  #media { display: none; max-width: 100%; max-height: 260px; margin: 0 auto 14px; border-radius: 14px; }
+  #title { font-size: 40px; font-weight: 800; letter-spacing: .5px; text-shadow: 0 3px 10px rgba(0, 0, 0, .6); }
+  #sub { font-size: 24px; margin-top: 6px; opacity: .95; }
+  #join { display: inline-block; margin-top: 14px; padding: 6px 18px; border-radius: 999px; background: #8f74ff; color: #0f0d18; font-size: 26px; font-weight: 800; }
+  #bar { height: 10px; margin-top: 18px; border-radius: 6px; background: rgba(255, 255, 255, .15); overflow: hidden; }
+  #fill { height: 100%; width: 100%; background: linear-gradient(90deg, #8f74ff, #ff7ad9); transform-origin: left; }
+  #count { margin-top: 10px; font-size: 20px; opacity: .85; }
+  #winners { font-size: 28px; font-weight: 700; margin-top: 10px; line-height: 1.35; }
+  .hide { display: none !important; }
+</style>
+</head>
+<body>
+<div id="card">
+  <img id="media" alt="" onerror="this.style.display='none'">
+  <div id="title"></div>
+  <div id="sub"></div>
+  <div id="join"></div>
+  <div id="bar"><div id="fill"></div></div>
+  <div id="count"></div>
+  <div id="winners" class="hide"></div>
+</div>
+<audio id="sound"></audio>
+<script>
+  // SETTINGS
+  const q = new URLSearchParams(location.search);
+  const HOST = q.get("host") || "127.0.0.1";
+  const PORT = q.get("port") || "8080";
+  const PASSWORD = q.get("password") || "";
+
+  const $ = (id) => document.getElementById(id);
+  const card = $("card");
+  let hideTimer = null, tick = null, endsAt = 0, total = 1, media = null;
+
+  function showMedia(src) {
+    if (media) { media.remove(); media = null; }
+    $("media").style.display = "none";
+    if (!src) return;
+    if (/\.(mp4|webm|mov|m4v)(\?|#|$)/i.test(src)) {
+      media = document.createElement("video");
+      Object.assign(media, { src, autoplay: true, loop: true, muted: true, playsInline: true });
+      media.style.cssText = "display:block;max-width:100%;max-height:260px;margin:0 auto 14px;border-radius:14px";
+      card.insertBefore(media, card.firstChild);
+    } else {
+      $("media").src = src;
+      $("media").style.display = "block";
+    }
+  }
+
+  function playSound(src) {
+    if (!src) return;
+    const a = $("sound");
+    a.src = src;
+    a.play().catch(() => {});
+  }
+
+  function start(d) {
+    clearTimeout(hideTimer);
+    showMedia(d.media);
+    playSound(d.sound);
+    $("title").textContent = d.title || "Point Event";
+    $("sub").textContent = `${d.winners} winner${d.winners == 1 ? "" : "s"} get ${Number(d.prize).toLocaleString()} ${d.pointsName || "points"}`;
+    $("join").textContent = "Type " + (d.join || "!join");
+    $("join").classList.remove("hide");
+    $("bar").classList.remove("hide");
+    $("count").textContent = "0 joined";
+    $("winners").classList.add("hide");
+    total = Math.max(1, Number(d.seconds) || 60) * 1000;
+    endsAt = Date.now() + total;
+    clearInterval(tick);
+    tick = setInterval(() => {
+      const left = Math.max(0, endsAt - Date.now());
+      $("fill").style.transform = `scaleX(${left / total})`;
+      if (!left) clearInterval(tick);
+    }, 100);
+    card.classList.add("show");
+  }
+
+  function end(d) {
+    clearInterval(tick);
+    $("join").classList.add("hide");
+    $("bar").classList.add("hide");
+    $("count").textContent = "";
+    const names = (d.winners || []).map((n) => String(n).replace(/^@/, ""));
+    $("winners").textContent = names.length ? `${names.join(", ")} won ${Number(d.prize).toLocaleString()} ${d.pointsName || "points"}!` : "Nobody joined this time!";
+    $("winners").classList.remove("hide");
+    card.classList.add("show");
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(() => { card.classList.remove("show"); setTimeout(() => showMedia(""), 400); }, Math.max(1, Number(d.winnersSeconds) || 8) * 1000);
+  }
+
+  async function sha256b64(text) {
+    const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+    return btoa(String.fromCharCode(...new Uint8Array(buf)));
+  }
+
+  function connect() {
+    const ws = new WebSocket(`ws://${HOST}:${PORT}/`);
+    ws.onmessage = async (msg) => {
+      let m;
+      try { m = JSON.parse(msg.data); } catch (e) { return; }
+      if (m.request === "Hello") {
+        const sub = { request: "Subscribe", id: "ffy-points", events: { General: ["Custom"] } };
+        if (m.authentication && PASSWORD) {
+          const secret = await sha256b64(PASSWORD + m.authentication.salt);
+          ws.send(JSON.stringify({ request: "Authenticate", id: "ffy-auth", authentication: await sha256b64(secret + m.authentication.challenge) }));
+        }
+        ws.send(JSON.stringify(sub));
+        return;
+      }
+      const d = m.data;
+      if (!m.event || m.event.source !== "General" || !d || d.source !== "FFY_Points") return;
+      if (d.event === "eventStart") start(d);
+      else if (d.event === "eventJoin") $("count").textContent = `${d.count} joined`;
+      else if (d.event === "eventEnd") end(d);
+    };
+    ws.onclose = () => setTimeout(connect, 3000);
+    ws.onerror = () => ws.close();
+  }
+  connect();
+</script>
+</body>
+</html>
