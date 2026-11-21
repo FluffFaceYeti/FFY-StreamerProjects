@@ -17,7 +17,7 @@ Chat: Point Hunt is over! @Mia, @Sam, @Bob won 500 Fluff!
 - Works on **Twitch, Kick and YouTube**.
 - **Call your points whatever you like**: Fluff, Cookies, Bananas...
 - **Point events** can pop up on stream with your own pictures, GIFs, videos and sounds.
-- Viewers can spend their points on tickets in the **FFY Giveaway Tool**.
+- Viewers can spend their points on tickets with **FFY Web Giveaway**.
 - **No code to edit.** A builder page makes the import for you.
 
 ---
@@ -117,19 +117,7 @@ If your WebSocket Server has a password, add `&password=yourpassword` to the end
 
 ## Using your points in giveaways
 
-### FFY Giveaway Tool
-
-Viewers can spend their points on giveaway tickets.
-
-1. In the Giveaway Tool, open **Settings > StreamerBot Connection** and put in your Streamer.bot WebSocket Server details.
-2. On the main screen, pick **Tickets** and set the cost per ticket and the max tickets per person.
-3. Start the giveaway. Viewers type `!enter`, `!enter 5` or `!enter max`.
-
-If you reset a giveaway before drawing a winner, everyone gets their points back.
-
-### FFY Web Giveaway
-
-Running your own **[FFY Web Giveaway](../FFY-WebGiveaway/Readme.md)** site? Make your import with the **Points Builder** on your giveaway site instead of this one. It's the same thing, with an extra box that links your points to the site.
+Want viewers to spend their points on giveaway tickets? Set up your own **[FFY Web Giveaway](../FFY-WebGiveaway/Readme.md)** site, then make your import with the **Points Builder** on your giveaway site instead of this one. It's the same thing, with an extra box that links your points to the site. Everyone keeps the points they've already got.
 
 ---
 
