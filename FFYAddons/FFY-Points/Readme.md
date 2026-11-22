@@ -79,6 +79,8 @@ A few things worth knowing:
 
 Don't like a command's name? Rename any of them in the builder.
 
+**Only want you to use the mod commands?** In the builder, switch off **My mods can use the mod commands**, then make a new import and import it again. Your mods can still use `!points`, `!join` and the other everyone commands.
+
 ---
 
 ## Point events
