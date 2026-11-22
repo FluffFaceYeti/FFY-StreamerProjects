@@ -73,6 +73,7 @@ A few things worth knowing:
 | `!addpoints @Sam 100` | You and mods | Gives Sam 100 points. |
 | `!removepoints @Sam 100` | You and mods | Takes 100 points from Sam. |
 | `!bonus 5000` | You and mods | Gives 5,000 points to everyone who's watched or chatted in the last 10 minutes. Great for celebrating a raid or a big moment. |
+| `!bonus 5000 all` | You and mods | Gives 5,000 points to everyone who has ever earned points, even if they're not here right now. `!bonus 5000 everyone` works too. |
 | `!bonus 5000 @Sam` | You and mods | Gives just Sam 5,000 points. |
 | `!pointevent hunt` | You and mods | Starts the event called hunt. `!pointevent` on its own picks a random one. |
 
