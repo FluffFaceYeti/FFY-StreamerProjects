@@ -4,7 +4,6 @@
 <meta charset="utf-8">
 <title>FFY_Points Overlay</title>
 <style>
-  /* Streamer.bot on another PC? Change the address in SETTINGS below, or add ?host=192.168.1.20&port=8080 to the end of the file path in OBS */
   html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; font-family: "Segoe UI", system-ui, sans-serif; }
   #card {
     position: absolute; left: 50%; top: 50%; width: 560px; max-width: 92vw; transform: translate(-50%, -50%) scale(.9);
@@ -36,7 +35,6 @@
 </div>
 <audio id="sound"></audio>
 <script>
-  // SETTINGS
   const q = new URLSearchParams(location.search);
   const HOST = q.get("host") || "127.0.0.1";
   const PORT = q.get("port") || "8080";

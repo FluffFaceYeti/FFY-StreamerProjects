@@ -14,6 +14,7 @@ Chat: 🎉 The winner of a Steam Key is @Mia with a 12% chance!
 - **Open all the time.** Run a giveaway for a day, a week or a month, and people can enter whenever suits them.
 - **Points earn themselves.** Everyone in your chat gets points every few minutes while you're live. Already use **[FFY Points](../FFY-Points/Readme.md)** in Streamer.bot? Use those instead.
 - **Your control page** starts giveaways, sets a draw date, shows who's in, and draws, redraws or cancels with everyone's points refunded. It works on your phone too.
+- **Enter from chat too.** With FFY Points in Streamer.bot, viewers can type `!tickets 5` (or `!tickets max`) in chat while you're live, and use the site when you're offline.
 - **Chat knows what's going on.** Messages go out when a giveaway starts and when someone wins, and for every entry too if you like.
 - **A winner overlay** for OBS, with confetti and their chance of winning.
 - **Make it yours:** your banner, profile picture, background, colours, and your own name and icon for points.
