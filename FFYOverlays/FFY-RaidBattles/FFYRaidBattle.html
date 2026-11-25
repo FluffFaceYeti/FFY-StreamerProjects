@@ -1,0 +1,1915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Raid Battle – Raid Overlay</title>
+<script>
+const CONFIG = {
+  channel: "yourchannelname",
+  theme: "beard",
+  myEmotePrefix: "",
+  battleSeconds: 120,
+  introSeconds: 1,
+  resultSeconds: 10,
+  minRaidViewers: 1,
+  maxEmotesPerMessage: 8,
+  includeThirdParty: true,
+  allowModCommands: true,
+
+  timerPos: "middle",
+  timerStyle: "ring",
+  barMode: "tug",
+  barPos: "top",
+  healthPool: 200,
+  koEnabled: true,
+
+  showNames: true,
+  showScore: false,
+  showEmoteHint: true,
+  showWinner: true,
+  showFlying: true,
+  emoteSize: 60,
+  growEmotes: 120,
+  size: 100,
+  pictureShape: "round",
+  pictureRing: 0,
+  dim: 0,
+
+  myBeardColor: "",
+  raiderBeardColor: "",
+};
+const CONFIG_DEFAULTS = { ...CONFIG };
+const URLP = new URLSearchParams(location.search);
+
+(() => {
+  const p = URLP;
+  for (const [k, v] of p) {
+    if (k in CONFIG && typeof CONFIG[k] !== "object") {
+      CONFIG[k] = typeof CONFIG[k] === "number" ? Number(v)
+               : typeof CONFIG[k] === "boolean" ? (v === "1" || v === "true") : v;
+    }
+  }
+  CONFIG.test = p.has("test");
+  CONFIG.preview = p.has("preview");
+  CONFIG.setup = !window.obsstudio && !p.has("channel") && !p.has("test") && !p.has("overlay");
+  CONFIG.debug = p.has("debug");
+  CONFIG.channel = String(CONFIG.channel).toLowerCase().replace(/^#/, "").trim();
+})();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; padding: 0; background: transparent; overflow: hidden; width: 100%; height: 100%; }
+  canvas { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+</style>
+</head>
+<body>
+<canvas id="c" width="1920" height="1080"></canvas>
+<script>
+"use strict";
+const W = 1920, H = 1080, TAU = Math.PI * 2;
+const cv = document.getElementById("c");
+const ctx = cv.getContext("2d");
+const FONT = "'Lilita One', Impact, 'Arial Black', sans-serif";
+
+function fit() {
+  const s = Math.min(innerWidth / W, innerHeight / H);
+  cv.style.transform = `scale(${s})`;
+  cv.style.left = ((innerWidth - W * s) / 2) + "px";
+  cv.style.top = ((innerHeight - H * s) / 2) + "px";
+}
+addEventListener("resize", fit); fit();
+
+function emptyTeam() {
+  return { login: "", display: "", userId: "", avatar: "", names: new Map(), ids: new Set(), prefix: "", samples: [] };
+}
+const team = { me: emptyTeam(), raid: emptyTeam() };
+team.me.login = CONFIG.channel;
+team.me.display = CONFIG.channel;
+team.me.prefix = CONFIG.myEmotePrefix || "";
+
+const twitchImg = id => `https://static-cdn.jtvnw.net/emoticons/v2/${id}/static/dark/2.0`;
+
+function withTimeout(promise, ms) {
+  return Promise.race([promise, new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), ms))]);
+}
+async function getJSON(url) {
+  const r = await withTimeout(fetch(url), 7000);
+  if (!r.ok) throw new Error(r.status);
+  return r.json();
+}
+function collectEmotes(node, out, depth = 0) {
+  if (!node || depth > 8) return;
+  if (Array.isArray(node)) { node.forEach(n => collectEmotes(n, out, depth + 1)); return; }
+  if (typeof node === "object") {
+    const code = node.code || node.token || node.emoteCode;
+    const id = node.id || node.emoteID || node.emoteId;
+    if (typeof code === "string" && id != null) out.push({ id: String(id), code });
+    for (const k in node) if (node[k] && typeof node[k] === "object") collectEmotes(node[k], out, depth + 1);
+  }
+}
+function derivePrefix(codes) {
+  const tally = {};
+  for (const c of codes) {
+    const m = /^([a-z][a-z0-9]{1,11})(?=[A-Z0-9_])/.exec(c);
+    if (m) tally[m[1]] = (tally[m[1]] || 0) + 1;
+  }
+  let best = "", n = 0;
+  for (const k in tally) if (tally[k] > n) { best = k; n = tally[k]; }
+  return n >= 2 || codes.length === 1 ? best : "";
+}
+
+async function resolveUser(t) {
+  try {
+    const d = await getJSON(`https://api.ivr.fi/v2/twitch/user?login=${encodeURIComponent(t.login)}`);
+    const u = Array.isArray(d) ? d[0] : d;
+    if (u) {
+      if (u.id && !t.userId) t.userId = String(u.id);
+      if (u.logo) t.avatar = u.logo;
+      if (u.displayName && (!t.display || t.display.toLowerCase() === t.login)) t.display = u.displayName;
+    }
+  } catch {}
+  if (!t.avatar) {
+    try {
+      const r = await withTimeout(fetch(`https://decapi.me/twitch/avatar/${encodeURIComponent(t.login)}`), 6000);
+      const url = (await r.text()).trim();
+      if (/^https:\/\//.test(url)) t.avatar = url;
+    } catch {}
+  }
+  if (t.avatar) getImg(t.avatar);
+}
+
+async function loadTeamEmotes(t) {
+  const twitchCodes = [];
+  const jobs = [];
+  jobs.push(getJSON(`https://api.ivr.fi/v2/twitch/emotes/channel/${encodeURIComponent(t.login)}`).then(d => {
+    const list = []; collectEmotes(d, list);
+    for (const e of list) {
+      t.names.set(e.code, twitchImg(e.id)); t.ids.add(e.id); twitchCodes.push(e.code);
+    }
+  }));
+  if (CONFIG.includeThirdParty && t.userId) {
+    jobs.push(getJSON(`https://7tv.io/v3/users/twitch/${t.userId}`).then(d => {
+      const emotes = (d && d.emote_set && d.emote_set.emotes) || [];
+      for (const e of emotes) if (e.name && !t.names.has(e.name)) t.names.set(e.name, `https://cdn.7tv.app/emote/${e.id}/2x.webp`);
+    }));
+    jobs.push(getJSON(`https://api.betterttv.net/3/cached/users/twitch/${t.userId}`).then(d => {
+      for (const e of [...(d.channelEmotes || []), ...(d.sharedEmotes || [])])
+        if (e.code && !t.names.has(e.code)) t.names.set(e.code, `https://cdn.betterttv.net/emote/${e.id}/2x`);
+    }));
+  }
+  const res = await Promise.allSettled(jobs);
+  if (!t.prefix) t.prefix = derivePrefix(twitchCodes);
+  const tw = [...t.names.entries()].filter(([, u]) => u.includes("jtvnw"));
+  const pool = tw.length ? tw : [...t.names.entries()];
+  t.samples = pool.slice(0, 4).map(([name, url]) => ({ name, url }));
+  log(`${t.login}: ${t.names.size} emotes, prefix "${t.prefix}"`, res.map(r => r.status).join(","));
+}
+
+const ownerCache = new Map();
+const pendingCredit = new Map();
+let ivrDown = false;
+const looksPrefixed = name => /^[a-z][a-z0-9]{1,11}[A-Z0-9_]/.test(name);
+
+function lookupOwner(id, name, count) {
+  const p = pendingCredit.get(id) || { count: 0, name };
+  p.count += count; pendingCredit.set(id, p);
+  if (ownerCache.has(id)) return;
+  ownerCache.set(id, "?");
+  getJSON(`https://api.ivr.fi/v2/twitch/emotes/${encodeURIComponent(id)}?id=true`).then(d => {
+    const owner = String(d.channelLogin || d.channelName || (d.channel && d.channel.login) || "").toLowerCase();
+    ownerCache.set(id, owner);
+    settle(id, owner);
+  }).catch(() => {
+    ivrDown = true; ownerCache.set(id, "");
+    settle(id, "");
+  });
+}
+function settle(id, owner) {
+  const p = pendingCredit.get(id); pendingCredit.delete(id);
+  let side = null;
+  if (owner && owner === team.me.login) side = "me";
+  else if (owner && owner === team.raid.login) side = "raid";
+  else if (!owner && ivrDown && p && looksPrefixed(p.name) && !prefixMatch(p.name, team.me.prefix)) side = "raid";
+  if (!side) return;
+  const t = team[side];
+  t.ids.add(id);
+  if (p) {
+    t.names.set(p.name, twitchImg(id));
+    if (!t.prefix && looksPrefixed(p.name)) t.prefix = derivePrefix([p.name]);
+    if (game.phase === "battle") credit(side, p.count, twitchImg(id), p.name);
+  }
+}
+
+function prefixMatch(name, p) {
+  if (!p) return false;
+  return String(p).split(",").some(x => {
+    x = x.trim();
+    return x && name.length > x.length && name.startsWith(x) && /[A-Z0-9_]/.test(name[x.length]);
+  });
+}
+
+function classify(name, twitchId) {
+  const inMe = team.me.names.has(name) || (twitchId && team.me.ids.has(twitchId)) || prefixMatch(name, team.me.prefix);
+  const inRaid = team.raid.names.has(name) || (twitchId && team.raid.ids.has(twitchId)) || prefixMatch(name, team.raid.prefix);
+  if (inMe && !inRaid) return "me";
+  if (inRaid && !inMe) return "raid";
+  if (inMe && inRaid) return null;
+  if (twitchId) {
+    const owner = ownerCache.get(twitchId);
+    if (owner === undefined || owner === "?") return { lookup: true };
+    if (!owner && ivrDown && looksPrefixed(name)) return "raid";
+  }
+  return null;
+}
+
+const game = {
+  phase: "idle",
+  t0: 0, raidViewers: 0,
+  score: { me: 0, raid: 0 },
+  winner: null,
+};
+const sides = {
+  me:   { key: "me",   x: 270,  dir: 1,  g: 0, bump: 0, pop: 0, hpLag: 1, phase: 0,   col: "#2f7de1", tip: [270, 500] },
+  raid: { key: "raid", x: 1650, dir: -1, g: 0, bump: 0, pop: 0, hpLag: 1, phase: 1.7, col: "#e0383e", tip: [1650, 500] },
+};
+const hud = { share: 0.5 };
+const AV_R = 100;
+
+function now() { return performance.now() / 1000; }
+
+const hexCol = c => /^#?[0-9a-f]{6}$/i.test(String(c).trim()) ? "#" + String(c).trim().replace("#", "") : null;
+let theme = null, themeId = "", opt = {}, forcedTheme = "";
+
+function themeParam(id, key) {
+  const v = URLP.get(`${id}_${key}`);
+  if (v !== null) return v;
+  if (id === "beard" && key === "me" && CONFIG.myBeardColor) return CONFIG.myBeardColor;
+  if (id === "beard" && key === "raid" && CONFIG.raiderBeardColor) return CONFIG.raiderBeardColor;
+  return null;
+}
+function parseOpt(o, v) {
+  if (v === null) return o.v;
+  if (o.t === "check") return v === "1" || v === "true";
+  if (o.t === "range") { const n = Number(v); return Number.isFinite(n) ? n : o.v; }
+  if (o.t === "color") return hexCol(v) || o.v;
+  return v;
+}
+function applyTheme(id) {
+  themeId = THEMES[id] ? id : "beard";
+  theme = THEMES[themeId];
+  opt = {};
+  for (const o of theme.opts || []) opt[o.k] = parseOpt(o, themeParam(themeId, o.k));
+  for (const s of Object.values(sides)) {
+    s.x = s.dir > 0 ? theme.x : W - theme.x;
+    s.col = hexCol(themeParam(themeId, s.key)) || theme[s.key];
+  }
+}
+function pickTheme() {
+  if (forcedTheme) return applyTheme(forcedTheme);
+  if (CONFIG.theme === "random") {
+    const names = Object.keys(THEMES);
+    return applyTheme(names[Math.floor(Math.random() * names.length)]);
+  }
+  applyTheme(CONFIG.theme);
+}
+
+function resetBattle(viewers) {
+  game.raidViewers = viewers || 0;
+  game.score = { me: 0, raid: 0 }; game.winner = null;
+  for (const s of Object.values(sides)) { s.g = 0; s.bump = 0; s.pop = 0; s.hpLag = 1; }
+  hud.share = 0.5;
+  particles.length = 0; sparkles.length = 0;
+  pickTheme();
+}
+async function startBattle(login, display, viewers, userId) {
+  if (game.phase !== "idle" && game.phase !== "outro") { log("battle already running"); return; }
+  login = String(login).toLowerCase().replace(/^@/, "");
+  if (!login || login === team.me.login) return;
+  endTest();
+  team.raid = emptyTeam();
+  team.raid.login = login; team.raid.display = display || login; team.raid.userId = userId || "";
+  ownerCache.clear(); pendingCredit.clear();
+  resetBattle(viewers);
+  game.phase = "loading"; game.t0 = now();
+  await resolveUser(team.raid);
+  await loadTeamEmotes(team.raid).catch(() => {});
+  beginIntro();
+}
+function beginIntro() { game.phase = "intro"; game.t0 = now(); }
+function endBattle() {
+  if (game.phase !== "battle" && game.phase !== "intro") return;
+  const { me, raid } = game.score;
+  game.winner = me > raid ? "me" : raid > me ? "raid" : "tie";
+  game.phase = "result"; game.t0 = now();
+}
+function stopAll() { game.phase = "outro"; game.t0 = now(); }
+
+function credit(side, n, img, name) {
+  if (game.phase !== "battle" || n <= 0) return;
+  game.score[side] += n;
+  for (let i = 0; i < n; i++) spawnParticle(side, img, name, i * 0.06);
+}
+
+function handleChat(tags, user, text) {
+  if (text.startsWith("\u0001ACTION ")) text = text.slice(8, -1);
+  const badges = tags.badges || "";
+  const isBroadcaster = badges.includes("broadcaster/") || user === team.me.login;
+  const isMod = tags.mod === "1" || badges.includes("moderator/");
+  if (text[0] === "!" && (isBroadcaster || (CONFIG.allowModCommands && isMod))) {
+    const [cmd, arg] = text.trim().split(/\s+/);
+    if (cmd === "!raidtest" || cmd === "!beardtest") { startTest(); return; }
+    if ((cmd === "!raidbattle" || cmd === "!beardbattle") && arg) { startBattle(arg, arg.replace(/^@/, ""), 0); return; }
+    if (cmd === "!raidstop" || cmd === "!beardstop") { game.phase === "battle" ? endBattle() : stopAll(); return; }
+    if (cmd === "!raidtheme" && arg) {
+      const id = arg.toLowerCase();
+      forcedTheme = THEMES[id] ? id : "";
+      log("theme for next battle:", forcedTheme || CONFIG.theme);
+      return;
+    }
+  }
+  if (game.phase !== "battle") return;
+  scoreMessage(text, parseEmoteTag(tags.emotes, text));
+}
+
+function parseEmoteTag(tag, text) {
+  const map = new Map();
+  if (!tag) return map;
+  const chars = Array.from(text);
+  for (const part of tag.split("/")) {
+    const [id, ranges] = part.split(":");
+    if (!ranges) continue;
+    const [s, e] = ranges.split(",")[0].split("-").map(Number);
+    map.set(chars.slice(s, e + 1).join(""), id);
+  }
+  return map;
+}
+
+function scoreMessage(text, idMap) {
+  const tally = { me: 0, raid: 0 }, img = { me: null, raid: null }, nm = { me: "", raid: "" };
+  let used = 0;
+  for (const tok of text.split(/\s+/)) {
+    if (!tok || used >= CONFIG.maxEmotesPerMessage) continue;
+    const id = idMap.get(tok);
+    const side = classify(tok, id);
+    if (side && side.lookup) { lookupOwner(id, tok, 1); used++; continue; }
+    if (!side) continue;
+    used++;
+    tally[side]++;
+    if (!img[side]) { img[side] = team[side].names.get(tok) || (id ? twitchImg(id) : null); nm[side] = tok; }
+  }
+  for (const s of ["me", "raid"]) credit(s, tally[s], img[s], nm[s]);
+}
+
+let ws, backoff = 1000, lastHeard = 0, lastRaid = "";
+const noChannel = () => !CONFIG.channel || CONFIG.channel === "yourchannelname";
+function connect() {
+  if (noChannel()) { status = "no channel set"; return; }
+  ws = new WebSocket("wss://irc-ws.chat.twitch.tv:443");
+  ws.onopen = () => {
+    backoff = 1000; lastHeard = now();
+    ws.send("CAP REQ :twitch.tv/tags twitch.tv/commands");
+    ws.send("PASS SCHMOOPIIE");
+    ws.send("NICK justinfan" + Math.floor(10000 + Math.random() * 80000));
+    ws.send("JOIN #" + CONFIG.channel);
+    status = "joining #" + CONFIG.channel + "…";
+  };
+  ws.onmessage = ev => { lastHeard = now(); ev.data.split("\r\n").forEach(l => l && onLine(l)); };
+  ws.onclose = () => { status = "disconnected – retrying"; setTimeout(connect, backoff); backoff = Math.min(backoff * 2, 30000); };
+  ws.onerror = () => ws.close();
+}
+setInterval(() => {
+  if (!ws || ws.readyState !== WebSocket.OPEN) return;
+  if (now() - lastHeard > 330) { log("no reply from Twitch, reconnecting"); ws.close(); return; }
+  ws.send("PING :tmi.twitch.tv");
+}, 120000);
+function unescapeTag(v) {
+  return v.replace(/\\(.)/g, (_, c) => ({ s: " ", ":": ";", "\\": "\\", r: "\r", n: "\n" }[c] || c));
+}
+function parseIRC(line) {
+  const msg = { tags: {}, prefix: "", command: "", params: [] };
+  if (line[0] === "@") {
+    const sp = line.indexOf(" ");
+    for (const kv of line.slice(1, sp).split(";")) {
+      const eq = kv.indexOf("=");
+      msg.tags[eq < 0 ? kv : kv.slice(0, eq)] = eq < 0 ? "" : unescapeTag(kv.slice(eq + 1));
+    }
+    line = line.slice(sp + 1);
+  }
+  if (line[0] === ":") { const sp = line.indexOf(" "); msg.prefix = line.slice(1, sp); line = line.slice(sp + 1); }
+  const ti = line.indexOf(" :");
+  let trailing = null;
+  if (ti >= 0) { trailing = line.slice(ti + 2); line = line.slice(0, ti); }
+  const parts = line.split(" ").filter(Boolean);
+  msg.command = parts.shift() || "";
+  msg.params = parts; if (trailing !== null) msg.params.push(trailing);
+  return msg;
+}
+let myIdLoaded = false;
+function onLine(line) {
+  const m = parseIRC(line);
+  switch (m.command) {
+    case "PING": ws.send("PONG :" + (m.params[0] || "tmi.twitch.tv")); break;
+    case "ROOMSTATE":
+      status = "connected to #" + CONFIG.channel;
+      if (!myIdLoaded && m.tags["room-id"]) {
+        myIdLoaded = true; team.me.userId = m.tags["room-id"];
+        loadTeamEmotes(team.me).catch(() => {});
+      }
+      break;
+    case "PRIVMSG": {
+      const user = m.prefix.split("!")[0];
+      handleChat(m.tags, user, m.params[1] || "");
+      break;
+    }
+    case "USERNOTICE":
+      if (m.tags["msg-id"] === "raid") {
+        const viewers = Number(m.tags["msg-param-viewerCount"] || 0);
+        log("RAID from", m.tags["msg-param-login"], viewers);
+        lastRaid = `${m.tags["msg-param-login"]} (${viewers}) at ${new Date().toLocaleTimeString()}`;
+        if (viewers >= CONFIG.minRaidViewers)
+          startBattle(m.tags["msg-param-login"], m.tags["msg-param-displayName"], viewers, m.tags["user-id"]);
+      }
+      break;
+  }
+}
+
+let simTimer = null, realMe = null;
+function endTest() {
+  clearInterval(simTimer);
+  if (realMe) { team.me = realMe; realMe = null; }
+}
+function startTest() {
+  if (game.phase !== "idle" && game.phase !== "outro") return;
+  const fakeMe = [["Kappa", "25"], ["SeemsGood", "64138"], ["VoHiYo", "81274"]];
+  const fakeRaid = [["LUL", "425618"], ["Kreygasm", "41"], ["4Head", "354"]];
+  endTest();
+  team.raid = emptyTeam();
+  team.raid.login = "testraider"; team.raid.display = "TestRaider";
+  realMe = team.me;
+  team.me = emptyTeam(); team.me.login = realMe.login; team.me.display = noChannel() ? "You" : realMe.display; team.me.avatar = realMe.avatar;
+  for (const [n, id] of fakeMe) { team.me.names.set(n, twitchImg(id)); team.me.ids.add(id); }
+  for (const [n, id] of fakeRaid) { team.raid.names.set(n, twitchImg(id)); team.raid.ids.add(id); }
+  team.me.samples = fakeMe.map(([name, id]) => ({ name, url: twitchImg(id) }));
+  team.raid.samples = fakeRaid.map(([name, id]) => ({ name, url: twitchImg(id) }));
+  resetBattle(42);
+  beginIntro();
+  let bias = 0.5;
+  simTimer = setInterval(() => {
+    if (game.phase !== "battle") {
+      if (game.phase === "idle") endTest();
+      return;
+    }
+    bias = Math.min(0.8, Math.max(0.2, bias + (Math.random() - 0.5) * 0.08));
+    const list = Math.random() < bias ? fakeMe : fakeRaid;
+    const [name, id] = list[Math.floor(Math.random() * 3)];
+    const n = 1 + Math.floor(Math.random() * 4);
+    const text = Array(n).fill(name).join(" ");
+    let tag = [], pos = 0;
+    for (let i = 0; i < n; i++) { tag.push(`${pos}-${pos + name.length - 1}`); pos += name.length + 1; }
+    handleChat({ emotes: `${id}:${tag.join(",")}` }, "sim", text);
+  }, 140);
+}
+
+const particles = [];
+const imgCache = new Map();
+function getImg(url) {
+  if (!url) return null;
+  let im = imgCache.get(url);
+  if (!im) { im = new Image(); im.src = url; imgCache.set(url, im); }
+  return im.complete && im.naturalWidth ? im : null;
+}
+function spawnParticle(side, img, name, delay) {
+  const s = sides[side];
+  if (!CONFIG.showFlying) {
+    s.bump = Math.min(1, s.bump + 0.35); s.pop = 1;
+    if (sparkles.length < 60) sparkles.push({ x: s.tip[0], y: s.tip[1], t: 0, col: s.col });
+    return;
+  }
+  if (particles.length > 140) return;
+  particles.push({
+    side, img, name,
+    x0: s.x + s.dir * (250 + Math.random() * 520),
+    y0: H + 60,
+    t: -delay, dur: 0.9 + Math.random() * 0.4,
+    spin: (Math.random() - 0.5) * 6,
+  });
+  if (img) getImg(img);
+}
+
+function shade(hex, amt) {
+  const n = parseInt(hex.slice(1), 16);
+  let r = (n >> 16) + amt, g = ((n >> 8) & 255) + amt, b = (n & 255) + amt;
+  r = Math.max(0, Math.min(255, r)); g = Math.max(0, Math.min(255, g)); b = Math.max(0, Math.min(255, b));
+  return `rgb(${r},${g},${b})`;
+}
+function circle(x, y, r, fill, stroke, lw) {
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
+  if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+  if (stroke) { ctx.lineWidth = lw || 4; ctx.strokeStyle = stroke; ctx.stroke(); }
+}
+function roundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+}
+function text(str, x, y, size, fill, align = "center", stroke = "#1a1020", lw = 8) {
+  ctx.font = `${size}px ${FONT}`; ctx.textAlign = align; ctx.textBaseline = "middle";
+  ctx.lineJoin = "round";
+  if (stroke) { ctx.lineWidth = lw; ctx.strokeStyle = stroke; ctx.strokeText(str, x, y); }
+  ctx.fillStyle = fill; ctx.fillText(str, x, y);
+}
+function fitText(str, maxW, size) {
+  ctx.font = `${size}px ${FONT}`;
+  while (size > 18 && ctx.measureText(str).width > maxW) { size -= 2; ctx.font = `${size}px ${FONT}`; }
+  return size;
+}
+function drawEmote(url, name, x, y, size, alpha = 1) {
+  const im = getImg(url);
+  ctx.globalAlpha = alpha;
+  if (im) ctx.drawImage(im, x - size / 2, y - size / 2, size, size);
+  else {
+    roundRect(x - size / 2, y - size / 2, size, size, 10);
+    ctx.fillStyle = "#ffffffdd"; ctx.fill();
+    text((name || "?").slice(0, 6), x, y, size * 0.28, "#222", "center", null);
+  }
+  ctx.globalAlpha = 1;
+}
+
+const OUTLINE = "#1a1020";
+
+function drawBeard(x, y, R, len, color, t, bump, phase, strands = true) {
+  const sway = Math.sin(t * 1.6 + phase) * Math.min(len * 0.05, 26);
+  const top = y + R * 0.05;
+  const bottom = top + len;
+  const wob = 1 + bump * 0.1;
+  const halfB = R * (0.45 + Math.min(len / 900, 0.45)) * wob;
+  const sideW = R * 1.02 * wob;
+  const tuft = Math.min(16 + len * 0.04, 34);
+
+  const grad = ctx.createLinearGradient(0, top - R * 0.3, 0, bottom);
+  grad.addColorStop(0, shade(color, 18)); grad.addColorStop(1, shade(color, -30));
+
+  ctx.beginPath();
+  ctx.moveTo(x - sideW * 0.96, top - R * 0.35);
+  ctx.bezierCurveTo(x - sideW * 1.18, top + len * 0.3,
+                    x - halfB * 1.25 + sway * 0.5, top + len * 0.75,
+                    x - halfB + sway, bottom - tuft);
+  const n = 7;
+  for (let i = 0; i < n; i++) {
+    const a = x - halfB + sway + (2 * halfB) * (i / n);
+    const b = x - halfB + sway + (2 * halfB) * ((i + 1) / n);
+    const mid = (a + b) / 2;
+    const dip = tuft * (i === 3 ? 1.6 : (i === 2 || i === 4) ? 1.25 : 0.9);
+    ctx.quadraticCurveTo(mid, bottom - tuft + dip * 1.4, b, bottom - tuft);
+  }
+  ctx.bezierCurveTo(x + halfB * 1.25 + sway * 0.5, top + len * 0.75,
+                    x + sideW * 1.18, top + len * 0.3,
+                    x + sideW * 0.96, top - R * 0.35);
+  ctx.lineTo(x + R * 0.78, top - R * 0.3);
+  ctx.quadraticCurveTo(x + R * 0.6, top + R * 0.18, x, top + R * 0.12);
+  ctx.quadraticCurveTo(x - R * 0.6, top + R * 0.18, x - R * 0.78, top - R * 0.3);
+  ctx.closePath();
+  ctx.fillStyle = grad; ctx.fill();
+  ctx.lineWidth = 5; ctx.strokeStyle = OUTLINE; ctx.lineJoin = "round"; ctx.stroke();
+
+  if (!strands) return;
+  ctx.save(); ctx.clip();
+  ctx.lineCap = "round";
+  for (let k = -7; k <= 7; k++) {
+    const sx = x + k * R * 0.12;
+    const ex = x + k * (halfB / 7) * 0.95 + sway;
+    const ey = bottom - tuft * 0.6;
+    const cx = (sx + ex) / 2 + Math.sin(t * 2 + k + phase) * 10 + k * 6;
+    ctx.beginPath(); ctx.moveTo(sx, top + R * 0.2);
+    ctx.quadraticCurveTo(cx, top + len * 0.55, ex, ey);
+    ctx.lineWidth = 3; ctx.strokeStyle = k % 2 ? shade(color, -45) + "" : shade(color, 40);
+    ctx.globalAlpha = k % 2 ? 0.45 : 0.3; ctx.stroke();
+  }
+  ctx.globalAlpha = 1; ctx.restore();
+}
+
+let LINE = 5;
+function ell(x, y, rx, ry, fill, lw = LINE, rot = 0) {
+  ctx.beginPath(); ctx.ellipse(x, y, Math.max(rx, 0.1), Math.max(ry, 0.1), rot, 0, TAU);
+  if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+  if (lw) { ctx.lineWidth = lw; ctx.strokeStyle = OUTLINE; ctx.lineJoin = "round"; ctx.stroke(); }
+}
+function poly(pts, fill, lw = LINE) {
+  ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.closePath();
+  if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+  if (lw) { ctx.lineWidth = lw; ctx.strokeStyle = OUTLINE; ctx.lineJoin = "round"; ctx.stroke(); }
+}
+function box(x, y, w, h, r, fill, lw = LINE) {
+  roundRect(x, y, w, h, Math.min(r, Math.abs(w) / 2, Math.abs(h) / 2));
+  if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+  if (lw) { ctx.lineWidth = lw; ctx.strokeStyle = OUTLINE; ctx.lineJoin = "round"; ctx.stroke(); }
+}
+function tube(path, w, col, lw = LINE) {
+  ctx.lineCap = "round"; ctx.lineJoin = "round";
+  ctx.beginPath(); path();
+  if (lw) { ctx.lineWidth = w + lw * 2; ctx.strokeStyle = OUTLINE; ctx.stroke(); }
+  ctx.lineWidth = w; ctx.strokeStyle = col; ctx.stroke();
+}
+function line(x1, y1, x2, y2, col, w = 5) {
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
+  ctx.lineCap = "round"; ctx.lineWidth = w; ctx.strokeStyle = col; ctx.stroke();
+}
+function eyes(x, y, gap, r) {
+  for (const d of [-1, 1]) { ell(x + d * gap, y, r, r * 1.2, OUTLINE, 0); ell(x + d * gap + r * 0.3, y - r * 0.4, r * 0.32, r * 0.32, "#fff", 0); }
+}
+function pic(S, x, y, r) {
+  const im = getImg(S.tm.avatar);
+  const path = () => {
+    if (CONFIG.pictureShape === "round") { ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); }
+    else roundRect(x - r, y - r, r * 2, r * 2, CONFIG.pictureShape === "square" ? 0.01 : r * 0.28);
+  };
+  ctx.save(); path(); ctx.clip();
+  if (im) ctx.drawImage(im, x - r, y - r, r * 2, r * 2);
+  else {
+    ctx.fillStyle = shade(S.col, -50); ctx.fillRect(x - r, y - r, r * 2, r * 2);
+    text((S.tm.display || "?")[0].toUpperCase(), x, y + r * 0.04, r * 1.1, "#fff", "center", null);
+  }
+  if (S.lose) { ctx.fillStyle = "rgba(0,0,0,0.35)"; ctx.fillRect(x - r, y - r, r * 2, r * 2); }
+  ctx.restore();
+  if (CONFIG.pictureRing > 0) { path(); ctx.lineWidth = CONFIG.pictureRing; ctx.strokeStyle = OUTLINE; ctx.stroke(); }
+}
+function eye(x, y, r) {
+  ell(x, y, r, r * 1.14, OUTLINE, 0);
+  ell(x + r * 0.32, y - r * 0.4, r * 0.32, r * 0.32, "#fff", 0);
+}
+function sil(paths, fill, lw = LINE) {
+  ctx.lineJoin = "round"; ctx.lineCap = "round";
+  ctx.strokeStyle = OUTLINE; ctx.lineWidth = lw * 2;
+  for (const p of paths) { ctx.beginPath(); p(); ctx.stroke(); }
+  ctx.fillStyle = fill;
+  for (const p of paths) { ctx.beginPath(); p(); ctx.fill(); }
+}
+function flip(x, dir, k, fn) {
+  ctx.save(); ctx.translate(x, GROUND); ctx.scale(dir * k, k);
+  LINE = 5 / k;
+  fn();
+  LINE = 5;
+  ctx.restore();
+}
+function taper(pts, w0, w1) {
+  const n = pts.length - 1, a = [], b = [];
+  pts.forEach((p, i) => {
+    const p0 = pts[Math.max(0, i - 1)], p1 = pts[Math.min(n, i + 1)], dx = p1[0] - p0[0], dy = p1[1] - p0[1], d = Math.hypot(dx, dy) || 1, w = (w0 + (w1 - w0) * i / n) / 2;
+    a.push([p[0] - dy / d * w, p[1] + dx / d * w]); b.push([p[0] + dy / d * w, p[1] - dx / d * w]);
+  });
+  ctx.moveTo(a[0][0], a[0][1]);
+  a.forEach(q => ctx.lineTo(q[0], q[1]));
+  b.reverse().forEach(q => ctx.lineTo(q[0], q[1]));
+  ctx.closePath();
+}
+const GROUND = H - 40;
+
+const THEMES = {
+  beard: {
+    name: "Beard", where: "The face, with the beard growing down from it",
+    colour: "Beard colour", me: "#6b3f1f", raid: "#d2601a", x: 270, anchorY: 0,
+    opts: [
+      { k: "tache", l: "Moustache", t: "check", v: true },
+      { k: "strands", l: "Hair strands", t: "check", v: true },
+    ],
+    draw(S) {
+      const R = AV_R, len = 40 + S.g * 640, x = S.x, y = 290 + Math.sin(S.t * 2.2 + S.phase) * 4 - S.bump * 6;
+      drawBeard(x, y + R * 0.45, R * 0.85, len, S.col, S.t, S.bump, S.phase, S.opt.strands);
+      pic(S, x, y, R);
+      if (S.opt.tache) {
+        const mw = R * 0.5, my = y + R * 0.78;
+        for (const d of [-1, 1]) {
+          ctx.beginPath();
+          ctx.moveTo(x, my - 6);
+          ctx.bezierCurveTo(x + d * mw * 0.4, my - 24, x + d * mw * 0.9, my - 12, x + d * mw * 1.1, my + 10 + Math.sin(S.t * 3 + d) * 3);
+          ctx.bezierCurveTo(x + d * mw * 0.8, my + 6, x + d * mw * 0.35, my + 14, x, my + 6);
+          ctx.closePath();
+          ctx.fillStyle = shade(S.col, -15); ctx.fill();
+          ctx.lineWidth = 4; ctx.strokeStyle = OUTLINE; ctx.stroke();
+        }
+      }
+      const sway = Math.sin(S.t * 1.6 + S.phase) * Math.min(len * 0.05, 26);
+      return { tip: [x + sway, 339 + len], top: [x, y - R * 1.12] };
+    },
+  },
+
+  ghost: {
+    name: "Ghost", where: "In its see-through tummy, growing with it",
+    colour: "Ghost colour", me: "#dff3ff", raid: "#e9d6ff", x: 440,
+    opts: [
+      { k: "alpha", l: "Solidness", t: "range", min: 0.35, max: 1, step: 0.05, v: 0.8 },
+      { k: "glow", l: "Spooky glow", t: "check", v: true },
+      { k: "mood", l: "Face", t: "select", v: "cute", opts: [["cute", "Cute"], ["angry", "Angry"]] },
+    ],
+    draw(S) {
+      const { x, g, t } = S, r = 110 + g * 250, w = r * (1 + S.bump * 0.04);
+      const cy = 770 - g * 110 + Math.sin(t * 1.8 + S.phase) * 12, bottom = cy + r * 1.05;
+      ctx.save(); ctx.globalAlpha = S.opt.alpha;
+      if (S.opt.glow) { ctx.shadowColor = S.col; ctx.shadowBlur = 50; }
+      for (const d of [-1, 1]) ell(x + d * w * 1.14, cy + r * 0.25 + Math.sin(t * 3 + d) * 8, r * 0.17, r * 0.11, S.col, 5, d * -0.6);
+      ctx.beginPath(); ctx.arc(x, cy, w, Math.PI, 0); ctx.lineTo(x + w, bottom);
+      const n = 6;
+      for (let i = 0; i < n; i++) {
+        const a = x + w - 2 * w * i / n, b = x + w - 2 * w * (i + 1) / n;
+        ctx.quadraticCurveTo((a + b) / 2, bottom + r * 0.16 * (i % 2 ? -1 : 1) + Math.sin(t * 3 + i) * 6, b, bottom);
+      }
+      ctx.closePath();
+      ctx.fillStyle = S.col; ctx.fill();
+      ctx.shadowBlur = 0; ctx.lineWidth = 5; ctx.strokeStyle = OUTLINE; ctx.stroke();
+      ctx.restore();
+      pic(S, x, cy + r * 0.42, r * 0.46);
+      eyes(x, cy - r * 0.42, r * 0.3, r * 0.11);
+      for (const d of [-1, 1]) { ctx.save(); ctx.globalAlpha = 0.45; ell(x + d * r * 0.56, cy - r * 0.2, r * 0.1, r * 0.06, "#ff9db8", 0); ctx.restore(); }
+      if (S.opt.mood === "angry") for (const d of [-1, 1]) line(x + d * r * 0.46, cy - r * 0.68, x + d * r * 0.14, cy - r * 0.55, OUTLINE, Math.max(5, r * 0.04));
+      ell(x, cy - r * 0.14, r * (0.05 + S.bump * 0.04), r * (0.06 + S.bump * 0.06), OUTLINE, 0);
+      return { tip: [x, cy], top: [x, cy - r - 28] };
+    },
+  },
+
+  dino: {
+    name: "T-Rex", where: "On its belly, growing with the whole dino",
+    colour: "Dino colour", me: "#79c52f", raid: "#d99a58", x: 480,
+    opts: [
+      { k: "belly", l: "Belly colour", t: "color", v: "#f4ecd8" },
+      { k: "tongue", l: "Mouth colour", t: "color", v: "#f58ba0" },
+      { k: "teeth", l: "Teeth and claw colour", t: "color", v: "#fffdf2" },
+    ],
+    draw(S) {
+      const { x, dir, g, t, col } = S, k = 0.55 + g * 1.1, opt = S.opt, L = 5 / k;
+      const bob = Math.sin(t * 2.4 + S.phase) * 5 - S.bump * 8, wag = Math.sin(t * 2 + S.phase) * 14;
+      const dark = shade(col, -30), claw = opt.teeth;
+      const hx = 22, hy = -432 + bob, gape = 0.42 + S.bump * 0.14 + Math.sin(t * 3 + S.phase) * 0.02;
+      const blob = (paths, fill) => {
+        ctx.lineJoin = "round"; ctx.lineCap = "round";
+        ctx.strokeStyle = OUTLINE; ctx.lineWidth = L * 2;
+        for (const p of paths) { ctx.beginPath(); p(); ctx.stroke(); }
+        ctx.fillStyle = fill;
+        for (const p of paths) { ctx.beginPath(); p(); ctx.fill(); }
+      };
+      const leg = lx => [
+        () => ctx.ellipse(lx, -125, 68, 82, 0, 0, TAU),
+        () => { ctx.moveTo(lx - 44, -100); ctx.lineTo(lx - 30, -18); ctx.lineTo(lx + 36, -18); ctx.lineTo(lx + 42, -100); ctx.closePath(); },
+        () => roundRect(lx - 40, -28, 124, 28, 14),
+      ];
+      const claws = lx => { ctx.fillStyle = claw; for (const c of [38, 54, 70]) { ctx.beginPath(); ctx.moveTo(lx + c - 7, -1); ctx.lineTo(lx + c + 8, -1); ctx.lineTo(lx + c + 7, -13); ctx.closePath(); ctx.fill(); } };
+      const arm = (ax, ay, c, reach) => {
+        tube(() => { ctx.moveTo(ax - 12, ay); ctx.quadraticCurveTo(ax + 22, ay + 18, ax + 50 + reach, ay + 4); }, 26, c, L);
+        ctx.fillStyle = claw;
+        for (const d of [-7, 7]) { ctx.beginPath(); ctx.moveTo(ax + 58 + reach, ay - 1 + d); ctx.lineTo(ax + 74 + reach, ay + 4 + d); ctx.lineTo(ax + 58 + reach, ay + 9 + d); ctx.closePath(); ctx.fill(); }
+      };
+      const torso = () => {
+        ctx.moveTo(-118, -150);
+        ctx.bezierCurveTo(-125, -250, -95, -345 + bob, -38, -405 + bob);
+        ctx.lineTo(34, -428 + bob); ctx.lineTo(90, -395 + bob);
+        ctx.bezierCurveTo(125, -300, 125, -170, 75, -95);
+        ctx.bezierCurveTo(30, -55, -80, -60, -118, -150);
+        ctx.closePath();
+      };
+      const tail = () => {
+        ctx.moveTo(-70, -265 + bob);
+        ctx.bezierCurveTo(-170, -220, -250, -130, -310, -66 + wag);
+        ctx.bezierCurveTo(-230, -85, -140, -85, -60, -95);
+        ctx.closePath();
+      };
+      const head = () => {
+        ctx.moveTo(hx - 62, hy + 30);
+        ctx.bezierCurveTo(hx - 66, hy - 66, hx - 22, hy - 110, hx + 40, hy - 110);
+        ctx.bezierCurveTo(hx + 95, hy - 110, hx + 130, hy - 84, hx + 180, hy - 66);
+        ctx.bezierCurveTo(hx + 215, hy - 52, hx + 212, hy - 8, hx + 178, hy + 2);
+        ctx.bezierCurveTo(hx + 120, hy + 12, hx + 50, hy + 8, hx + 10, hy + 6);
+        ctx.closePath();
+      };
+
+      ctx.save();
+      ctx.translate(x, GROUND); ctx.scale(dir * k, k);
+
+      blob(leg(44), dark);
+      claws(44);
+      arm(92, -306 + bob, dark, Math.sin(t * 5 + S.phase + 1) * 4 + S.bump * 8);
+      blob([tail, torso, head, ...leg(-44)], col);
+      claws(-44);
+
+      ctx.save(); ctx.beginPath(); torso(); ctx.clip();
+      ctx.beginPath(); ctx.ellipse(58, -220, 62, 190, 0.05, 0, TAU);
+      ctx.fillStyle = opt.belly; ctx.fill();
+      ctx.restore();
+      ctx.beginPath(); ctx.ellipse(-44, -125, 68, 82, 0, 0, TAU);
+      ctx.fillStyle = col; ctx.fill();
+      ctx.beginPath(); ctx.ellipse(-44, -125, 68, 82, 0, -2.3, 0.75);
+      ctx.lineWidth = L * 0.9; ctx.strokeStyle = shade(col, -55); ctx.lineCap = "round"; ctx.stroke();
+
+      const jx = hx + 8, jy = hy + 6, jaw = (a, b) => [jx + a * Math.cos(gape) - b * Math.sin(gape), jy + a * Math.sin(gape) + b * Math.cos(gape)];
+      const ux = hx + 166, uy = hy + 5, [fx, fy] = jaw(142, -2), cx = (ux + fx) / 2 - 26, cy = (uy + fy) / 2;
+      ctx.save();
+      ctx.beginPath(); ctx.moveTo(jx, jy); ctx.lineTo(ux, uy); ctx.quadraticCurveTo(cx, cy, fx, fy); ctx.closePath();
+      ctx.fillStyle = shade(opt.tongue, -80); ctx.fill();
+      ctx.lineWidth = L; ctx.strokeStyle = OUTLINE; ctx.lineJoin = "round"; ctx.stroke();
+      ctx.clip();
+      ctx.translate(jx, jy); ctx.rotate(gape);
+      ctx.beginPath(); ctx.ellipse(66, 4, 62, 20, 0, 0, TAU);
+      ctx.fillStyle = opt.tongue; ctx.fill();
+      ctx.restore();
+
+      ctx.save(); ctx.translate(jx, jy); ctx.rotate(gape);
+      ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(150, -4); ctx.quadraticCurveTo(176, 14, 146, 30);
+      ctx.bezierCurveTo(92, 44, 24, 40, 0, 0); ctx.closePath();
+      ctx.fillStyle = opt.belly; ctx.fill(); ctx.lineWidth = L; ctx.strokeStyle = OUTLINE; ctx.lineJoin = "round"; ctx.stroke();
+      ctx.fillStyle = claw;
+      for (let i = 0; i < 4; i++) { const a = 72 + i * 18; ctx.beginPath(); ctx.moveTo(a, -3); ctx.lineTo(a + 14, -4); ctx.lineTo(a + 7, -18); ctx.closePath(); ctx.fill(); }
+      ctx.restore();
+
+      ctx.beginPath(); ctx.moveTo(hx + 10, hy + 6);
+      ctx.bezierCurveTo(hx + 70, hy - 18, hx + 135, hy - 22, hx + 199, hy - 32);
+      ctx.bezierCurveTo(hx + 204, hy - 14, hx + 195, hy - 2, hx + 178, hy + 2);
+      ctx.bezierCurveTo(hx + 120, hy + 12, hx + 50, hy + 8, hx + 10, hy + 6);
+      ctx.closePath(); ctx.fillStyle = opt.belly; ctx.fill(); ctx.lineWidth = L; ctx.strokeStyle = OUTLINE; ctx.lineJoin = "round";
+      ctx.beginPath(); ctx.moveTo(hx + 10, hy + 6); ctx.bezierCurveTo(hx + 50, hy + 8, hx + 120, hy + 12, hx + 178, hy + 2); ctx.stroke();
+      ctx.fillStyle = claw;
+      for (let i = 0; i < 5; i++) { const a = hx + 72 + i * 20; ctx.beginPath(); ctx.moveTo(a, hy + 9); ctx.lineTo(a + 14, hy + 9); ctx.lineTo(a + 7, hy + 24); ctx.closePath(); ctx.fill(); }
+
+      ell(hx + 60, hy - 64, 14, 16, OUTLINE, 0);
+      ell(hx + 65, hy - 70, 4.5, 4.5, "#fff", 0);
+      ell(hx + 180, hy - 50, 4.5, 3.5, OUTLINE, 0);
+
+      ctx.restore();
+
+      pic(S, x + dir * k * 50, GROUND + k * (-218 + bob), k * 54);
+
+      ctx.save();
+      ctx.translate(x, GROUND); ctx.scale(dir * k, k);
+      arm(60, -318 + bob, col, Math.sin(t * 5 + S.phase) * 4 + S.bump * 8);
+      ctx.beginPath(); ctx.ellipse(48, -318 + bob, 24, 24, 0, 0, TAU);
+      ctx.fillStyle = col; ctx.fill();
+      ctx.lineWidth = L; ctx.strokeStyle = OUTLINE; ctx.stroke();
+      ctx.restore();
+
+      return { tip: [x + dir * k * (hx + 110), GROUND + k * (hy + 24)], top: [x + dir * k * (hx + 40), GROUND + k * (hy - 110) - 30] };
+    },
+  },
+
+  dog: {
+    name: "Sausage Dog", where: "On its side, moving along as the body stretches",
+    colour: "Fur colour", me: "#b0702f", raid: "#4a403a", x: 70,
+    opts: [
+      { k: "ears", l: "Ears", t: "select", v: "floppy", opts: [["floppy", "Floppy"], ["pointy", "Pointy"]] },
+      { k: "belly", l: "Lighter belly", t: "check", v: true },
+      { k: "collar", l: "Collar colour", t: "color", v: "#e0383e" },
+    ],
+    draw(S) {
+      const { x, dir, g, t, col } = S, o = S.opt, L = 170 + g * 470, dark = shade(col, -30);
+      const bob = Math.sin(t * 3 + S.phase) * 3 - S.bump * 6, wag = Math.sin(t * 12 + S.phase) * 24;
+      const hx = L + 42, hy = -278 + bob;
+      const legs = [10, L - 12];
+      const leg = lx => [() => roundRect(lx - 21, -110, 42, 100, 18), () => roundRect(lx - 21, -24, 66, 24, 12)];
+      flip(x, dir, 1, () => {
+        for (const lx of legs) sil(leg(lx + 38), dark);
+        tube(() => { ctx.moveTo(-28, -170); ctx.quadraticCurveTo(-74, -210, -62 + wag * 0.5, -266); }, 20, col);
+        const body = () => roundRect(-40, -208, L + 90, 142, 71);
+        const neck = () => { ctx.moveTo(L - 30, -190); ctx.lineTo(hx - 52, hy + 10); ctx.lineTo(hx + 50, hy + 26); ctx.lineTo(L + 50, -110); ctx.closePath(); };
+        const skull = () => ctx.ellipse(hx, hy, 72, 68, 0, 0, TAU);
+        const snout = () => { ctx.moveTo(hx + 20, hy - 34); ctx.bezierCurveTo(hx + 80, hy - 40, hx + 146, hy - 24, hx + 150, hy + 4); ctx.bezierCurveTo(hx + 152, hy + 30, hx + 80, hy + 38, hx + 20, hy + 34); ctx.closePath(); };
+        sil([body, neck, skull, snout, ...legs.flatMap(lx => leg(lx))], col);
+        ctx.save(); ctx.beginPath(); body(); ctx.clip();
+        if (o.belly) { ctx.beginPath(); roundRect(-20, -112, L + 50, 70, 30); ctx.fillStyle = shade(col, 42); ctx.fill(); }
+        ctx.restore();
+        tube(() => { ctx.moveTo(L - 22, -196 + bob * 0.5); ctx.quadraticCurveTo(L + 18, -172, L + 58, -186 + bob * 0.5); }, 20, o.collar);
+        if (S.bump > 0.05) box(hx + 76, hy + 24, 32, 14 + S.bump * 30, 14, "#ff8fa8", LINE * 0.8);
+        ctx.beginPath(); ctx.moveTo(hx + 40, hy + 28); ctx.quadraticCurveTo(hx + 100, hy + 34, hx + 138, hy + 14);
+        ctx.lineWidth = LINE; ctx.strokeStyle = OUTLINE; ctx.lineCap = "round"; ctx.stroke();
+        ell(hx + 146, hy - 8, 15, 12, OUTLINE, 0);
+        eye(hx + 34, hy - 20, 13);
+        if (o.ears === "floppy") sil([() => { ctx.moveTo(hx - 34, hy - 54); ctx.bezierCurveTo(hx + 18, hy - 50, hx + 14, hy + 40, hx - 22, hy + 62); ctx.bezierCurveTo(hx - 62, hy + 60, hx - 74, hy - 20, hx - 34, hy - 54); ctx.closePath(); }], dark);
+        else sil([() => { ctx.moveTo(hx - 50, hy - 40); ctx.lineTo(hx - 34, hy - 128); ctx.lineTo(hx + 12, hy - 58); ctx.closePath(); }], dark);
+      });
+      pic(S, x + dir * (L / 2 + 10), GROUND - 138, 60);
+      return { tip: [x + dir * (hx + 90), GROUND + hy + 22], top: [x + dir * hx, GROUND + hy - 104] };
+    },
+  },
+
+  cat: {
+    name: "Chonky Cat", where: "On its belly, which gets fatter and fatter",
+    colour: "Fur colour", me: "#e8964a", raid: "#7c7f8f", x: 400,
+    opts: [
+      { k: "stripes", l: "Stripes", t: "check", v: true },
+      { k: "whiskers", l: "Whiskers", t: "check", v: true },
+      { k: "swish", l: "Tail swish speed", t: "range", min: 0, max: 6, step: 0.5, v: 2.5 },
+    ],
+    draw(S) {
+      const { x, dir, g, t, col } = S, o = S.opt, rx = 112 + g * 248, ry = 108 + g * 202, cy = GROUND - ry;
+      const hw = 104 + g * 40, hh = 86 + g * 32, hy = cy - ry * 0.86 - hh * 0.3 + Math.sin(t * 2 + S.phase) * 3 - S.bump * 7;
+      const sw = Math.sin(t * o.swish + S.phase) * 34, light = shade(col, 48), dark = shade(col, -38);
+      const tx = x - dir * rx * 0.9;
+      tube(() => { ctx.moveTo(x - dir * rx * 0.55, GROUND - 34); ctx.quadraticCurveTo(tx - dir * 70, GROUND - 40, tx - dir * 42 + sw * 0.4, GROUND - 170 - g * 140 + sw * 0.3); }, 34, col);
+      const body = () => ctx.ellipse(x, cy, rx * (1 + S.bump * 0.02), ry, 0, 0, TAU);
+      const head = () => ctx.ellipse(x, hy, hw, hh, 0, 0, TAU);
+      const ear = d => () => { ctx.moveTo(x + d * hw * 0.98, hy - hh * 0.05); ctx.lineTo(x + d * hw * 0.82, hy - hh * 1.5); ctx.lineTo(x + d * hw * 0.16, hy - hh * 0.92); ctx.closePath(); };
+      sil([body, ear(-1), ear(1), head], col);
+      ctx.save(); ctx.beginPath(); body(); ctx.clip();
+      ctx.beginPath(); ctx.ellipse(x, cy + ry * 0.26, rx * 0.66, ry * 0.76, 0, 0, TAU); ctx.fillStyle = light; ctx.fill();
+      if (o.stripes) for (const d of [-1, 1]) for (let i = 0; i < 3; i++) {
+        const sy = cy - ry * 0.12 + i * ry * 0.34;
+        tube(() => { ctx.moveTo(x + d * rx * 1.02, sy); ctx.quadraticCurveTo(x + d * rx * 0.88, sy + 6, x + d * rx * 0.74, sy + 20); }, Math.max(10, rx * 0.045), dark, 0);
+      }
+      ctx.restore();
+      for (const d of [-1, 1]) poly([[x + d * hw * 0.8, hy - hh * 0.66], [x + d * hw * 0.76, hy - hh * 1.22], [x + d * hw * 0.38, hy - hh * 0.86]], "#ffb3c7", 0);
+      if (o.stripes) for (const a of [-0.22, 0, 0.22]) line(x + a * hw, hy - hh * 0.92, x + a * hw * 0.9, hy - hh * 0.56, dark, 9);
+      ell(x, hy + hh * 0.36, hw * 0.52, hh * 0.44, light, 0);
+      for (const d of [-1, 1]) eye(x + d * hw * 0.42, hy - hh * 0.12, hh * 0.17);
+      poly([[x - hw * 0.08, hy + hh * 0.14], [x + hw * 0.08, hy + hh * 0.14], [x, hy + hh * 0.26]], "#ff8fa8", 0);
+      ctx.lineCap = "round"; ctx.lineWidth = 4; ctx.strokeStyle = OUTLINE;
+      for (const d of [-1, 1]) { ctx.beginPath(); ctx.moveTo(x, hy + hh * 0.27); ctx.quadraticCurveTo(x + d * hw * 0.07, hy + hh * 0.46, x + d * hw * 0.2, hy + hh * 0.32); ctx.stroke(); }
+      if (S.bump > 0.05) ell(x, hy + hh * 0.5, hw * 0.1, hh * 0.08 + S.bump * hh * 0.1, "#c43d5e", 3);
+      if (o.whiskers) for (const d of [-1, 1]) for (const w of [-0.14, 0.04, 0.22]) line(x + d * hw * 0.58, hy + hh * (0.24 + w * 0.3), x + d * hw * 1.26, hy + hh * (0.14 + w), OUTLINE, 3.5);
+      const pr = Math.min(rx, ry) * 0.5;
+      pic(S, x, cy + ry * 0.24, pr);
+      for (const d of [-1, 1]) sil([() => ctx.ellipse(x + d * rx * 0.34, GROUND - 14, 48 + g * 22, 22 + g * 4, 0, 0, TAU)], light);
+      return { tip: [x, hy + hh * 0.46], top: [x, hy - hh * 1.5 - 24] };
+    },
+  },
+
+  balloon: {
+    name: "Hot Air Balloon", where: "Printed on the balloon, stretching as it inflates",
+    colour: "Balloon colour", me: "#e0383e", raid: "#2f7de1", x: 400,
+    opts: [
+      { k: "stripes", l: "Stripes", t: "check", v: true },
+      { k: "stripeCol", l: "Stripe colour", t: "color", v: "#ffcc22" },
+      { k: "flame", l: "Burner flame", t: "check", v: true },
+    ],
+    draw(S) {
+      const { x, g, t, col } = S, o = S.opt, r = 95 + g * 225, cy = 680 - g * 220 + Math.sin(t * 1.4 + S.phase) * 10;
+      const ny = cy + r * 1.22, nw = r * 0.2, by = ny + 66;
+      const env = () => { ctx.moveTo(x - nw, ny); ctx.bezierCurveTo(x - r * 0.5, cy + r * 0.86, x - r, cy + r * 0.5, x - r, cy); ctx.arc(x, cy, r, Math.PI, 0); ctx.bezierCurveTo(x + r, cy + r * 0.5, x + r * 0.5, cy + r * 0.86, x + nw, ny); ctx.closePath(); };
+      for (const d of [-1, 1]) line(x + d * nw * 0.8, ny, x + d * 30, by, OUTLINE, 4);
+      if (o.flame) { const f = 26 + Math.sin(t * 20) * 6 + S.bump * 18; ctx.beginPath(); ctx.moveTo(x - 11, by - 4); ctx.quadraticCurveTo(x - 10, by - 4 - f * 0.6, x, by - 4 - f); ctx.quadraticCurveTo(x + 10, by - 4 - f * 0.6, x + 11, by - 4); ctx.closePath(); ctx.fillStyle = "#ffb020"; ctx.fill(); }
+      box(x - 40, by, 80, 54, 10, "#a8713a");
+      line(x - 40, by + 16, x + 40, by + 16, shade("#a8713a", -50), 3);
+      sil([env], col);
+      ctx.save(); ctx.beginPath(); env(); ctx.clip();
+      if (o.stripes) for (const q of [-0.74, 0.74]) { ctx.beginPath(); ctx.ellipse(x + q * r, cy + r * 0.1, r * 0.15, r * 1.3, q * -0.12, 0, TAU); ctx.fillStyle = o.stripeCol; ctx.fill(); }
+      ctx.save(); ctx.globalAlpha = 0.18; ell(x - r * 0.45, cy - r * 0.5, r * 0.3, r * 0.2, "#fff", 0, -0.6); ctx.restore();
+      ctx.restore();
+      ctx.beginPath(); env(); ctx.lineWidth = 5; ctx.strokeStyle = OUTLINE; ctx.lineJoin = "round"; ctx.stroke();
+      box(x - nw * 1.1, ny - 8, nw * 2.2, 14, 6, shade(col, -40), 4);
+      pic(S, x, cy + r * 0.05, r * 0.52);
+      return { tip: [x, ny], top: [x, cy - r - 28] };
+    },
+  },
+
+  snowman: {
+    name: "Snowman", where: "On the bottom snowball, with more snowballs stacking on top",
+    colour: "Scarf colour", me: "#2f7de1", raid: "#e0383e", x: 340,
+    opts: [
+      { k: "hat", l: "Top hat", t: "check", v: true },
+      { k: "nose", l: "Carrot nose", t: "check", v: true },
+      { k: "snow", l: "Snow colour", t: "color", v: "#f4f9ff" },
+    ],
+    draw(S) {
+      const { x, dir, g, t, col } = S, o = S.opt, radii = [150, 118, 92], prog = 0.6 + g * 2.4;
+      let y = GROUND, botR = 0, botY = 0, armY = 0, armR = 0;
+      const sway = i => Math.sin(t * 1.3 + i + S.phase) * i * 3;
+      const balls = [];
+      radii.forEach((r0, i) => {
+        const q = Math.max(0, Math.min(1, prog - i));
+        if (!q) return;
+        const r = r0 * q;
+        balls.push([x + sway(i), y - r, r]);
+        if (i === 0) { botR = r; botY = y - r; }
+        armY = y - r; armR = r;
+        y -= r * 1.84;
+      });
+      const armX = balls[balls.length - 1][0];
+      for (const d of [-1, 1]) {
+        const ax = armX + d * armR * 0.9, ay = armY - armR * 0.1, ey = ay - 62 + Math.sin(t * 4 + d) * 10;
+        line(ax, ay, ax + d * 92, ey, "#5c3a1c", 9);
+        line(ax + d * 62, ay - 40, ax + d * 74, ay - 78, "#5c3a1c", 6);
+      }
+      balls.forEach(([bx, by, r], i) => {
+        ell(bx, by, r, r, o.snow);
+        if (i > 0) for (const q of [-0.32, 0.32]) ell(bx, by + q * r, r * 0.09, r * 0.09, OUTLINE, 0);
+      });
+      const hr = 74, hy = y - hr + 8 - S.bump * 8, hx = x + sway(3);
+      ell(hx, hy, hr, hr, o.snow);
+      for (const d of [-1, 1]) eye(hx + d * 26, hy - 16, 10);
+      if (o.nose) poly([[hx, hy - 6], [hx + dir * 66, hy + 8], [hx, hy + 20]], "#f28a1e", 4);
+      for (let i = -2; i <= 2; i++) ell(hx + i * 13, hy + 38 - Math.abs(i) * 3 * -1 - 6 + S.bump * 4, 4.5, 4.5, OUTLINE, 0);
+      tube(() => { ctx.moveTo(hx - 66, hy + hr - 4); ctx.quadraticCurveTo(hx, hy + hr + 14, hx + 66, hy + hr - 4); }, 24, col);
+      tube(() => { ctx.moveTo(hx - dir * 42, hy + hr + 8); ctx.quadraticCurveTo(hx - dir * 58, hy + hr + 40, hx - dir * 46, hy + hr + 72 + Math.sin(t * 3) * 4); }, 26, col);
+      pic(S, x, botY + botR * 0.08, botR * 0.62);
+      let top = hy - hr - 28;
+      if (o.hat) {
+        box(hx - 42, hy - hr - 72, 84, 88, 6, "#22202a");
+        box(hx - 42, hy - hr - 8, 84, 16, 0, col, 4);
+        box(hx - 68, hy - hr + 6, 136, 16, 8, "#22202a");
+        top = hy - hr - 100;
+      }
+      return { tip: [hx, hy + 30], top: [hx, top] };
+    },
+  },
+
+  pumpkin: {
+    name: "Pumpkin", where: "Set in the middle like a carved face",
+    colour: "Pumpkin colour", me: "#f07f13", raid: "#8e5cf0", x: 430,
+    opts: [
+      { k: "glow", l: "Candle glow", t: "check", v: true },
+      { k: "eyes", l: "Carved eyes", t: "check", v: true },
+      { k: "lobes", l: "Lobes", t: "range", min: 3, max: 7, step: 2, v: 5 },
+    ],
+    draw(S) {
+      const { x, g, t, col } = S, rx = 115 + g * 250, ry = rx * 0.8, cy = GROUND - ry;
+      const wob = 1 + S.bump * 0.03;
+      poly([[x - 16, cy - ry * 0.9], [x - 8 + S.dir * 18, cy - ry - 26 - g * 34], [x + 16 + S.dir * 18, cy - ry - 26 - g * 34], [x + 18, cy - ry * 0.9]], "#4f7a2a");
+      ctx.beginPath(); ctx.moveTo(x, cy - ry * 0.92); ctx.bezierCurveTo(x - S.dir * 50, cy - ry - 34, x - S.dir * 90, cy - ry - 10, x - S.dir * 70, cy - ry + 10); ctx.lineWidth = 6; ctx.strokeStyle = "#4f7a2a"; ctx.lineCap = "round"; ctx.stroke();
+      if (S.opt.glow) { ctx.save(); ctx.shadowColor = "#ffb020"; ctx.shadowBlur = 40 + Math.sin(t * 8 + S.phase) * 12; ell(x, cy, rx * 0.9, ry * 0.9, col, 0); ctx.restore(); }
+      const side = Math.floor(Math.round(S.opt.lobes) / 2);
+      for (let i = side; i >= 1; i--) for (const d of [-1, 1]) {
+        const k = i / side;
+        ell(x + d * k * rx * 0.62, cy, rx * (0.46 + (1 - k) * 0.1) * wob, ry * wob, shade(col, -k * 24));
+      }
+      ell(x, cy, rx * 0.5 * wob, ry * wob, col);
+      if (S.opt.eyes) for (const d of [-1, 1]) poly([[x + d * rx * 0.2, cy - ry * 0.32], [x + d * rx * 0.64, cy - ry * 0.32], [x + d * rx * 0.46, cy - ry * 0.74]], "#2a1505", 0);
+      pic(S, x, cy + ry * 0.26, ry * 0.5);
+      return { tip: [x, cy], top: [x + S.dir * 10, cy - ry - 60 - g * 34] };
+    },
+  },
+
+  cake: {
+    name: "Cake", where: "On top as the cake topper, raised with each tier",
+    colour: "Icing colour", me: "#ff8ac2", raid: "#7fd8ff", x: 370,
+    opts: [
+      { k: "sponge", l: "Sponge colour", t: "color", v: "#f2cf94" },
+      { k: "sprinkles", l: "Sprinkles", t: "check", v: true },
+      { k: "candles", l: "Candles", t: "check", v: true },
+    ],
+    draw(S) {
+      const { x, g, t, col } = S, w0 = [440, 370, 300, 235, 175], th = 128, prog = 0.3 + g * 4.7;
+      box(x - 250, GROUND - 14, 500, 22, 10, "#e6e6ee");
+      let y = GROUND - 14, topW = 150;
+      w0.forEach((w, i) => {
+        const k = Math.max(0, Math.min(1, prog - i));
+        if (!k) return;
+        const h = th * k, ww = w * (0.6 + k * 0.4);
+        box(x - ww / 2, y - h, ww, h, 14, S.opt.sponge);
+        ctx.save(); box(x - ww / 2, y - h, ww, h, 14, null, 0); ctx.clip();
+        ctx.fillStyle = col; ctx.fillRect(x - ww / 2, y - h, ww, h * 0.3);
+        const n = Math.max(3, Math.floor(ww / 44));
+        for (let d = 0; d < n; d++) box(x - ww / 2 + (d + 0.2) * ww / n, y - h, ww / n * 0.62, h * (0.34 + ((d * 37) % 10) / 34), 14, col, 0);
+        if (S.opt.sprinkles) for (let d = 0; d < n; d++) { ctx.fillStyle = ["#e0383e", "#2f7de1", "#ffcc22", "#3fbf6a"][(d + i) % 4]; ctx.fillRect(x - ww / 2 + (d + 0.4) * ww / n, y - h * (0.32 + ((d * 19) % 7) / 26), 10, 5); }
+        ctx.restore();
+        box(x - ww / 2, y - h, ww, h, 14, null);
+        y -= h; topW = ww;
+      });
+      if (S.opt.candles) for (const d of [-1, 1]) {
+        const cx = x + d * topW * 0.38;
+        box(cx - 7, y - 44, 14, 44, 3, "#fff6d8", 3);
+        poly([[cx - 8, y - 46], [cx + Math.sin(t * 15 + d) * 3, y - 72], [cx + 8, y - 46]], "#ffb020", 0);
+      }
+      const hy = y - 76 + Math.sin(t * 2.4 + S.phase) * 3 - S.bump * 8;
+      pic(S, x, hy, 76);
+      return { tip: [x, y], top: [x, hy - 104] };
+    },
+  },
+
+  slime: {
+    name: "Slime", where: "Floating inside the blob",
+    colour: "Slime colour", me: "#62d94a", raid: "#c05cff", x: 400,
+    opts: [
+      { k: "alpha", l: "Solidness", t: "range", min: 0.4, max: 1, step: 0.05, v: 0.78 },
+      { k: "bubbles", l: "Bubbles", t: "check", v: true },
+      { k: "eyes", l: "Googly eyes", t: "check", v: true },
+    ],
+    draw(S) {
+      const { x, g, t, col } = S, rx = 125 + g * 280, ry = 80 + g * 300 + S.bump * 14;
+      const f = u => Math.sin(u * 4 + t * 2 + S.phase) * 9 + Math.sin(u * 9 - t * 3) * 4;
+      ctx.save(); ctx.globalAlpha = S.opt.alpha;
+      ctx.beginPath(); ctx.moveTo(x - rx * 0.86, GROUND);
+      ctx.quadraticCurveTo(x - rx * 1.04, GROUND, x - rx * 0.99, GROUND - Math.min(30, ry * 0.3));
+      for (let i = 1; i <= 39; i++) {
+        const a = Math.PI - (i / 40) * Math.PI;
+        ctx.lineTo(x + Math.cos(a) * rx, GROUND - Math.max(Math.sin(a) * ry, Math.min(30, ry * 0.3)) + f(i / 40 * 6) * Math.sin(a));
+      }
+      ctx.quadraticCurveTo(x + rx * 1.04, GROUND, x + rx * 0.86, GROUND);
+      ctx.closePath();
+      ctx.fillStyle = col; ctx.fill(); ctx.lineWidth = 5; ctx.strokeStyle = OUTLINE; ctx.stroke();
+      ctx.restore();
+      ctx.save(); ctx.globalAlpha = 0.35; ell(x - rx * 0.5, GROUND - ry * 0.68, rx * 0.14, ry * 0.08, "#fff", 0, -0.7); ctx.restore();
+      const pr = Math.min(ry * 0.42, 44 + g * 95), py = GROUND - ry * 0.46;
+      if (S.opt.bubbles) for (let i = 0; i < 7; i++) {
+        const k = (t * 0.2 + i * 0.143) % 1, bx = x + Math.sin(i * 2.4) * rx * 0.68, by = GROUND - k * ry * 0.72;
+        ell(bx, by, 7 + i * 1.6, 7 + i * 1.6, shade(col, 55), 0);
+      }
+      pic(S, x, py, pr);
+      if (S.opt.eyes) for (const d of [-1, 1]) {
+        const ex = x + d * (24 + g * 42), ey = GROUND - ry + 2, er = 20 + g * 18;
+        ell(ex, ey, er, er, "#fff", 4);
+        ell(ex + Math.sin(t * 2 + d) * er * 0.4, ey + Math.cos(t * 3) * er * 0.3, er * 0.42, er * 0.42, OUTLINE, 0);
+      }
+      return { tip: [x, GROUND - ry * 0.5], top: [x, GROUND - ry - 58 - g * 18] };
+    },
+  },
+
+  snake: {
+    name: "Cobra", where: "On its hood, which rises higher as the body grows",
+    colour: "Snake colour", me: "#39b56a", raid: "#d94f7c", x: 340,
+    opts: [
+      { k: "pattern", l: "Diamond pattern", t: "check", v: true },
+      { k: "width", l: "Body thickness", t: "range", min: 40, max: 110, step: 5, v: 70 },
+      { k: "tongue", l: "Flicking tongue", t: "check", v: true },
+    ],
+    draw(S) {
+      const { x, g, t, col } = S, o = S.opt, w = o.width, hy = GROUND - 280 - g * 470 + Math.sin(t * 1.5 + S.phase) * 6 - S.bump * 8;
+      const dark = shade(col, -26), hr = 118 + g * 22, pts = [], by = GROUND - 90, h = by - hy, bends = 0.75 + g * 1.6, amp = 28 + g * 60;
+      for (let i = 0; i <= 36; i++) { const q = i / 36; pts.push([x + Math.sin(q * bends * TAU + t * 1.2 + S.phase) * amp * Math.sin(q * Math.PI), by - q * h]); }
+      for (const [cy, cw] of [[GROUND - w * 0.45, 340], [GROUND - w * 1.2, 260]]) sil([() => roundRect(x - cw / 2, cy - w * 0.45, cw, w * 0.9, w * 0.45)], dark);
+      tube(() => pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])), w, col);
+      if (o.pattern) for (let i = 2; i < pts.length - 6; i += 3) { const p = pts[i], s = w * 0.2; poly([[p[0] - s, p[1]], [p[0], p[1] - s], [p[0] + s, p[1]], [p[0], p[1] + s]], dark, 0); }
+      const hood = () => { ctx.moveTo(x, hy - 76); ctx.bezierCurveTo(x + hr * 1.5, hy - 50, x + hr * 1.26, hy + 190, x, hy + 232); ctx.bezierCurveTo(x - hr * 1.26, hy + 190, x - hr * 1.5, hy - 50, x, hy - 76); ctx.closePath(); };
+      const head = () => { ctx.moveTo(x - 62, hy - 40); ctx.bezierCurveTo(x - 56, hy - 112, x + 56, hy - 112, x + 62, hy - 40); ctx.bezierCurveTo(x + 66, hy, x + 30, hy + 26, x, hy + 26); ctx.bezierCurveTo(x - 30, hy + 26, x - 66, hy, x - 62, hy - 40); ctx.closePath(); };
+      sil([hood, head], col);
+      ctx.beginPath(); ctx.moveTo(x - 62, hy - 12); ctx.bezierCurveTo(x - 50, hy + 34, x + 50, hy + 34, x + 62, hy - 12);
+      ctx.lineWidth = 4; ctx.strokeStyle = shade(col, -50); ctx.lineCap = "round"; ctx.stroke();
+      pic(S, x, hy + 116, 74);
+      if (o.tongue) {
+        const fl = Math.max(Math.sin(t * 5 + S.phase) > 0.2 ? 1 : 0, S.bump);
+        if (fl > 0) { const ty = hy + 22 + 22 * fl; line(x, hy + 20, x, ty, "#e0383e", 6); for (const d of [-1, 1]) line(x, ty, x + d * 9, ty + 11, "#e0383e", 4); }
+      }
+      for (const d of [-1, 1]) { eye(x + d * 30, hy - 42, 13); ell(x + d * 9, hy - 6, 3, 2.5, OUTLINE, 0); }
+      return { tip: [x, hy + 20], top: [x, hy - 122] };
+    },
+  },
+
+  rocket: {
+    name: "Rocket", where: "In the porthole at the top of the rocket",
+    colour: "Rocket colour", me: "#2f7de1", raid: "#e0383e", x: 400,
+    opts: [
+      { k: "flame", l: "Flame colour", t: "color", v: "#ff9a1f" },
+      { k: "hull", l: "Hull colour", t: "color", v: "#eef0f6" },
+      { k: "rivets", l: "Rivets", t: "check", v: true },
+    ],
+    draw(S) {
+      const { x, g, t, col } = S, bw = 100, base = GROUND - 90 - g * 10, len = 200 + g * 520, top = base - len;
+      const shake = Math.sin(t * 40) * (1 + S.bump * 3), xx = x + shake;
+      const fl = 40 + g * 60 + S.bump * 30 + Math.sin(t * 25) * 12;
+      poly([[xx - 54, base], [xx + Math.sin(t * 18) * 8, base + fl], [xx + 54, base]], S.opt.flame, 4);
+      poly([[xx - 26, base], [xx + Math.sin(t * 22) * 5, base + fl * 0.6], [xx + 26, base]], "#fff1a8", 0);
+      for (const d of [-1, 1]) poly([[xx + d * bw * 0.86, base - 110], [xx + d * (bw + 66), base + 18], [xx + d * bw * 0.86, base]], col);
+      box(xx - bw, top, bw * 2, len, 22, S.opt.hull);
+      ctx.beginPath(); ctx.moveTo(xx - bw, top + 10); ctx.bezierCurveTo(xx - bw, top - 50, xx - 40, top - 96, xx, top - 112); ctx.bezierCurveTo(xx + 40, top - 96, xx + bw, top - 50, xx + bw, top + 10); ctx.closePath();
+      ctx.fillStyle = col; ctx.fill(); ctx.lineWidth = LINE; ctx.strokeStyle = OUTLINE; ctx.lineJoin = "round"; ctx.stroke();
+      if (len > 280) { box(xx - bw, base - 56, bw * 2, 26, 0, col, 4); box(xx - bw, top + len * 0.5, bw * 2, 18, 0, col, 4); }
+      if (S.opt.rivets) for (const d of [-1, 1]) for (let ry = top + 180; ry < base - 80; ry += 80) ell(xx + d * (bw - 16), ry, 5, 5, "#99a", 0);
+      pic(S, xx, top + 78, 82);
+      return { tip: [xx, base], top: [xx, top - 122] };
+    },
+  },
+
+  robot: {
+    name: "Robot", where: "On the robot's head screen, scaling with the whole body",
+    colour: "Robot colour", me: "#8fa3b8", raid: "#d4a13c", x: 400,
+    opts: [
+      { k: "antenna", l: "Antenna light", t: "check", v: true },
+      { k: "lights", l: "Chest lights", t: "range", min: 0, max: 6, step: 1, v: 4 },
+      { k: "light", l: "Light colour", t: "color", v: "#2fe08a" },
+    ],
+    draw(S) {
+      const { x, g, t, col } = S, k = 0.55 + g * 1.15, bob = Math.sin(t * 2 + S.phase) * 4 - S.bump * 6;
+      ctx.save(); ctx.translate(x, GROUND); ctx.scale(k, k); ctx.translate(-x, -GROUND);
+      LINE = 5 / k;
+      const by = GROUND - 150, hy = by - 175 + bob;
+      for (const d of [-1, 1]) {
+        box(x + d * 52 - 26, by + 40, 52, 112, 8, shade(col, -26));
+        box(x + d * 52 - 38, GROUND - 22, 76, 24, 8, shade(col, -44));
+        const sw = Math.sin(t * 3 + d + S.phase) * 16;
+        tube(() => { ctx.moveTo(x + d * 94, by - 74); ctx.lineTo(x + d * 138, by - 30); ctx.lineTo(x + d * 148, by + 24 + sw); }, 24, shade(col, -14));
+      }
+      for (const d of [-1, 1]) ell(x + d * 96, by - 74, 22, 22, shade(col, -14));
+      box(x - 92, by - 100, 184, 150, 18, col);
+      const n = Math.round(S.opt.lights);
+      for (let i = 0; i < n; i++) ell(x - (n - 1) * 18 + i * 36, by - 30, 12, 12, Math.sin(t * 5 + i) > -0.2 ? S.opt.light : shade(S.opt.light, -90), 3);
+      box(x - 20, by - 112, 40, 18, 2, shade(col, -30));
+      box(x - 88, hy - 88, 176, 176, 26, col);
+      box(x - 74, hy - 74, 148, 148, 16, "#1d2330", LINE * 0.8);
+      for (const d of [-1, 1]) ell(x + d * 96, hy, 12, 26, shade(col, -26));
+      pic(S, x, hy, 66);
+      if (S.opt.antenna) {
+        line(x, hy - 88, x, hy - 124, OUTLINE, 6);
+        ell(x, hy - 130, 11, 11, Math.sin(t * 6) > 0 ? S.opt.light : "#fff", 3);
+      }
+      LINE = 5;
+      ctx.restore();
+      const yy = v => GROUND + (v - GROUND) * k;
+      return { tip: [x, yy(by - 30)], top: [x, yy(hy - 166)] };
+    },
+  },
+
+  mohawk: {
+    name: "Mohawk", where: "The face, with the hair growing up out of it",
+    colour: "Hair colour", me: "#ff3fa0", raid: "#39e0d0", x: 320,
+    opts: [
+      { k: "spikes", l: "Spikes", t: "range", min: 3, max: 9, step: 1, v: 5 },
+      { k: "jacket", l: "Jacket colour", t: "color", v: "#2b2b34" },
+      { k: "studs", l: "Studs", t: "check", v: true },
+    ],
+    draw(S) {
+      const { x, g, t, col } = S, o = S.opt, R = 112, hy = GROUND - 262 + Math.sin(t * 3 + S.phase) * 3 - S.bump * 6, h = 34 + g * 500, n = Math.round(o.spikes);
+      sil([
+        () => { ctx.moveTo(x - 230, GROUND + 10); ctx.bezierCurveTo(x - 226, GROUND - 120, x - 130, GROUND - 150, x - 62, GROUND - 158); ctx.lineTo(x + 62, GROUND - 158); ctx.bezierCurveTo(x + 130, GROUND - 150, x + 226, GROUND - 120, x + 230, GROUND + 10); ctx.closePath(); },
+      ], o.jacket);
+      box(x - 46, hy + 70, 92, 90, 18, shade(o.jacket, 34));
+      for (const d of [-1, 1]) poly([[x + d * 14, GROUND - 158], [x + d * 88, GROUND - 158], [x + d * 58, GROUND - 56]], shade(o.jacket, 24), 4);
+      if (o.studs) for (const d of [-1, 1]) for (let i = 0; i < 5; i++) ell(x + d * (116 + i * 20), GROUND - 118 + i * 11, 6, 6, "#d9dde6", 0);
+      const hair = [];
+      for (let i = 0; i < n; i++) {
+        const q0 = i / n, q1 = (i + 1) / n, qm = (q0 + q1) / 2, k2 = qm * 2 - 1;
+        const ang = q => -Math.PI / 2 + (q * 2 - 1) * 1.2, a0 = ang(q0), a1 = ang(q1);
+        const v0 = [x + Math.cos(a0) * R * 0.9, hy + Math.sin(a0) * R * 0.9], v1 = [x + Math.cos(a1) * R * 0.9, hy + Math.sin(a1) * R * 0.9];
+        const rise = h * (1 - Math.abs(k2) * 0.3) + 26, tip = [x + k2 * (R * 1.05 + rise * 0.42) + Math.sin(t * 2 + i) * 5, hy - R * 0.8 + Math.abs(k2) * 30 - rise];
+        hair.push(() => {
+          ctx.moveTo(v0[0], v0[1]);
+          ctx.quadraticCurveTo(v0[0] + (tip[0] - v0[0]) * 0.35 - 150 / n, v0[1] + (tip[1] - v0[1]) * 0.62, tip[0], tip[1]);
+          ctx.quadraticCurveTo(v1[0] + (tip[0] - v1[0]) * 0.35 + 150 / n, v1[1] + (tip[1] - v1[1]) * 0.62, v1[0], v1[1]);
+          ctx.lineTo(x, hy); ctx.closePath();
+        });
+      }
+      sil(hair, col);
+      pic(S, x, hy, R);
+      return { tip: [x, hy - R - h * 0.6], top: [x, hy - R * 0.8 - h - 34] };
+    },
+  },
+
+  frog: {
+    name: "Frog", where: "On its belly, with the whole frog puffing up",
+    colour: "Frog colour", me: "#62c04e", raid: "#3f9fd9", x: 440,
+    opts: [
+      { k: "belly", l: "Belly colour", t: "color", v: "#fbf3cf" },
+      { k: "pad", l: "Lily pad", t: "check", v: true },
+      { k: "spots", l: "Spots", t: "check", v: true },
+    ],
+    draw(S) {
+      const { x, g, t, col } = S, o = S.opt, k = 0.6 + g, bob = Math.sin(t * 2.2 + S.phase) * 3 - S.bump * 10, dark = shade(col, -44);
+      flip(x, 1, k, () => {
+        if (o.pad) { ell(0, -8, 272, 24, "#2f7f3a"); ell(0, -11, 250, 18, "#3f9c4a", 0); }
+        const parts = [
+          () => ctx.ellipse(0, -142 + bob * 0.4, 136, 138, 0, 0, TAU),
+          () => ctx.ellipse(0, -274 + bob, 166, 94, 0, 0, TAU),
+        ];
+        for (const d of [-1, 1]) {
+          parts.push(() => ctx.ellipse(d * 142, -84, 74, 82, 0, 0, TAU));
+          parts.push(() => ctx.ellipse(d * 172, -16, 86, 18, 0, 0, TAU));
+          parts.push(() => ctx.ellipse(d * 92, -350 + bob, 50, 50, 0, 0, TAU));
+        }
+        sil(parts, col);
+        ctx.save(); ctx.beginPath(); parts[0](); ctx.clip();
+        ctx.beginPath(); ctx.ellipse(0, -118 + bob * 0.4, 98, 112, 0, 0, TAU); ctx.fillStyle = o.belly; ctx.fill();
+        ctx.restore();
+        for (const d of [-1, 1]) {
+          ctx.beginPath(); ctx.ellipse(d * 142, -84, 74, 82, 0, d > 0 ? -2.5 : -0.64 - Math.PI * 0.72, d > 0 ? -0.9 : -0.64);
+          ctx.lineWidth = LINE * 0.9; ctx.strokeStyle = dark; ctx.lineCap = "round"; ctx.stroke();
+        }
+        if (o.spots) for (const [a, b, r] of [[-120, -300, 13], [-84, -262, 9], [116, -306, 12], [78, -270, 8], [150, -92, 13], [-154, -100, 12], [-126, -54, 8], [132, -50, 8]]) ell(a, b + (b < -200 ? bob : 0), r, r * 0.85, dark, 0);
+        pic(S, 0, -122 + bob * 0.4, 72);
+        for (const d of [-1, 1]) {
+          tube(() => { ctx.moveTo(d * 92, -180 + bob * 0.4); ctx.quadraticCurveTo(d * 112, -90, d * 84, -30); }, 34, col);
+          ell(d * 84, -18, 44, 16, col);
+          ell(d * 92, -354 + bob, 31, 31, "#fff", LINE * 0.8);
+          ell(d * 92 + 3, -350 + bob, 17, 19, OUTLINE, 0);
+          ell(d * 92 + 9, -358 + bob, 6, 6, "#fff", 0);
+          ell(d * 18, -314 + bob, 4, 3.5, OUTLINE, 0);
+        }
+        const my = -272 + bob;
+        ctx.beginPath(); ctx.moveTo(-124, my); ctx.quadraticCurveTo(0, my + 54, 124, my);
+        if (S.bump > 0.05) { ctx.quadraticCurveTo(0, my + 54 + S.bump * 90, -124, my); ctx.closePath(); ctx.fillStyle = "#c43d5e"; ctx.fill(); }
+        ctx.lineWidth = LINE; ctx.strokeStyle = OUTLINE; ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.stroke();
+      });
+      return { tip: [x, GROUND + k * (-250 + bob)], top: [x, GROUND + k * (-400 + bob) - 30] };
+    },
+  },
+
+  burger: {
+    name: "Burger", where: "On a cocktail stick at the top of the stack",
+    colour: "Flag colour", me: "#2f7de1", raid: "#e0383e", x: 370,
+    opts: [
+      { k: "bun", l: "Bun colour", t: "color", v: "#d99a4e" },
+      { k: "sesame", l: "Sesame seeds", t: "check", v: true },
+      { k: "cheese", l: "Extra cheese", t: "check", v: true },
+    ],
+    draw(S) {
+      const { x, g, t, col } = S, n = Math.floor(1 + g * 13), w = 200;
+      const wob = i => Math.sin(i * 1.7 + t * 1.5 + S.phase) * Math.min(i * 1.4, 14);
+      let y = GROUND - 48;
+      box(x - w, y, w * 2, 48, 22, S.opt.bun);
+      const kinds = S.opt.cheese ? ["patty", "cheese", "lettuce", "patty", "cheese", "tomato"] : ["patty", "lettuce", "tomato"];
+      for (let i = 0; i < n; i++) {
+        const kind = kinds[i % kinds.length], xx = x + wob(i);
+        if (kind === "patty") { y -= 40; box(xx - w * 0.96, y, w * 1.92, 40, 16, "#6b3a1c"); }
+        else if (kind === "cheese") { y -= 16; poly([[xx - w, y], [xx + w, y], [xx + w * 0.9, y + 16], [xx + w * 0.36, y + 34], [xx - w * 0.1, y + 16], [xx - w, y + 16]], "#ffce33", 4); }
+        else if (kind === "lettuce") { y -= 22; box(xx - w * 1.04, y, w * 2.08, 22, 11, "#67c23f", 4); }
+        else { y -= 24; box(xx - w * 0.94, y, w * 1.88, 24, 8, "#e0452f", 4); }
+      }
+      const tx = x + wob(n), h = 86;
+      ctx.beginPath(); ctx.moveTo(tx - w, y); ctx.bezierCurveTo(tx - w, y - h * 1.3, tx + w, y - h * 1.3, tx + w, y); ctx.closePath();
+      ctx.fillStyle = S.opt.bun; ctx.fill(); ctx.lineWidth = 5; ctx.strokeStyle = OUTLINE; ctx.lineJoin = "round"; ctx.stroke();
+      if (S.opt.sesame) for (const [a, b] of [[-110, 30], [-60, 58], [0, 44], [60, 62], [120, 32], [-20, 72], [30, 22]]) ell(tx + a, y - b, 10, 6, "#fff3cf", 0, a * 0.01);
+      const py = y - h - 104 - S.bump * 6;
+      line(tx, y - h + 14, tx, py, "#caa56c", 6);
+      poly([[tx, py + 74], [tx + S.dir * 92, py + 90], [tx, py + 106]], col, 4);
+      pic(S, tx, py, 72);
+      return { tip: [tx, y - 40], top: [tx, py - 98] };
+    },
+  },
+
+  tree: {
+    name: "Tree", where: "Peeking out of the leaves, growing with the tree",
+    colour: "Leaf colour", me: "#4aa84a", raid: "#d97ab0", x: 400,
+    opts: [
+      { k: "apples", l: "Apples", t: "check", v: true },
+      { k: "appleCol", l: "Apple colour", t: "color", v: "#e0383e" },
+      { k: "bird", l: "Little bird", t: "check", v: true },
+    ],
+    draw(S) {
+      const { x, g, t, col } = S, h = 90 + g * 280, r = 85 + g * 205, tw = 34 + g * 44;
+      const cy = GROUND - h - r * 0.55, sw = Math.sin(t * 1.3 + S.phase) * 6 * (1 + S.bump);
+      sil([() => { ctx.moveTo(x - tw * 1.9, GROUND); ctx.bezierCurveTo(x - tw * 1.1, GROUND - 14, x - tw * 0.8, GROUND - h * 0.4, x - tw * 0.78, cy + r * 0.2); ctx.lineTo(x + tw * 0.78, cy + r * 0.2); ctx.bezierCurveTo(x + tw * 0.8, GROUND - h * 0.4, x + tw * 1.1, GROUND - 14, x + tw * 1.9, GROUND); ctx.closePath(); }], "#7a4f27");
+      for (const q of [-0.4, 0.05, 0.42]) line(x + q * tw, GROUND - 16, x + q * tw * 0.8, GROUND - h * 0.62, "#5c3a1c", 4);
+      const blobs = [[0, -0.55, 0.72], [-0.65, -0.1, 0.62], [0.65, -0.1, 0.62], [-0.38, 0.4, 0.55], [0.38, 0.4, 0.55], [0, 0, 0.82]];
+      sil(blobs.map(([a, b, c]) => () => ctx.ellipse(x + a * r + sw * (1 + b), cy + b * r, c * r, c * r, 0, 0, TAU)), col);
+      for (const [a, b] of [[-0.62, -0.5], [0.62, -0.5], [-0.9, 0.1], [0.92, 0.12], [0, -1.02], [-0.5, 0.74], [0.5, 0.74]]) {
+        ctx.beginPath(); ctx.arc(x + a * r + sw, cy + b * r, r * 0.11, Math.PI * 1.1, Math.PI * 1.9);
+        ctx.lineWidth = 4; ctx.strokeStyle = shade(col, 38); ctx.lineCap = "round"; ctx.stroke();
+      }
+      if (S.opt.apples && g > 0.08) for (const [a, b] of [[-0.72, -0.2], [0.74, 0.04], [-0.46, 0.56], [0.5, 0.58], [0.3, -0.76], [-0.3, -0.8]]) ell(x + a * r + sw, cy + b * r, 9 + g * 13, 9 + g * 13, S.opt.appleCol, 4);
+      pic(S, x + sw, cy, 56 + g * 74);
+      let top = cy - r * 1.27 - 28;
+      if (S.opt.bird) {
+        const by = cy - r * 1.27 - 12, bx = x + r * 0.15 * S.dir + sw * 0.5;
+        ell(bx, by, 24, 18, "#ffcc22", 4);
+        poly([[bx + S.dir * 22, by - 6], [bx + S.dir * 40, by], [bx + S.dir * 22, by + 6]], "#f28a1e", 3);
+        ell(bx + S.dir * 10, by - 5, 3, 3, OUTLINE, 0);
+        top -= 26;
+      }
+      return { tip: [x, cy], top: [x, top] };
+    },
+  },
+
+  octopus: {
+    name: "Octopus", where: "On its head, lifted up on the tentacles",
+    colour: "Octopus colour", me: "#c94f8e", raid: "#e8743b", x: 400,
+    opts: [
+      { k: "arms", l: "Tentacles", t: "range", min: 4, max: 10, step: 1, v: 8 },
+      { k: "suckers", l: "Suckers", t: "check", v: true },
+      { k: "eyes", l: "Eyes", t: "check", v: true },
+    ],
+    draw(S) {
+      const { x, g, t, col } = S, o = S.opt, r = 126 + g * 34, hy = GROUND - 190 - g * 530 + Math.sin(t * 2 + S.phase) * 6 - S.bump * 8;
+      const n = Math.round(o.arms), reach = 200 + g * 170, startY = hy + r * 0.72, order = [];
+      for (let i = 0; i < n; i++) order.push(i);
+      order.sort((a, b) => Math.abs(b - (n - 1) / 2) - Math.abs(a - (n - 1) / 2));
+      for (const i of order) {
+        const q = n > 1 ? i / (n - 1) * 2 - 1 : 0, sx = x + q * r * 0.62, ex = x + q * reach + Math.sin(t * 2 + i) * 14;
+        const mx = sx + q * 30 + Math.sin(t * 1.7 + i * 1.4 + S.phase) * (14 + g * 42), my = (startY + GROUND) / 2, pts = [];
+        for (let s = 0; s <= 16; s++) { const u = s / 16, v = 1 - u; pts.push([v * v * sx + 2 * v * u * mx + u * u * ex, v * v * startY + 2 * v * u * my + u * u * (GROUND - 22)]); }
+        const curl = q >= 0 ? 1 : -1;
+        pts.push([ex + curl * 24, GROUND - 14], [ex + curl * 50, GROUND - 22], [ex + curl * 60, GROUND - 42]);
+        const shadeBy = Math.abs(q) > 0.5 ? -26 : -10;
+        sil([() => taper(pts, 56 - g * 12, 10)], shade(col, shadeBy));
+        if (o.suckers) for (let s = 6; s < 17; s += 3) { const p = pts[s], sr = Math.max(3, 8 - s * 0.26); ell(p[0], p[1], sr, sr, shade(col, 66), 0); }
+      }
+      const head = () => { ctx.moveTo(x - r * 1.02, hy + r * 0.56); ctx.bezierCurveTo(x - r * 1.34, hy - r * 0.9, x - r * 0.7, hy - r * 1.3, x, hy - r * 1.3); ctx.bezierCurveTo(x + r * 0.7, hy - r * 1.3, x + r * 1.34, hy - r * 0.9, x + r * 1.02, hy + r * 0.56); ctx.quadraticCurveTo(x, hy + r * 1.06, x - r * 1.02, hy + r * 0.56); ctx.closePath(); };
+      sil([head], col);
+      if (o.eyes) for (const d of [-1, 1]) { ell(x + d * r * 0.46, hy - r * 0.72, r * 0.2, r * 0.22, "#fff", 4); eye(x + d * r * 0.46, hy - r * 0.68, r * 0.11); }
+      pic(S, x, hy + r * 0.04, r * 0.5);
+      return { tip: [x, hy], top: [x, hy - r * 1.3 - 28] };
+    },
+  },
+
+  wizard: {
+    name: "Wizard Hat", where: "The face, under the brim of the growing hat",
+    colour: "Hat colour", me: "#4d3bb3", raid: "#1f7a5c", x: 320,
+    opts: [
+      { k: "stars", l: "Stars", t: "check", v: true },
+      { k: "band", l: "Band colour", t: "color", v: "#ffcc22" },
+      { k: "whitebeard", l: "White beard", t: "check", v: true },
+    ],
+    draw(S) {
+      const { x, dir, g, t, col } = S, o = S.opt, R = 104, hy = GROUND - 250 + Math.sin(t * 2.4 + S.phase) * 3 - S.bump * 6, h = 90 + g * 490;
+      const robe = shade(col, -14);
+      sil([() => { ctx.moveTo(x - 250, GROUND + 10); ctx.bezierCurveTo(x - 220, GROUND - 90, x - 120, GROUND - 170, x - 70, GROUND - 180); ctx.lineTo(x + 70, GROUND - 180); ctx.bezierCurveTo(x + 120, GROUND - 170, x + 220, GROUND - 90, x + 250, GROUND + 10); ctx.closePath(); }], robe);
+      for (const d of [-1, 1]) tube(() => { ctx.moveTo(x + d * 148, GROUND - 124); ctx.quadraticCurveTo(x + d * 184, GROUND - 60, x + d * 140, GROUND - 24); }, 4, shade(col, -44), 0);
+      pic(S, x, hy, R);
+      if (o.whitebeard) {
+        const w = Math.sin(t * 2 + S.phase) * 4;
+        sil([() => { ctx.moveTo(x - 92, hy + 46); ctx.quadraticCurveTo(x, hy + 92, x + 92, hy + 46); ctx.bezierCurveTo(x + 104, hy + 120, x + 66, hy + 180, x + w, hy + 226); ctx.bezierCurveTo(x - 66, hy + 180, x - 104, hy + 120, x - 92, hy + 46); ctx.closePath(); }], "#f1f1f4");
+      }
+      const by = hy - 66, bend = Math.sin(t * 1.6 + S.phase) * 14 + dir * g * 120, tipX = x + bend, tipY = by - h, hw = 112 + g * 24;
+      const hat = () => { ctx.moveTo(x - hw, by); ctx.bezierCurveTo(x - hw * 0.5, by - h * 0.5, x - hw * 0.2 + bend * 0.2, by - h * 0.86, tipX, tipY); ctx.bezierCurveTo(x + hw * 0.34 + bend * 0.3, by - h * 0.62, x + hw * 0.6, by - h * 0.3, x + hw, by); ctx.closePath(); };
+      sil([hat], col);
+      if (o.stars) {
+        const count = Math.floor(2 + g * 8);
+        for (let i = 0; i < count; i++) {
+          const q = (i + 0.5) / count, sx = x + Math.sin(i * 2.3) * hw * 0.42 * (1 - q) + bend * q * q, sy = by - 44 - q * (h - 44) * 0.82, sr = 17 * (1 - q * 0.5);
+          const star = []; for (let p = 0; p < 10; p++) { const a = p / 10 * TAU - Math.PI / 2, rr = p % 2 ? sr * 0.45 : sr; star.push([sx + Math.cos(a) * rr, sy + Math.sin(a) * rr]); }
+          poly(star, "#ffe89a", 0);
+        }
+      }
+      ctx.save(); ctx.beginPath(); hat(); ctx.clip(); ctx.fillStyle = o.band; ctx.fillRect(x - hw - 10, by - 36, hw * 2 + 20, 36); ctx.restore();
+      ctx.beginPath(); hat(); ctx.lineWidth = 5; ctx.strokeStyle = OUTLINE; ctx.lineJoin = "round"; ctx.stroke();
+      line(x - hw * 0.99, by - 36, x + hw * 0.99, by - 36, OUTLINE, 4);
+      ell(x, by + 2, hw + 62, 20, shade(col, -22));
+      return { tip: [tipX, tipY + 40], top: [tipX, tipY - 34] };
+    },
+  },
+
+  dragon: {
+    name: "Dragon", where: "On its belly, while it breathes fire towards the middle",
+    colour: "Dragon colour", me: "#c63f3a", raid: "#3fa0a8", x: 250,
+    opts: [
+      { k: "fire", l: "Fire colour", t: "color", v: "#ff8a1f" },
+      { k: "horns", l: "Horns", t: "check", v: true },
+      { k: "wings", l: "Wings", t: "check", v: true },
+    ],
+    draw(S) {
+      const { x, dir, g, t, col } = S, o = S.opt, k = 0.92 + g * 0.2, dark = shade(col, -34), belly = "#f4e3c0";
+      const bob = Math.sin(t * 1.8 + S.phase) * 5 - S.bump * 6, hx = 58, hy = -496 + bob, gape = 0.36 + S.bump * 0.14;
+      const jx = hx + 8, jy = hy + 22, jaw = (a, b) => [jx + a * Math.cos(gape) - b * Math.sin(gape), jy + a * Math.sin(gape) + b * Math.cos(gape)];
+      const mouth = jaw(70, -18);
+      const mx = x + dir * k * (hx + 150), my = GROUND + k * ((jy + jaw(150, 0)[1]) / 2);
+      const reach = 60 + g * 300 + S.bump * 14, fw = 34 + g * 80;
+      flip(x, dir, k, () => {
+        if (o.wings) {
+          const fl = Math.sin(t * 2.6 + S.phase) * 26;
+          sil([() => { ctx.moveTo(-10, -350 + bob); ctx.lineTo(-96, -560 - fl); ctx.lineTo(-250, -600 - fl * 1.4); ctx.quadraticCurveTo(-230, -500 - fl, -262, -420 - fl * 0.7); ctx.quadraticCurveTo(-200, -440 - fl * 0.6, -196, -350 - fl * 0.4); ctx.quadraticCurveTo(-140, -380, -96, -270 + bob); ctx.closePath(); }], dark);
+          line(-30, -350 + bob, -240, -585 - fl * 1.3, shade(col, -60), LINE * 0.9);
+          line(-60, -340 + bob, -250, -432 - fl * 0.7, shade(col, -60), LINE * 0.9);
+        }
+        const leg = lx => [() => ctx.ellipse(lx, -120, 66, 80, 0, 0, TAU), () => { ctx.moveTo(lx - 42, -100); ctx.lineTo(lx - 30, -18); ctx.lineTo(lx + 36, -18); ctx.lineTo(lx + 42, -100); ctx.closePath(); }, () => roundRect(lx - 40, -28, 120, 28, 14)];
+        sil(leg(46), dark);
+        const backPts = [];
+        for (let i = 0; i <= 9; i++) { const u = i / 9, v = 1 - u; backPts.push([v * v * v * -118 + 3 * v * v * u * -128 + 3 * v * u * u * -70 + u * u * u * (hx - 62), v * v * v * -150 + 3 * v * v * u * -280 + 3 * v * u * u * -360 + u * u * u * (hy + 10)]); }
+        for (let i = 1; i < 9; i++) { const [px, py] = backPts[i]; poly([[px - 4, py - 24], [px - 42, py - 14], [px - 4, py + 22]], shade(col, 46), LINE * 0.8); }
+        const torso = () => { ctx.moveTo(-118, -150); ctx.bezierCurveTo(-128, -280, -70, -360 + bob, hx - 62, hy + 10); ctx.lineTo(hx + 62, hy + 40); ctx.bezierCurveTo(70, -350 + bob, 120, -240, 74, -95); ctx.bezierCurveTo(30, -55, -80, -60, -118, -150); ctx.closePath(); };
+        const tail = () => { ctx.moveTo(-70, -260); ctx.bezierCurveTo(-170, -200, -260, -110, -330, -60); ctx.bezierCurveTo(-240, -80, -140, -85, -60, -95); ctx.closePath(); };
+        const head = () => { ctx.moveTo(hx - 66, hy + 34); ctx.bezierCurveTo(hx - 70, hy - 50, hx - 20, hy - 82, hx + 36, hy - 80); ctx.bezierCurveTo(hx + 90, hy - 78, hx + 130, hy - 50, hx + 176, hy - 36); ctx.bezierCurveTo(hx + 204, hy - 24, hx + 200, hy + 18, hx + 168, hy + 24); ctx.bezierCurveTo(hx + 110, hy + 32, hx + 50, hy + 26, hx + 8, hy + 24); ctx.closePath(); };
+        if (o.horns) for (const a of [-44, -6]) poly([[hx + a, hy - 60], [hx + a - 54, hy - 138], [hx + a + 26, hy - 74]], "#f2e6c4", LINE);
+        sil([tail, torso, head, ...leg(-46)], col);
+        ctx.save(); ctx.beginPath(); torso(); ctx.clip();
+        ctx.beginPath(); ctx.ellipse(56, -230, 60, 200, 0.04, 0, TAU); ctx.fillStyle = belly; ctx.fill(); ctx.clip();
+        ctx.strokeStyle = shade(belly, -40); ctx.lineWidth = LINE * 0.7;
+        for (let yy = -390; yy < -60; yy += 44) { ctx.beginPath(); ctx.moveTo(-10, yy); ctx.quadraticCurveTo(56, yy + 18, 130, yy); ctx.stroke(); }
+        ctx.restore();
+        ctx.beginPath(); ctx.ellipse(-46, -120, 66, 80, 0, 0, TAU); ctx.fillStyle = col; ctx.fill();
+        ctx.beginPath(); ctx.ellipse(-46, -120, 66, 80, 0, -2.3, 0.75); ctx.lineWidth = LINE * 0.9; ctx.strokeStyle = shade(col, -55); ctx.lineCap = "round"; ctx.stroke();
+        const [fx, fy] = jaw(132, -2), ux = hx + 156, uy = hy + 24, cx = (ux + fx) / 2 - 22, cy = (uy + fy) / 2;
+        ctx.beginPath(); ctx.moveTo(jx, jy); ctx.lineTo(ux, uy); ctx.quadraticCurveTo(cx, cy, fx, fy); ctx.closePath();
+        ctx.fillStyle = "#6e1420"; ctx.fill(); ctx.lineWidth = LINE; ctx.strokeStyle = OUTLINE; ctx.lineJoin = "round"; ctx.stroke();
+        ctx.save(); ctx.translate(jx, jy); ctx.rotate(gape);
+        ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(140, -4); ctx.quadraticCurveTo(164, 12, 136, 26); ctx.bezierCurveTo(86, 38, 24, 34, 0, 0); ctx.closePath();
+        ctx.fillStyle = col; ctx.fill(); ctx.lineWidth = LINE; ctx.strokeStyle = OUTLINE; ctx.stroke();
+        ctx.fillStyle = "#fffdf2";
+        for (let i = 0; i < 4; i++) { const a = 62 + i * 18; ctx.beginPath(); ctx.moveTo(a, -3); ctx.lineTo(a + 13, -4); ctx.lineTo(a + 6, -16); ctx.closePath(); ctx.fill(); }
+        ctx.restore();
+        ctx.beginPath(); ctx.moveTo(hx + 8, hy + 24); ctx.bezierCurveTo(hx + 50, hy + 26, hx + 110, hy + 32, hx + 168, hy + 24); ctx.lineWidth = LINE; ctx.strokeStyle = OUTLINE; ctx.lineCap = "round"; ctx.stroke();
+        ctx.fillStyle = "#fffdf2";
+        for (let i = 0; i < 4; i++) { const a = hx + 66 + i * 21; ctx.beginPath(); ctx.moveTo(a, hy + 28); ctx.lineTo(a + 13, hy + 28); ctx.lineTo(a + 6, hy + 43); ctx.closePath(); ctx.fill(); }
+        eye(hx + 50, hy - 34, 14);
+        line(hx + 30, hy - 58, hx + 76, hy - 46, OUTLINE, LINE * 1.2);
+        ell(hx + 168, hy - 16, 5, 4, OUTLINE, 0);
+        tube(() => { ctx.moveTo(58, -318 + bob); ctx.quadraticCurveTo(90, -300 + bob, 118, -316 + bob); }, 26, col);
+        ctx.fillStyle = "#fffdf2"; for (const d of [-7, 7]) { ctx.beginPath(); ctx.moveTo(128, -320 + bob + d); ctx.lineTo(146, -316 + bob + d); ctx.lineTo(128, -310 + bob + d); ctx.closePath(); ctx.fill(); }
+        ctx.beginPath(); ctx.ellipse(48, -318 + bob, 24, 24, 0, 0, TAU); ctx.fillStyle = col; ctx.fill(); ctx.lineWidth = LINE; ctx.strokeStyle = OUTLINE; ctx.stroke();
+      });
+      pic(S, x + dir * k * 52, GROUND + k * (-204 + bob), k * 64);
+      const flame = (sc, colr, lw) => {
+        const len = reach * sc, w = fw * sc, tipY = my + Math.sin(t * 9 + S.phase) * 16 * sc, wa = Math.sin(t * 13 + S.phase) * 10 * sc, wb = Math.sin(t * 11 + 2 + S.phase) * 10 * sc;
+        ctx.beginPath(); ctx.moveTo(mx, my);
+        ctx.bezierCurveTo(mx + dir * len * 0.2, my - w * 1.4 + wa, mx + dir * len * 0.68, my - w * 0.9 + wb, mx + dir * len, tipY);
+        ctx.bezierCurveTo(mx + dir * len * 0.68, my + w * 0.9 + wa, mx + dir * len * 0.2, my + w * 1.4 + wb, mx, my);
+        ctx.closePath(); ctx.fillStyle = colr; ctx.fill();
+        if (lw) { ctx.lineWidth = lw; ctx.strokeStyle = OUTLINE; ctx.lineJoin = "round"; ctx.stroke(); }
+      };
+      flame(1, o.fire, 5); flame(0.72, "#ffc62a", 0); flame(0.44, "#fff4b8", 0);
+      return { tip: [mx + dir * reach, my], top: [x + dir * k * hx, GROUND + k * (hy - 138) - 24] };
+    },
+  },
+
+};
+
+function drawCrown(x, y, t) {
+  const w = 120, h = 70, yy = y + Math.sin(t * 4) * 5;
+  ctx.beginPath();
+  ctx.moveTo(x - w / 2, yy + h / 2);
+  ctx.lineTo(x - w / 2, yy - h / 2 + 10);
+  ctx.lineTo(x - w / 4, yy);
+  ctx.lineTo(x, yy - h / 2 - 8);
+  ctx.lineTo(x + w / 4, yy);
+  ctx.lineTo(x + w / 2, yy - h / 2 + 10);
+  ctx.lineTo(x + w / 2, yy + h / 2);
+  ctx.closePath();
+  ctx.fillStyle = "#ffcc22"; ctx.fill(); ctx.lineWidth = 6; ctx.strokeStyle = OUTLINE; ctx.stroke();
+  circle(x, yy + 12, 9, "#e0383e", OUTLINE, 3);
+  circle(x - w / 3, yy + 16, 7, "#2f7de1", OUTLINE, 3);
+  circle(x + w / 3, yy + 16, 7, "#2fbf5a", OUTLINE, 3);
+}
+
+function drawSide(s, tm, t, win, lose) {
+  const sc = CONFIG.size / 100, ay = theme.anchorY === undefined ? H : theme.anchorY;
+  ctx.save();
+  ctx.translate(s.x, ay); ctx.scale(sc, sc); ctx.translate(-s.x, -ay);
+  const r = theme.draw({ x: s.x, dir: s.dir, g: s.g, t, bump: s.bump, phase: s.phase, col: s.col, opt, tm, win, lose });
+  if (win) drawCrown(r.top[0], r.top[1], t);
+  ctx.restore();
+  s.tip = [s.x + (r.tip[0] - s.x) * sc, ay + (r.tip[1] - ay) * sc];
+}
+
+function drawParticles(dt) {
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.t += dt;
+    if (p.t < 0) continue;
+    const k = Math.min(1, p.t / p.dur);
+    const s = sides[p.side], tip = s.tip;
+    const cx = (p.x0 + tip[0]) / 2, cy = Math.min(p.y0, tip[1]) - 260;
+    const e = 1 - Math.pow(1 - k, 2);
+    const x = (1 - e) * (1 - e) * p.x0 + 2 * (1 - e) * e * cx + e * e * tip[0];
+    const y = (1 - e) * (1 - e) * p.y0 + 2 * (1 - e) * e * cy + e * e * tip[1];
+    const size = CONFIG.emoteSize * (1 - k * 0.5);
+    ctx.save(); ctx.translate(x, y); ctx.rotate(p.spin * k);
+    drawEmote(p.img, p.name, 0, 0, size, k > 0.85 ? (1 - k) / 0.15 : 1);
+    ctx.restore();
+    if (k >= 1) {
+      s.bump = Math.min(1, s.bump + 0.35); s.pop = 1;
+      sparkles.push({ x: tip[0], y: tip[1], t: 0, col: s.col });
+      particles.splice(i, 1);
+    }
+  }
+}
+const sparkles = [];
+function drawSparkles(dt) {
+  for (let i = sparkles.length - 1; i >= 0; i--) {
+    const s = sparkles[i]; s.t += dt;
+    const k = s.t / 0.45;
+    if (k >= 1) { sparkles.splice(i, 1); continue; }
+    ctx.globalAlpha = 1 - k;
+    for (let j = 0; j < 6; j++) {
+      const a = j / 6 * TAU;
+      circle(s.x + Math.cos(a) * 40 * k, s.y + Math.sin(a) * 40 * k, 6 * (1 - k), j % 2 ? "#fff" : s.col);
+    }
+    ctx.globalAlpha = 1;
+  }
+}
+
+function targetGrowth(side) {
+  const a = game.score.me, b = game.score.raid;
+  const lead = Math.max(a, b);
+  if (!lead) return 0;
+  const leader = 1 - Math.exp(-lead / Math.max(1, CONFIG.growEmotes));
+  return leader * (game.score[side] / lead);
+}
+const hpOf = side => Math.max(0, 1 - game.score[side === "me" ? "raid" : "me"] / Math.max(1, CONFIG.healthPool));
+
+function sideLabel(side) {
+  const name = team[side].display || team[side].login || "?";
+  return CONFIG.showScore ? `${name}  ${game.score[side]}` : name;
+}
+function drawName(side, y) {
+  const left = side === "me", x = left ? 60 : W - 60, label = sideLabel(side);
+  text(label, x, y, fitText(label, 400, 38), "#fff", left ? "left" : "right");
+}
+function drawHint(side, y) {
+  const left = side === "me", list = team[side].samples.slice(0, 4);
+  list.forEach((e, i) => drawEmote(e.url, e.name, left ? 84 + i * 60 : W - 84 - i * 60, y, 50));
+}
+function drawBars(dt) {
+  const top = CONFIG.barPos !== "bottom";
+  const nameY = CONFIG.barMode === "off" ? (top ? 44 : H - 44) : CONFIG.barMode === "health" ? (top ? 36 : H - 36) : (top ? 60 : H - 60);
+  const hintY = CONFIG.barMode === "health" ? (top ? 140 : H - 140) : (top ? 118 : H - 118);
+  if (CONFIG.barMode === "tug") {
+    const x = 480, w = 960, h = 36, y = top ? 42 : H - 78;
+    const total = game.score.me + game.score.raid, want = total ? game.score.me / total : 0.5;
+    hud.share += (want - hud.share) * Math.min(1, dt * 5);
+    box(x, y, w, h, h / 2, "#1a1020cc", 5);
+    ctx.save(); roundRect(x, y, w, h, h / 2); ctx.clip();
+    ctx.fillStyle = sides.me.col; ctx.fillRect(x, y, w * hud.share, h);
+    ctx.fillStyle = sides.raid.col; ctx.fillRect(x + w * hud.share, y, w * (1 - hud.share), h);
+    ctx.restore();
+    box(x, y, w, h, h / 2, null, 5);
+    box(x + w * hud.share - 8, y - 7, 16, h + 14, 6, "#fff", 4);
+  } else if (CONFIG.barMode === "health") {
+    const w = 720, h = 34, y = top ? 66 : H - 100;
+    for (const k of ["me", "raid"]) {
+      const s = sides[k], hp = hpOf(k), left = k === "me", bx = left ? 60 : W - 60 - w;
+      s.hpLag = Math.max(hp, s.hpLag - dt * 0.4);
+      box(bx, y, w, h, 12, "#1a1020cc", 5);
+      ctx.save(); roundRect(bx, y, w, h, 12); ctx.clip();
+      ctx.fillStyle = "#fff"; ctx.fillRect(left ? bx : bx + w * (1 - s.hpLag), y, w * s.hpLag, h);
+      ctx.fillStyle = hp < 0.25 && Math.sin(now() * 10) > 0 ? "#ff5a5a" : s.col; ctx.fillRect(left ? bx : bx + w * (1 - hp), y, w * hp, h);
+      ctx.restore();
+      box(bx, y, w, h, 12, null, 5);
+    }
+  }
+  if (CONFIG.showNames) { drawName("me", nameY); drawName("raid", nameY); }
+  if (CONFIG.showEmoteHint && game.phase === "battle") { drawHint("me", hintY); drawHint("raid", hintY); }
+}
+function drawTimer(remaining) {
+  if (CONFIG.timerPos === "off") return;
+  const secs = Math.max(0, Math.ceil(remaining)), urgent = remaining <= 10;
+  const label = secs >= 60 ? `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, "0")}` : String(secs);
+  const barTop = CONFIG.barMode !== "off" && CONFIG.barPos !== "bottom", barBottom = CONFIG.barMode !== "off" && CONFIG.barPos === "bottom";
+  const gapped = CONFIG.barMode === "health";
+  const y = CONFIG.timerPos === "top" ? (barTop && !gapped ? 170 : 92)
+          : CONFIG.timerPos === "bottom" ? (barBottom && !gapped ? H - 170 : H - 92) : H / 2;
+  const pulse = urgent ? 1 + Math.max(0, Math.sin(now() * 7)) * 0.08 : 1;
+  const col = urgent ? "#ff5a5a" : "#fff";
+  if (CONFIG.timerStyle === "ring") {
+    const r = 76 * pulse, k = Math.max(0, Math.min(1, remaining / CONFIG.battleSeconds));
+    ell(W / 2, y, r, r, "#1a1020dd", 5);
+    ctx.beginPath(); ctx.arc(W / 2, y, r - 12, -Math.PI / 2, -Math.PI / 2 + TAU * k);
+    ctx.lineWidth = 11; ctx.lineCap = "round"; ctx.strokeStyle = col; ctx.stroke();
+    text(label, W / 2, y + 3, (label.length > 3 ? 44 : 64) * pulse, col, "center", null);
+  } else text(label, W / 2, y, 112 * pulse, col);
+}
+function drawResult(t) {
+  if (!CONFIG.showWinner) return;
+  const msg = { me: "DEFENDERS WIN!", raid: "RAIDERS WIN!", tie: "IT'S A TIE!" }[game.winner];
+  const size = fitText(msg, 1100, 100);
+  text(msg, W / 2, H / 2 + Math.sin(t * 3) * 6, size, "#ffcc22", "center", "#1a1020", 12);
+}
+
+let status = CONFIG.test ? "preview mode" : "connecting…";
+let last = now();
+function frame() {
+  const t = now(), dt = Math.min(0.05, t - last); last = t;
+  ctx.clearRect(0, 0, W, H);
+
+  const el = t - game.t0;
+  if (game.phase === "intro" && el >= CONFIG.introSeconds) { game.phase = "battle"; game.t0 = t; }
+  else if (game.phase === "battle" && el >= CONFIG.battleSeconds) endBattle();
+  else if (game.phase === "battle" && CONFIG.barMode === "health" && CONFIG.koEnabled && (hpOf("me") <= 0 || hpOf("raid") <= 0)) endBattle();
+  else if (game.phase === "result" && el >= CONFIG.resultSeconds) { game.phase = "outro"; game.t0 = t; }
+  else if (game.phase === "outro" && el >= 1) game.phase = "idle";
+
+  if (game.phase === "idle" || game.phase === "loading") {
+    if (noChannel() && !CONFIG.test) text("Raid Battle: no channel set. Use the link from the setup page, with Local file unticked.", 20, 30, 24, "#ff6b6b", "left");
+    else if (CONFIG.debug) {
+      text(`Raid Battle: ${status}${game.phase === "loading" ? " – loading raider emotes…" : ""}`, 20, 30, 24, "#fff", "left");
+      text(`Theme: ${CONFIG.theme}${forcedTheme ? ` (next: ${forcedTheme})` : ""}   Last raid: ${lastRaid || "none yet"}`, 20, 62, 20, "#fff", "left");
+    }
+    requestAnimationFrame(frame); return;
+  }
+
+  let enter = 1;
+  if (game.phase === "intro") enter = Math.min(1, el / 0.7);
+  if (game.phase === "outro") enter = 1 - Math.min(1, el / 1);
+  const ease = 1 - Math.pow(1 - enter, 3);
+  const off = (1 - ease) * 900;
+
+  if (CONFIG.dim > 0) { ctx.fillStyle = `rgba(0,0,0,${CONFIG.dim * ease})`; ctx.fillRect(0, 0, W, H); }
+
+  for (const k of ["me", "raid"]) {
+    const s = sides[k];
+    s.g += (targetGrowth(k) - s.g) * Math.min(1, dt * 4);
+    s.bump = Math.max(0, s.bump - dt * 3);
+    s.pop = Math.max(0, s.pop - dt * 4);
+  }
+
+  const res = game.phase === "result" || game.phase === "outro";
+  ctx.save(); ctx.translate(-off, 0);
+  drawSide(sides.me, team.me, t, res && game.winner === "me", res && game.winner === "raid");
+  ctx.restore();
+  ctx.save(); ctx.translate(off, 0);
+  drawSide(sides.raid, team.raid, t, res && game.winner === "raid", res && game.winner === "me");
+  ctx.restore();
+
+  drawParticles(dt);
+  drawSparkles(dt);
+
+  ctx.save(); ctx.globalAlpha = ease;
+  drawBars(dt);
+  if (game.phase === "intro" || game.phase === "battle") drawTimer(game.phase === "intro" ? CONFIG.battleSeconds : CONFIG.battleSeconds - el);
+  if (game.phase === "result") drawResult(t);
+  ctx.restore();
+
+  requestAnimationFrame(frame);
+}
+
+function log(...a) { console.log("[RaidBattle]", ...a); }
+
+applyTheme(CONFIG.theme === "random" ? "beard" : CONFIG.theme);
+requestAnimationFrame(frame);
+if (!CONFIG.setup) {
+  if (!noChannel()) resolveUser(team.me);
+  if (!CONFIG.preview) connect();
+  if (CONFIG.test) setTimeout(startTest, 600);
+  if (CONFIG.preview) setInterval(() => { if (game.phase === "idle") startTest(); }, 500);
+} else addEventListener("DOMContentLoaded", () => showSetup());
+addEventListener("keydown", e => {
+  if (e.key === "t" || e.key === "T") startTest();
+  if (e.key === "s" || e.key === "S") (game.phase === "battle" ? endBattle() : stopAll());
+});
+window.raidBattle = { startBattle, startTest, endBattle, onLine, game, team, sides, THEMES, applyTheme };
+</script>
+
+<style>
+  #setup { position: fixed; inset: 0; display: none; gap: 20px; padding: 20px; box-sizing: border-box;
+           background: #15162b; font-family: system-ui, sans-serif; color: #eee; z-index: 10; }
+  #setup .card { background: #22233f; border-radius: 18px; padding: 26px 30px; width: 540px; flex: 0 0 auto; box-sizing: border-box; overflow-y: auto; box-shadow: 0 10px 40px #0008; }
+  #setup h1 { margin: 0 0 6px; font: 32px 'Lilita One', Impact, sans-serif; color: #ffcc22; letter-spacing: .5px; }
+  #setup h2 { margin: 24px 0 2px; font: 20px 'Lilita One', Impact, sans-serif; color: #ffcc22; letter-spacing: .3px; }
+  #setup p.sub { margin: 0 0 14px; color: #aab; font-size: 14px; }
+  #setup label { display: block; font-weight: 600; margin: 12px 0 5px; font-size: 14px; }
+  #setup small { display: block; color: #99a; font-weight: 400; margin-top: 4px; font-size: 12.5px; }
+  #setup input[type=text], #setup input[type=number], #setup select { width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 10px; border: 1px solid #3a3b60;
+                 background: #15162b; color: #fff; font-size: 15px; }
+  #setup input:focus, #setup select:focus { outline: 2px solid #2f7de1; border-color: transparent; }
+  #setup .two { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
+  #setup label.check { display: flex; gap: 9px; align-items: center; font-weight: 500; margin: 10px 0; }
+  #setup label.check input { width: 18px; height: 18px; accent-color: #2f7de1; }
+  #setup input[type=range] { width: 100%; accent-color: #2f7de1; }
+  #setup .pick { display: flex; align-items: center; gap: 10px; background: #15162b; border: 1px solid #3a3b60; border-radius: 10px; padding: 6px 10px; }
+  #setup input[type=color] { width: 44px; height: 30px; padding: 0; border: 0; background: none; cursor: pointer; }
+  #setup .sw-name { font-family: monospace; color: #ccd; font-size: 13px; }
+  #setup .themes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 8px; }
+  #setup .themes button { background: #34355a; color: #fff; padding: 9px 4px; font-size: 13px; font-weight: 600; flex: none; }
+  #setup .themes button.on { background: #2f7de1; }
+  #setup .where { margin-top: 10px; }
+  #setup .row { display: flex; gap: 10px; margin-top: 22px; }
+  #setup button { flex: 1; padding: 12px; border: 0; border-radius: 10px; font-weight: 700; font-size: 15px; cursor: pointer; }
+  #setup .primary { background: #2f7de1; color: #fff; }
+  #setup .out { margin-top: 16px; display: none; }
+  #setup .out code { display: block; background: #15162b; border: 1px solid #3a3b60; border-radius: 10px; padding: 10px 12px;
+                     word-break: break-all; font-size: 12.5px; color: #9fd0ff; }
+  #setup ol { margin: 10px 0 0; padding-left: 20px; color: #ccd; font-size: 13.5px; line-height: 1.6; }
+  #setup .stage { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: center; }
+  #setup iframe { width: 100%; aspect-ratio: 16 / 9; border: 0; border-radius: 14px;
+                  background: repeating-conic-gradient(#2b2c4a 0% 25%, #24253f 0% 50%) 0 0 / 40px 40px; }
+</style>
+<div id="setup">
+  <div class="card">
+    <h1>Raid Battle setup</h1>
+    <p class="sub">When someone raids you, each side spams their streamer's emotes. Whoever has grown biggest when the timer ends wins.</p>
+    <label>Your Twitch channel <input id="s-channel" type="text" placeholder="e.g. yourchannel" autocomplete="off"></label>
+    <label>Your emote prefix
+      <input id="s-prefix" type="text" placeholder="e.g. abc" autocomplete="off">
+      <small>The start of your emote names (abc<b>Hype</b>, abc<b>Love</b>). Separate several with commas.
+        Optional: it's detected automatically. The raider's emotes are always detected automatically.</small>
+    </label>
+    <h2>Theme</h2>
+    <div class="themes" id="s-themes"></div>
+    <small class="where" id="s-where"></small>
+    <div id="s-themeopts"></div>
+    <h2>Timer</h2><div id="s-timer" class="two"></div>
+    <h2>Health bar</h2><div id="s-bar" class="two"></div>
+    <h2>Battle</h2><div id="s-battle" class="two"></div>
+    <h2>On screen</h2><div id="s-screen"></div>
+    <div class="row"><button class="primary" id="s-link">Get OBS link</button></div>
+    <div class="out" id="s-out">
+      <code id="s-url"></code>
+      <ol>
+        <li>In OBS add a <b>Browser</b> source, size <b>1920 × 1080</b>.</li>
+        <li>Leave "Local file" <b>unticked</b> and paste this link into the URL box.</li>
+        <li>Put it at the top of <b>every scene you could be on when raided</b>. Use "Add Existing" so it's the same source each time. It stays invisible until a raid comes in.</li>
+      </ol>
+    </div>
+  </div>
+  <div class="stage"><iframe id="s-frame" title="Preview"></iframe></div>
+</div>
+<script>
+function showSetup() {
+  const el = id => document.getElementById(id);
+  el("setup").style.display = "flex";
+  const general = {
+    timer: [
+      { k: "timerPos", l: "Position", t: "select", opts: [["middle", "Middle"], ["top", "Top"], ["bottom", "Bottom"], ["off", "Off"]] },
+      { k: "timerStyle", l: "Style", t: "select", opts: [["ring", "Ring"], ["plain", "Plain numbers"]] },
+    ],
+    bar: [
+      { k: "barMode", l: "Type", t: "select", opts: [["tug", "Tug of war (one bar)"], ["health", "Health (two bars)"], ["off", "Off"]] },
+      { k: "barPos", l: "Position", t: "select", opts: [["top", "Top"], ["bottom", "Bottom"]] },
+      { k: "healthPool", l: "Emotes to empty a bar", t: "number", min: 10, max: 5000 },
+      { k: "koEnabled", l: "Empty bar ends the battle", t: "check" },
+    ],
+    battle: [
+      { k: "battleSeconds", l: "Battle length (seconds)", t: "number", min: 15, max: 600 },
+      { k: "resultSeconds", l: "Winner screen (seconds)", t: "number", min: 2, max: 60 },
+      { k: "minRaidViewers", l: "Smallest raid to battle", t: "number", min: 1, max: 100000 },
+      { k: "growEmotes", l: "Emotes per growth stage", t: "number", min: 10, max: 2000 },
+      { k: "maxEmotesPerMessage", l: "Max emotes per message", t: "number", min: 1, max: 50 },
+    ],
+    screen: [
+      { k: "showNames", l: "Show names", t: "check" },
+      { k: "showScore", l: "Show emote counts", t: "check" },
+      { k: "showEmoteHint", l: "Show which emotes to spam", t: "check" },
+      { k: "showWinner", l: "Show the winner's name", t: "check" },
+      { k: "showFlying", l: "Flying emotes", t: "check" },
+      { k: "includeThirdParty", l: "Count 7TV and BTTV emotes", t: "check" },
+      { k: "allowModCommands", l: "Let mods use the commands", t: "check" },
+      { k: "size", l: "Character size", t: "range", min: 50, max: 130, step: 5, unit: "%" },
+      { k: "emoteSize", l: "Flying emote size", t: "range", min: 30, max: 120, step: 5 },
+      { k: "dim", l: "Darken the screen behind", t: "range", min: 0, max: 0.7, step: 0.05 },
+      { k: "pictureRing", l: "Outline round pictures", t: "range", min: 0, max: 12, step: 1, unit: "px" },
+      { k: "pictureShape", l: "Picture shape", t: "select", opts: [["round", "Round"], ["rounded", "Rounded square"], ["square", "Square"]] },
+    ],
+  };
+  const vals = {}, themeVals = {};
+  let current = THEMES[CONFIG.theme] ? CONFIG.theme : CONFIG.theme === "random" ? "random" : "beard";
+  for (const [id, th] of Object.entries(THEMES)) {
+    themeVals[id] = { me: hexCol(themeParam(id, "me")) || th.me, raid: hexCol(themeParam(id, "raid")) || th.raid };
+    for (const o of th.opts) themeVals[id][o.k] = parseOpt(o, themeParam(id, o.k));
+  }
+  const field = (o, val, set) => {
+    const wrap = document.createElement("label");
+    if (o.t === "check") {
+      wrap.className = "check";
+      const i = document.createElement("input"); i.type = "checkbox"; i.checked = !!val;
+      i.onchange = () => set(i.checked);
+      wrap.append(i, o.l);
+      return wrap;
+    }
+    wrap.append(o.l);
+    if (o.t === "select") {
+      const i = document.createElement("select");
+      for (const [v, n] of o.opts) i.add(new Option(n, v));
+      i.value = val; i.onchange = () => set(i.value);
+      wrap.append(i);
+    } else if (o.t === "color") {
+      const p = document.createElement("span"); p.className = "pick";
+      const i = document.createElement("input"); i.type = "color"; i.value = val;
+      const n = document.createElement("span"); n.className = "sw-name"; n.textContent = val;
+      i.oninput = () => { n.textContent = i.value; }; i.onchange = () => set(i.value);
+      p.append(i, n); wrap.append(p);
+    } else if (o.t === "range") {
+      const i = document.createElement("input"); i.type = "range"; i.min = o.min; i.max = o.max; i.step = o.step; i.value = val;
+      const n = document.createElement("small"); n.textContent = val + (o.unit || "");
+      i.oninput = () => { n.textContent = i.value + (o.unit || ""); }; i.onchange = () => set(Number(i.value));
+      wrap.append(i, n);
+    } else {
+      const i = document.createElement("input"); i.type = "number"; i.min = o.min; i.max = o.max; i.value = val;
+      i.onchange = () => set(Math.max(o.min, Math.min(o.max, Number(i.value) || CONFIG_DEFAULTS[o.k])));
+      wrap.append(i);
+    }
+    return wrap;
+  };
+  for (const [sec, list] of Object.entries(general)) for (const o of list) {
+    vals[o.k] = CONFIG[o.k];
+    el("s-" + sec).append(field(o, vals[o.k], v => { vals[o.k] = v; refresh(); }));
+  }
+  const drawThemes = () => {
+    const box = el("s-themes"); box.innerHTML = "";
+    for (const [id, name] of [...Object.entries(THEMES).map(([i, th]) => [i, th.name]), ["random", "Random each raid"]]) {
+      const b = document.createElement("button"); b.textContent = name; b.className = id === current ? "on" : "";
+      b.onclick = () => { current = id; drawThemes(); drawThemeOpts(); refresh(); };
+      box.append(b);
+    }
+  };
+  const drawThemeOpts = () => {
+    const box = el("s-themeopts"); box.innerHTML = "";
+    if (current === "random") { el("s-where").textContent = "Picks a different theme for each raid, using whatever you've set on each one."; return; }
+    const th = THEMES[current], v = themeVals[current];
+    el("s-where").textContent = "Picture: " + th.where + ".";
+    const cols = document.createElement("div"); cols.className = "two";
+    cols.append(field({ t: "color", l: "Your " + th.colour.toLowerCase() }, v.me, c => { v.me = c; refresh(); }));
+    cols.append(field({ t: "color", l: "Raider's " + th.colour.toLowerCase() }, v.raid, c => { v.raid = c; refresh(); }));
+    box.append(cols);
+    const rest = document.createElement("div"); rest.className = "two";
+    for (const o of th.opts) rest.append(field(o, v[o.k], x => { v[o.k] = x; refresh(); }));
+    box.append(rest);
+  };
+  if (!noChannel()) el("s-channel").value = CONFIG.channel;
+  el("s-prefix").value = CONFIG.myEmotePrefix || "";
+  const channel = () => el("s-channel").value.trim().toLowerCase().replace(/^.*twitch\.tv\//, "").replace(/[^a-z0-9_]/g, "");
+  const flag = v => typeof v === "boolean" ? (v ? "1" : "0") : String(v).replace(/^#/, "");
+  const build = () => {
+    const q = new URLSearchParams();
+    const ch = channel();
+    if (ch) q.set("channel", ch);
+    const pre = el("s-prefix").value.replace(/\s+/g, "");
+    if (pre) q.set("myEmotePrefix", pre);
+    q.set("theme", current);
+    for (const [k, v] of Object.entries(vals)) if (v !== CONFIG_DEFAULTS[k]) q.set(k, flag(v));
+    for (const [id, th] of Object.entries(THEMES)) {
+      const v = themeVals[id];
+      if (v.me !== th.me) q.set(id + "_me", flag(v.me));
+      if (v.raid !== th.raid) q.set(id + "_raid", flag(v.raid));
+      for (const o of th.opts) if (v[o.k] !== o.v) q.set(`${id}_${o.k}`, flag(v[o.k]));
+    }
+    return q;
+  };
+  const base = location.href.split(/[?#]/)[0];
+  const refresh = () => {
+    const q = build();
+    q.set("test", "1"); q.set("preview", "1");
+    q.set("battleSeconds", Math.min(20, vals.battleSeconds)); q.set("resultSeconds", 4);
+    el("s-frame").src = base + "?" + q.toString();
+    el("s-out").style.display = "none";
+  };
+  el("s-channel").onchange = el("s-prefix").onchange = refresh;
+  el("s-link").onclick = () => {
+    if (!channel()) { el("s-channel").focus(); return; }
+    const url = base + "?" + build().toString();
+    el("s-url").textContent = url; el("s-out").style.display = "block";
+    navigator.clipboard && navigator.clipboard.writeText(url).then(() => { el("s-link").textContent = "Copied!"; setTimeout(() => el("s-link").textContent = "Get OBS link", 1500); }, () => {});
+  };
+  drawThemes(); drawThemeOpts(); refresh();
+}
+</script>
+</body>
+</html>

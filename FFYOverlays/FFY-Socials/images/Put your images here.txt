@@ -1,0 +1,4 @@
+Put the pictures for your socials and promos in this folder.
+
+PNG, JPG, GIF (animated ones work) and WEBP are all fine.
+Then open FFY_Socials-Settings.html and click Choose next to the one you want it on.
