@@ -47,7 +47,7 @@ If you're the one being hunted, `!hideout` lets you lie low for 30 minutes and y
 
 ## Settings
 
-Go to the **Actions** tab, open the **FFY Bounty** group, then the **FFY Bounty** action, and double-click **Execute C# Code**. The settings are all between `EDIT BELOW` and `EDIT ABOVE`. Remember to click **Save and Compile** when you've changed something.
+Go to the **Actions** tab, open the **FFY Bounty** group, then the **FFY Bounty** action, and double-click **Execute C# Code**. The settings are all inside `Settings()`. Remember to click **Save and Compile** when you've changed something.
 
 | Setting | What it does |
 |---|---|

@@ -30,7 +30,7 @@ Don't want all of them? Open the **FFY Easter** folder in the **Commands** tab a
 
 ## Tweaking it
 
-Everything's in the **FFY Easter** group in the **Actions** tab. To change something, open the action, double-click **Execute C# Code**, edit the lines between `EDIT BELOW` and `EDIT ABOVE` and hit **Save and Compile**.
+Everything's in the **FFY Easter** group in the **Actions** tab. To change something, open the action, double-click **Execute C# Code**, edit the lines inside `Data()` and hit **Save and Compile**.
 
 | Action | What's in it |
 |---|---|

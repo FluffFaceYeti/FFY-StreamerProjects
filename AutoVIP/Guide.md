@@ -113,7 +113,7 @@ The commands and the **Auto VIP Refresh** timer switch themselves on the first t
 
 ## Settings
 
-All settings are at the top of the **AUTOVIP** code, in sections marked `// SETTINGS`. Click **Save and Compile** after changing anything.
+All settings are at the top of the **AUTOVIP** code. Click **Save and Compile** after changing anything.
 
 ### The basics
 

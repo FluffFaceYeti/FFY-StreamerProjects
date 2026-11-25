@@ -152,13 +152,14 @@ You edit every data action the same way:
 1. Go to the **Actions** tab.
 2. Open the group and click the action, for example **FFY Drinks** in **FFY Picks**.
 3. On the right, under **Sub-Actions**, double-click **Execute C# Code**.
-4. Scroll down to the bit between these two lines:
+4. Scroll down to the bit called `Data()`:
    ```
-   // ===== EDIT BELOW =====
-   ...your lines are here...
-   // ===== EDIT ABOVE =====
+   private void Data()
+   {
+       ...your lines are here...
+   }
    ```
-   Only change things between those two lines.
+   Only change things between its `{` and `}`.
 5. Make your change.
 6. Click **Save and Compile** at the bottom.
 7. Close the window. Give it about 30 seconds and your change will be working in chat.
@@ -181,8 +182,7 @@ You can read it like a sentence: *for the command **drink**, set the **list** to
 2. Text goes inside "quote marks". Numbers and `true`/`false` don't.
 3. Every line ends with a `;`
 4. `List(...)` holds more than one thing, with commas in between: `List("Coffee", "Tea", "Martini")`
-5. A line starting with `//` is switched off. It's just a note. Take the `//` away to switch it on.
-6. If you copy another command to start from, change the first word on **every** line. Otherwise you'll overwrite the one you copied. (Everyone does this at least once!)
+5. If you copy another command to start from, change the first word on **every** line. Otherwise you'll overwrite the one you copied. (Everyone does this at least once!)
 
 ### If "Save and Compile" shows an error
 
@@ -250,9 +250,8 @@ Chat will see something like: `@Bob, you're 73% cool today!`
 
 1. In the **Actions** tab, open **FFY Number Commands** and click **FFY My Number Commands** (updates never touch this one).
 2. Double-click **Execute C# Code**.
-3. Paste this just above `// ===== EDIT ABOVE =====`:
+3. Paste this inside `Data()`, just above its closing `}`:
    ```csharp
-   // coolness
    Set("coolness", "min", 0);
    Set("coolness", "max", 100);
    Set("coolness", "template", "{sender}, you're {value}% cool today!");
@@ -285,9 +284,8 @@ Chat will see: `@Bob, your snack today is Popcorn!`
 ### Part 1: add the lines
 
 1. In **FFY List Commands**, click **FFY My List Commands** (updates never touch it) and double-click **Execute C# Code**.
-2. Paste this above `// ===== EDIT ABOVE =====`:
+2. Paste this inside `Data()`, just above its closing `}`:
    ```csharp
-   // snack
    Set("snack", "list", List("Cookies", "Crisps", "Popcorn"));
    Set("snack", "template", "{sender}, your snack today is {item}!");
    Set("snack", "variable", "Snack today");
@@ -306,7 +304,7 @@ This is one viewer doing something to another. Let's make **`!tickle @someone`**
 
 Chat will see: `@Bob Tickled @Sam with 73% power!`
 
-1. Open **FFY Interactions** (it's in the **FFY Interactions** group, from the Interactions pack) and add this above `// ===== EDIT ABOVE =====`:
+1. Open **FFY Interactions** (it's in the **FFY Interactions** group, from the Interactions pack) and add this inside `Data()`, just above its closing `}`:
    ```csharp
    Add("tickle");
    ```
@@ -338,9 +336,8 @@ Chat will see:
 
 ### For a number command (win with an exact number)
 
-1. Open **FFY Of The Day** (in **FFY Helpers**) and paste this above `// ===== EDIT ABOVE =====`:
+1. Open **FFY Of The Day** (in **FFY Helpers**) and paste this inside `Data()`, just above its closing `}`:
    ```csharp
-   // coolness
    Set("coolness", "title", "Coolness");
    Set("coolness", "winValue", 100);
    Set("coolness", "whoCommands", List("coolnessofday"));
@@ -354,7 +351,6 @@ Chat will see:
 Use `winItemContains` instead of `winValue`. In this one, whoever gets something with "popcorn" in it wins:
 
 ```csharp
-// snack
 Set("snack", "title", "Snack");
 Set("snack", "winItemContains", "popcorn");
 Set("snack", "whoCommands", List("snackofday"));
@@ -378,7 +374,7 @@ You can make a command always say something special for one person.
 So when SomeViewer types `!beard`, chat sees: `@SomeViewer, your beard is legendary!`
 
 1. Open **FFY Special Users** (in **FFY Helpers**) and double-click **Execute C# Code**.
-2. Paste this above `// ===== EDIT ABOVE =====`:
+2. Paste this inside `Data()`, just above its closing `}`:
    ```csharp
    Set("someviewer", "beard", "@SomeViewer, your beard is legendary!");
    ```
@@ -400,7 +396,7 @@ Put `"anyone"` instead of a username to match everyone, e.g. *anyone* hugging *t
 
 ## 11. More things you can add
 
-For all of these, open the action named, paste the lines above `// ===== EDIT ABOVE =====`, click **Save and Compile**, then do [section 5](#5-make-streamerbot-listen-for-a-new-command) for each new command.
+For all of these, open the action named, paste the lines inside `Data()`, just above its closing `}`, click **Save and Compile**, then do [section 5](#5-make-streamerbot-listen-for-a-new-command) for each new command.
 
 ### Add-ons (separate imports)
 
@@ -487,7 +483,7 @@ For example, a `!hype` that always talks about one particular viewer: `@someview
    ```csharp
    private const string DataPath = "helpers/replycommands";
    ```
-4. Delete the example lines between EDIT BELOW and EDIT ABOVE and paste in:
+4. Delete the lines inside `Data()`, between its `{` and `}`, and paste in:
    ```csharp
    Set("hype", "target", "someviewer");
    Set("hype", "niceChance", 0.5);
@@ -530,7 +526,7 @@ These are in **FFY Config** (in **FFY Helpers**):
 | `channelName` | Your channel name (see [section 2](#2-two-things-to-set-first)). |
 | `timeZone` | When your "day" starts. Leave it as `""` to use your PC's clock. Or use a **Windows** time zone name: `"GMT Standard Time"` (UK), `"Eastern Standard Time"` (US East), `"Pacific Standard Time"` (US West)... **Not** `"Europe/London"`, which Streamer.bot doesn't understand. The full list is in the [Complete Guide](QuickGuide.md#set-your-time-zone-optional). |
 | `consentTimeoutSeconds` | How many seconds people get to type `!accept` or `!deny`. |
-| Disabled commands | A list of commands that never reply. Delete the `//` in front of the example line to use it. |
+| Disabled commands | A list of commands that never reply. To use it, add `Set("disabledCommands", List("spank", "keg"));` inside `Data()` with your own list. |
 
 ## 14. Something isn't working
 

@@ -72,7 +72,7 @@ Once someone digs one up, it's theirs and nobody else can find it that season. C
 
 ## Settings
 
-In the **Actions** tab, open the **FFY Dino** group, then the **FFY Dino** action, and double-click **Execute C# Code**. The settings are between `EDIT BELOW` and `EDIT ABOVE`:
+In the **Actions** tab, open the **FFY Dino** group, then the **FFY Dino** action, and double-click **Execute C# Code**. The settings are inside `Settings()`:
 
 | Setting | What it does |
 |---|---|

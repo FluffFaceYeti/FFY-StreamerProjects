@@ -40,10 +40,10 @@ Type `!santa` (or `!santa @someone`) and Santa checks his list to see if they're
 By default you get a new result every day. To change how long a result sticks, open **FFY Santa** (it's in the **FFY Christmas** group in the Actions tab) and change `resultDays`:
 
 ```csharp
-Set("resultDays", 1);   // a new result every day
-Set("resultDays", 7);   // the same result for a week
-Set("resultDays", 25);  // one result that lasts all of December
+Set("resultDays", 7);
 ```
+
+`1` gives a new result every day, `7` keeps the same result for a week, and `25` gives one result that lasts all of December.
 
 | Setting | What it does |
 |---|---|
@@ -56,7 +56,7 @@ Set("resultDays", 25);  // one result that lasts all of December
 
 ## Making changes
 
-It all lives in the **Actions** tab under the **FFY Christmas** group. Open an action, double-click **Execute C# Code**, change whatever's between `EDIT BELOW` and `EDIT ABOVE`, then click **Save and Compile**.
+It all lives in the **Actions** tab under the **FFY Christmas** group. Open an action, double-click **Execute C# Code**, change whatever's inside `Data()`, then click **Save and Compile**.
 
 | Action | What's in it |
 |---|---|

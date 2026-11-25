@@ -307,13 +307,14 @@ Every data action is edited the same way:
 
 1. **Actions tab** → open the group → click the action (for example **FFY Drinks**).
 2. On the right under **Sub-Actions**, double-click **Execute C# Code**.
-3. Scroll to the section between these two lines:
+3. Scroll to the section called `Data()`:
    ```
-   // ===== EDIT BELOW =====
-   ...your lines are here...
-   // ===== EDIT ABOVE =====
+   private void Data()
+   {
+       ...your lines are here...
+   }
    ```
-   **Only change things between these two lines.**
+   **Only change things between its `{` and `}`.**
 4. Make your change.
 5. Click **Save and Compile**.
 6. Close the window. The change works in chat within **30 seconds**. No restart needed.
@@ -323,7 +324,6 @@ Every data action is edited the same way:
 Here's `!drink` (in **FFY Drinks**):
 
 ```csharp
-// drink
 Set("drink", "list", List("Coffee", "Tea", "Martini", "Lemonade"));
 Set("drink", "template", "{sender}, your drink of the day is {item}!");
 Set("drink", "variable", "Drink of the day");
@@ -346,10 +346,9 @@ Each line reads like a sentence:
 | 4 | **Every line ends with `;`** | `...("Tea"));` | `...("Tea"))` |
 | 5 | **`List(...)` holds several things, separated by commas** | `List("A", "B", "C")` | `List("A" "B" "C")` |
 | 6 | **A quote mark *inside* text is written `\"`** | `"She said \"hi\""` | `"She said "hi""` |
-| 7 | **A line starting with `//` is switched off.** It's a note | `// Set(...)` is off | |
-| 8 | **Copying a command? Change the first word on EVERY line** | All lines say `"snack"` | Some lines still say `"drink"` |
+| 7 | **Copying a command? Change the first word on EVERY line** | All lines say `"snack"` | Some lines still say `"drink"` |
 
-> **Rule 8 catches everyone.** If you copy `!drink`'s lines to make `!snack` and forget to change one, you'll quietly change `!drink` instead of making `!snack`.
+> **Rule 7 catches everyone.** If you copy `!drink`'s lines to make `!snack` and forget to change one, you'll quietly change `!drink` instead of making `!snack`.
 
 ### When "Save and Compile" shows an error
 
@@ -435,10 +434,9 @@ Done. Once its lines are in place (see the next sections), type `!snack` in chat
 
 **Chat will see:** `@Bob, you're 73% cool today!`
 
-**Step 1.** Open **FFY My Number Commands** (in **FFY Number Commands**). Updates never touch this action. Paste this above `// ===== EDIT ABOVE =====`:
+**Step 1.** Open **FFY My Number Commands** (in **FFY Number Commands**). Updates never touch this action. Paste this inside `Data()`, just above its closing `}`:
 
 ```csharp
-// coolness
 Set("coolness", "min", 0);
 Set("coolness", "max", 100);
 Set("coolness", "template", "{sender}, you're {value}% cool today!");
@@ -465,7 +463,6 @@ Click **Save and Compile**.
 
 **A score out of 10:**
 ```csharp
-// vibes
 Set("vibes", "min", 1);
 Set("vibes", "max", 10);
 Set("vibes", "template", "{sender}, your vibes are a solid {value}/10 today!");
@@ -475,7 +472,6 @@ Set("vibes", "variable", "Vibes today");
 
 **Height with decimals:**
 ```csharp
-// height
 Set("height", "min", 1.5);
 Set("height", "max", 2.2);
 Set("height", "step", 0.01);
@@ -486,7 +482,6 @@ Set("height", "variable", "Height today");
 
 **Coins, no saving:**
 ```csharp
-// coins
 Set("coins", "min", 0);
 Set("coins", "max", 5000);
 Set("coins", "template", "{sender} found {value} gold coins down the back of the sofa!");
@@ -504,10 +499,9 @@ Set("coins", "template", "{sender} found {value} gold coins down the back of the
 
 **Chat will see:** `@Bob, your snack today is Popcorn!`
 
-**Step 1.** Open **FFY My List Commands** (in **FFY List Commands**). Updates never touch this action. Paste above `// ===== EDIT ABOVE =====`:
+**Step 1.** Open **FFY My List Commands** (in **FFY List Commands**). Updates never touch this action. Paste this inside `Data()`, just above its closing `}`:
 
 ```csharp
-// snack
 Set("snack", "list", List("Cookies", "Crisps", "Popcorn", "Grapes", "Pizza"));
 Set("snack", "template", "{sender}, your snack today is {item}!");
 Set("snack", "variable", "Snack today");
@@ -539,7 +533,6 @@ Click **Save and Compile**.
 
 **Spirit vehicle:**
 ```csharp
-// vehicle
 Set("vehicle", "list", List("Shopping Trolley", "Rocket", "Unicycle", "Golden Chariot", "Very Fast Snail"));
 Set("vehicle", "template", "{sender}, your vehicle of the day is a {item}!");
 Set("vehicle", "variable", "Vehicle today");
@@ -547,7 +540,6 @@ Set("vehicle", "variable", "Vehicle today");
 
 **Superhero name:**
 ```csharp
-// heroname
 Set("heroname", "list", List("Captain Crumbs", "The Midnight Snacker", "Doctor Dramatic", "Lady Lagspike"));
 Set("heroname", "template", "{sender}, today you are known as... {item}!");
 ```
@@ -625,7 +617,6 @@ Each pack keeps its own titles (for example **FFY Stats Of The Day** in the FFY 
 **Step 1.** Open **FFY Of The Day** (in **FFY Helpers**) and add:
 
 ```csharp
-// coolness
 Set("coolness", "title", "Coolness");
 Set("coolness", "winValue", 100);
 Set("coolness", "whoCommands", List("coolnessofday"));
@@ -639,7 +630,6 @@ Set("coolness", "noWinnerMessage", "Nobody is Coolness of the Day yet!");
 Use `winItemContains` instead of `winValue`. Whoever gets an item **containing** that word wins (capitals don't matter):
 
 ```csharp
-// snack
 Set("snack", "title", "Snack");
 Set("snack", "winItemContains", "popcorn");
 Set("snack", "whoCommands", List("snackofday"));
@@ -752,7 +742,6 @@ Each add-on is its own import file with its own guide. **Get them from the [FFYA
 Open **FFY Countdowns** (in **FFY Helpers**) and add, for example a stream birthday on 14 March:
 
 ```csharp
-// birthday
 Set("birthday", "month", 3);
 Set("birthday", "day", 14);
 Set("birthday", "message", "{sender}, only {days} days, {hours} hours and {minutes} minutes until the stream birthday!");
@@ -766,7 +755,6 @@ When the date has passed, it counts down to next year's.
 
 **Christmas:**
 ```csharp
-// christmas
 Set("christmas", "month", 12);
 Set("christmas", "day", 25);
 Set("christmas", "message", "{days} sleeps until Christmas, {sender}!");
@@ -781,7 +769,6 @@ Set("christmas", "message", "{days} sleeps until Christmas, {sender}!");
 Open **FFY Dice** (in **FFY Games**, from the Games pack) and add:
 
 ```csharp
-// d6
 Set("d6", "min", 1);
 Set("d6", "max", 6);
 Set("d6", "label", "D6");
@@ -804,7 +791,6 @@ Then do [section 9](#9-every-new-command-needs-this-connecting-it-to-streamerbot
 ### Words instead of numbers
 
 ```csharp
-// magic8
 Set("magic8", "min", 0);
 Set("magic8", "max", 4);
 Set("magic8", "label", "magic 8 ball");
@@ -825,7 +811,6 @@ Set("magic8", "faces", List("Yes", "No", "Maybe", "Ask again later", "Absolutely
 Open **FFY Duels** (in **FFY Games**, from the Games pack) and add. This example uses `!coolness` from section 10:
 
 ```csharp
-// coolduel
 Set("coolduel", "stat", "coolness");
 Set("coolduel", "seedKey", "coolness");
 Set("coolduel", "matchSelf", true);
@@ -868,9 +853,8 @@ Reply commands need their own data action, which you only make once:
    ```csharp
    private const string DataPath = "helpers/replycommands";
    ```
-4. Delete the example lines between EDIT BELOW and EDIT ABOVE, and add:
+4. Delete the lines inside `Data()`, between its `{` and `}`, and add:
    ```csharp
-   // hype
    Set("hype", "target", "someviewer");
    Set("hype", "niceChance", 0.7);
    Set("hype", "niceReplies", List("is the best!", "is an absolute legend!", "carries this whole community."));
@@ -918,7 +902,7 @@ For example, adding your own titles to **FFY Of The Day**:
 1. **Actions tab:** right-click **FFY Of The Day** → **Duplicate**.
 2. Rename the copy so it **starts with "FFY My"**, e.g. **FFY My Of The Day**.
 3. Open its code. **Leave the `DataPath` line as it is.**
-4. Delete the lines between EDIT BELOW and EDIT ABOVE, and add only your own.
+4. Delete the lines inside `Data()`, between its `{` and `}`, and add only your own.
 5. **Save and Compile.**
 
 Your lines are **added on top** of the built-in ones, and updates never touch your copy. This works for any built-in action: **FFY Interactions**, **FFY Action Words**, **FFY Top Titles**, **FFY Dice**, **FFY Duels**, **FFY Countdowns**, **FFY Do Not Track** and so on.
@@ -988,7 +972,6 @@ Delete its `variable` line, or switch off `saveToUserVariables` in **FFY Switche
 Open **FFY Switches** (in **FFY Helpers**). Set each to `true` (on) or `false` (off), then **Save and Compile**.
 
 ```csharp
-// CONSENT: true = !hug @someone asks them first; they reply !accept or !deny. false = no asking.
 Set("consentRequired", false);
 ```
 
@@ -1010,7 +993,7 @@ Set("consentRequired", false);
 | `channelName` | `""` | Your channel name. Makes your viewers' results unique to your channel. Changing it later shuffles everyone's results. |
 | `timeZone` | `""` | When "today" starts. `""` = your PC's clock. Or a **Windows** time zone name, e.g. `"GMT Standard Time"`, not `"Europe/London"` ([see the list](#set-your-time-zone-optional)). |
 | `consentTimeoutSeconds` | `60` | Seconds people get to `!accept` or `!deny`. |
-| `disabledCommands` | *(off)* | Commands that never reply, even if switched on in the Commands tab. Remove the `//` and list them: `Set("disabledCommands", List("spank", "keg"));` |
+| `disabledCommands` | *(off)* | Commands that never reply, even if switched on in the Commands tab. To use it, add this line inside `Data()` with your own list: `Set("disabledCommands", List("spank", "keg"));` |
 
 ---
 
@@ -1436,7 +1419,7 @@ See [section 7](#when-save-and-compile-shows-an-error). It's usually a missing `
 
 ### I made a new command and an *old* command changed instead
 
-You copied the old command's lines and didn't change the first word on every line. See [rule 8](#7-the-golden-rules).
+You copied the old command's lines and didn't change the first word on every line. See [rule 7](#7-the-golden-rules).
 
 ### Still stuck? Check the logs
 

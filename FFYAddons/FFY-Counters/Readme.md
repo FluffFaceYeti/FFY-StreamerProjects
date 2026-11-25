@@ -78,7 +78,7 @@ As an example, let's make `!cat` / `!cats` / `!setcat`.
 ### First, add the line
 
 1. In the **Actions** tab, open the **FFY Counters** group, then the **FFY Counters** action, and double-click **Execute C# Code**.
-2. Somewhere between `EDIT BELOW` and `EDIT ABOVE`, under the other counters, add:
+2. Inside `Counters()`, under the other counters, add:
    ```csharp
    Counter("cat", "cats", "{streamer} has pet the cat {count} time{s}!");
    ```

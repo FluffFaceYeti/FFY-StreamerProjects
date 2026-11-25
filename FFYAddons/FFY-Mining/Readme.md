@@ -78,7 +78,7 @@ You'll find one roughly once every 2,000 finds, and they're worth between $5,000
 
 ## Settings
 
-In the **Actions** tab, open the **FFY Mining** group, then the **FFY Mining** action, and double-click **Execute C# Code**. Everything you can change is between `EDIT BELOW` and `EDIT ABOVE`:
+In the **Actions** tab, open the **FFY Mining** group, then the **FFY Mining** action, and double-click **Execute C# Code**. Everything you can change is inside `Settings()`:
 
 | Setting | What it does |
 |---|---|

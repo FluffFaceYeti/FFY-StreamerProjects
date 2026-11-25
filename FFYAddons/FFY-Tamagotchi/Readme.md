@@ -184,7 +184,7 @@ If you change a value, the Tamagotchi picks it up next time that viewer uses a c
 
 ## Changing other things
 
-In the **Actions** tab, open the **FFY Tamagotchi** group, then the **FFY Tamagotchi** action, and double-click **Execute C# Code**. Everything's between `EDIT BELOW` and `EDIT ABOVE`. Click **Save and Compile** when you've finished.
+In the **Actions** tab, open the **FFY Tamagotchi** group, then the **FFY Tamagotchi** action, and double-click **Execute C# Code**. Everything's inside `Settings()`. Click **Save and Compile** when you've finished.
 
 | Setting | What it does |
 |---|---|

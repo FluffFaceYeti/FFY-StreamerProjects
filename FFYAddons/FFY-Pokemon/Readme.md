@@ -108,7 +108,7 @@ Then the PSA grade multiplies it:
 
 ## Settings
 
-Go to the **Actions** tab, open the **FFY Pokemon** group and the **FFY Pokemon** action, and double-click **Execute C# Code**. The settings are all between `EDIT BELOW` and `EDIT ABOVE`:
+Go to the **Actions** tab, open the **FFY Pokemon** group and the **FFY Pokemon** action, and double-click **Execute C# Code**. The settings are all inside `Settings()`:
 
 | Setting | What it does |
 |---|---|

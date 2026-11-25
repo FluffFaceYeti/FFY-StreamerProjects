@@ -36,7 +36,7 @@ If there are a few you don't want, go to the **Commands** tab, open the **FFY Ha
 
 ## Changing things
 
-Head to the **Actions** tab and open the **FFY Halloween** group. Double-click **Execute C# Code** in the action you want, change the bits between `EDIT BELOW` and `EDIT ABOVE`, and click **Save and Compile** when you're done.
+Head to the **Actions** tab and open the **FFY Halloween** group. Double-click **Execute C# Code** in the action you want, change the bits inside `Data()`, and click **Save and Compile** when you're done.
 
 | Action | What's in it |
 |---|---|

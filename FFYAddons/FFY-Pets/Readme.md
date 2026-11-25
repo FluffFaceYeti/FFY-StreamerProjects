@@ -123,7 +123,7 @@ These are at the top of the settings. Set them to `true` (on) or `false` (off), 
 
 ## Changing other things
 
-In the **Actions** tab, open the **FFY Pets** group, then the **FFY Pets** action, and double-click **Execute C# Code**. It's all between `EDIT BELOW` and `EDIT ABOVE`. Click **Save and Compile** after you change anything.
+In the **Actions** tab, open the **FFY Pets** group, then the **FFY Pets** action, and double-click **Execute C# Code**. It's all inside `Settings()`. Click **Save and Compile** after you change anything.
 
 | Setting | What it does |
 |---|---|

@@ -77,24 +77,20 @@
   </div>
 </div>
 <script>
-// ===== SETTINGS: change these to match your Streamer.bot =====
 const SETTINGS = {
-  host: "127.0.0.1",            // Streamer.bot: Servers/Clients > WebSocket Server > Address
-  port: 8080,                   // Streamer.bot: Servers/Clients > WebSocket Server > Port
-  endpoint: "/",                // Streamer.bot: Servers/Clients > WebSocket Server > Endpoint
-  password: "",                 // only needed if you switched on Authentication there
-  actionName: "FFY Tamagotchi", // the action's name in the Actions tab
-  showCard: true,               // true = show the name, age and mood under the Tamagotchi
-  showBubble: true,             // true = show a speech bubble when chat looks after it
-  bubbleSeconds: 6,             // how long the speech bubble stays
-  scale: 1,                     // size of the whole overlay, e.g. 0.75 or 1.5
-  shell: "auto",                // "auto" = the shell chat picks with !tamashell. Or always use one: "Classic", "Dinosaur", "Yeti",
-                                // "Crochet", "Cat", "Bunny", "Bear", "Frog", "Alien" or "Crown"
-  refreshMinutes: 2,            // how often it re-checks its needs while nobody uses a command
+  host: "127.0.0.1",
+  port: 8080,
+  endpoint: "/",
+  password: "",
+  actionName: "FFY Tamagotchi",
+  showCard: true,
+  showBubble: true,
+  bubbleSeconds: 6,
+  scale: 1,
+  shell: "auto",
+  refreshMinutes: 2,
 };
-// ===== END OF SETTINGS =====
 
-// URL OPTIONS: e.g. FFY-Tamagotchi-Overlay.html?port=8080&password=abc&scale=1.5&demo=1
 const params = new URLSearchParams(location.search);
 for (const key of Object.keys(SETTINGS)) {
   if (!params.has(key)) continue;
@@ -106,7 +102,6 @@ if (params.has("preview") || DEMO) document.body.classList.add("preview");
 document.getElementById("wrap").style.transform = "scale(" + (SETTINGS.scale || 1) + ")";
 if (!SETTINGS.showCard) document.getElementById("card").classList.add("hidden");
 
-// SPRITES: 16x16. o = outline, b = body, e = eye, m = mouth, c = cheek, w = white, s = spot
 const SPRITES = {
   egg: [
     "................", "................", "......oooo......", ".....obbbbo.....", "....obbbbbbo....", "...obbsbbbbbo...", "...obbbbbsbbo...", "..obbbbbbbbbbo..",
@@ -156,7 +151,6 @@ function drawText(text, ox, oy) {
   [...text].forEach((ch, i) => (FONT[ch] || []).forEach((row, y) => [...row].forEach((on, x2) => { if (on === "1") ctx.fillRect(ox + i * 4 + x2, oy + y, 1, 1); })));
 }
 
-// COLOURS
 const LCD = "#c8d6a2", DARK = "#263020", CHEEK = "#ff8fa3", WHITE = "#fbfbf3";
 const NAMED = { pink: "#ff9ec7", blue: "#6fb3ff", yellow: "#ffe066", green: "#7ed77e", purple: "#b98cff", orange: "#ffa94d", red: "#ff6b6b",
   white: "#f5f5f0", black: "#5a5a5a", teal: "#3cc9b9", lilac: "#d6b4fc", glitter: "#f3c4ff", "see-through": "rgba(255,255,255,.35)" };
@@ -175,7 +169,6 @@ function darker(hex, amount) {
   return "rgb(" + [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => Math.round(v * f)).join(",") + ")";
 }
 
-// STATE
 const canvas = document.getElementById("screen"), ctx = canvas.getContext("2d");
 let pet = null, notShared = false, ghost = null, tick = 0;
 let x = 22, dir = 1, pauseUntil = 0;
@@ -228,7 +221,6 @@ function drawIcon(name, ox, oy, alpha, size = 1) {
   ctx.globalAlpha = 1;
 }
 
-// DRAWING
 function draw() {
   tick++;
   if (!current && queue.length) { current = queue.shift(); current.start = tick; }
@@ -300,7 +292,6 @@ function scene(kind, t) {
     }
   }
 
-  // where it stands
   const busy = !!kind && kind !== "name" && kind !== "colour" && kind !== "shell";
   const still = sick || pet.rest < 10 || kind === "sleep";
   if (!busy && !still && tick > pauseUntil) {
@@ -320,7 +311,6 @@ function scene(kind, t) {
   drawSprite(sprite, pet, x + shake, top, 2, { flip: dir < 0, closed, chomp });
   drawHealth();
 
-  // needs
   if (!kind || kind === "name" || kind === "colour" || kind === "shell") {
     if (dirty) {
       drawIcon("poop", 54, GROUND - 7);
@@ -335,7 +325,6 @@ function scene(kind, t) {
     if (fine && avg >= 75 && tick % 40 < 12) drawIcon("heart", x + 26, top - (tick % 40) / 2);
   }
 
-  // what chat just did
   if (kind === "feed" && t <= 10) drawIcon("food", x + 12, -8 + t * 2.4);
   if (kind === "feed" && t > 10 && t % 8 < 4) drawIcon("heart", x + 28, top - 2 - (t - 10) / 2);
   if (kind === "play") { const bx = 4 + Math.abs(((t * 3) % 96) - 48); drawIcon("ball", Math.min(54, bx), GROUND - 10 - Math.abs(Math.sin(t / 2.2)) * 18); }
@@ -352,7 +341,6 @@ function scene(kind, t) {
   }
 }
 
-// SHELLS: extra bits drawn around the egg
 const SHELLS = ["Classic", "Dinosaur", "Yeti", "Crochet", "Cat", "Bunny", "Bear", "Frog", "Alien", "Crown"];
 function lighter(hex, amount) {
   const m = /^#?([0-9a-f]{6})$/i.exec(hex);
@@ -428,7 +416,6 @@ function shellParts(shape, main, dark) {
   return { back, front };
 }
 
-// THE CARD
 function render() {
   const device = document.getElementById("device"), colour = pet ? String(pet.colour || "").toLowerCase() : "pink";
   device.classList.toggle("rainbow", colour === "rainbow");
@@ -503,7 +490,6 @@ function handle(d) {
   render();
 }
 
-// STREAMER.BOT CONNECTION
 let socket = null, helloTimer = 0, refreshTimer = 0, answerTimer = 0;
 function status(text) { document.getElementById("status").textContent = text || ""; }
 function send(message) { if (socket && socket.readyState === 1) socket.send(JSON.stringify(message)); }
@@ -561,7 +547,6 @@ function connect() {
   };
 }
 
-// DEMO: open with ?demo=1 to see it without Streamer.bot (or ?demo=hungry, sleepy, messy, bored, sick, happy, egg, stats, shells)
 function demo(mode) {
   const base = { name: "Pickle", colour: "Pink", stage: "Child", stageIndex: 1, stageCount: 5, age: "3 streams old", health: 100, hunger: 85, happiness: 90, rest: 80, cleanliness: 90, mood: "Over the moon *does a happy little dance*", needs: [] };
   const looks = {

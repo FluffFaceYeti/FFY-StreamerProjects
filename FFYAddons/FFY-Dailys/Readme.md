@@ -74,7 +74,7 @@ Right-click the **FFY Daily's** action and choose **Run Now**. A pop-up will tel
 
 ## Changing the messages or adding your own
 
-In the **Actions** tab, open **FFY Daily's** and double-click **Execute C# Code**. Between `EDIT BELOW` and `EDIT ABOVE`, every daily is one line like this:
+In the **Actions** tab, open **FFY Daily's** and double-click **Execute C# Code**. Inside `Dailies()`, every daily is one line like this:
 
 ```csharp
 Daily("Daily Head Pat", "{user} has redeemed their daily head pat! That's {total} head pat{s} so far.");

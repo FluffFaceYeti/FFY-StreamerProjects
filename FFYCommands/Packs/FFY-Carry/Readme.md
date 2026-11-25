@@ -22,7 +22,7 @@ You can turn off any you don't like. Find them in the **FFY Carry** folder in th
 
 ## Making changes
 
-It all lives in the **Actions** tab under the **FFY Carry** group. Open an action, double-click **Execute C# Code**, change whatever's between `EDIT BELOW` and `EDIT ABOVE`, then click **Save and Compile**.
+It all lives in the **Actions** tab under the **FFY Carry** group. Open an action, double-click **Execute C# Code**, change whatever's inside `Data()`, then click **Save and Compile**.
 
 | Action | What's in it |
 |---|---|
